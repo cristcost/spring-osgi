@@ -1,0 +1,52 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<artifactId>weather</artifactId>
+		<groupId>org.springframework.osgi.samples</groupId>
+		<version>1.0-m1</version>
+	</parent>
+	<groupId>org.springframework.osgi.samples</groupId>
+	<artifactId>wiring-bundle</artifactId>
+	<packaging>osgi-bundle</packaging>
+	<name>Spring OSGi Sample Wiring Bundle</name>
+	<url>http://www.springframework.org/osgi</url>
+
+	<build>
+  <plugins>
+    <plugin>
+      <artifactId>maven-clean-plugin</artifactId>
+      <configuration>
+        <filesets>
+          <fileset>
+            <directory>META-INF</directory>
+            <includes>
+              <include>MANIFEST.MF</include>
+            </includes>
+            <followSymlinks>false</followSymlinks>
+          </fileset>
+        </filesets>
+      </configuration>
+    </plugin>
+    </plugins>
+		<resources>
+			<resource>
+				<!-- Bug MRESOURCES-35 means we can't use absolute paths -->
+				<!-- Bug in eclipse means we have to put META-INF in ${basedir} -->
+				<targetPath>../../META-INF</targetPath>
+				<filtering>true</filtering>
+				<includes>
+					<include>MANIFEST.MF</include>
+				</includes>
+				<directory>src/main/resources/META-INF</directory>
+			</resource>
+			<resource>
+				<directory>src/main/resources</directory>
+				<filtering>true</filtering>
+			</resource>
+		</resources>
+	</build>
+	<!--properties>
+		<localRepository>${user.home}/.m2/repository</localRepository>
+	</properties-->
+</project>

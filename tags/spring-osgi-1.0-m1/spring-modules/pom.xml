@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project>
+  <parent>
+    <artifactId>spring-osgi</artifactId>
+    <groupId>org.springframework.osgi</groupId>
+    <version>1.0-m1</version>
+  </parent>
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.springframework.osgi</groupId>
+  <artifactId>spring-modules</artifactId>
+  <packaging>pom</packaging>
+  <name>Spring Framework jars packaged as OSGi bundles</name>
+  <version>2.1-SNAPSHOT</version>
+  <url>http://www.springframework.org/osgi</url>
+  <modules>
+    <module>spring-aop</module>
+    <module>spring-aspects</module>
+    <module>spring-beans</module>
+    <module>spring-context</module>
+    <module>spring-core</module>
+    <module>spring-dao</module>
+    <module>spring-hibernate2</module>
+    <module>spring-hibernate3</module>
+    <module>spring-ibatis</module>
+    <module>spring-jca</module>
+    <module>spring-jdbc</module>
+    <module>spring-jdo</module>
+    <module>spring-jms</module>
+    <module>spring-jmx</module>
+    <module>spring-jpa</module>
+    <module>spring-mock</module>
+    <module>spring-portlet</module>
+    <module>spring-remoting</module>
+    <module>spring-struts</module>
+    <module>spring-support</module>
+    <module>spring-toplink</module>
+    <module>spring-web</module>
+    <module>spring-webmvc</module>
+    <module>spring-required-libraries</module>
+  </modules>
+
+ <build>
+    <resources>
+      <resource>
+        <!-- Bug MRESOURCES-35 means we can't use absolute paths -->
+        <!-- Bug in eclipse means we have to put META-INF in ${basedir} -->
+        <targetPath>../../META-INF</targetPath>
+        <filtering>true</filtering>
+        <includes>
+          <include>MANIFEST.MF</include>
+        </includes>
+        <directory>src/main/resources/META-INF</directory>
+      </resource>
+      <resource>
+        <filtering>true</filtering>
+        <directory>src/main/resources</directory>
+      </resource>
+    </resources>
+
+    <!-- There is a bug in maven which prevents correct inheritance beyond one-layer
+     Deep. We therefore have to reconfigure the plugin here -->
+    <plugins>
+      <plugin>
+        <groupId>org.apache.felix.plugins</groupId>
+        <artifactId>maven-osgi-plugin</artifactId>
+        <extensions>true</extensions>
+        <version>0.8.0-SNAPSHOT</version>
+        <configuration>
+          <manifestFile>META-INF/MANIFEST.MF</manifestFile>
+        </configuration>
+      </plugin>
+    <plugin>
+      <artifactId>maven-clean-plugin</artifactId>
+      <configuration>
+        <filesets>
+          <fileset>
+            <directory>META-INF</directory>
+            <includes>
+              <include>MANIFEST.MF</include>
+            </includes>
+            <followSymlinks>false</followSymlinks>
+          </fileset>
+        </filesets>
+      </configuration>
+    </plugin>
+    </plugins>
+ </build>
+
+  <reporting>
+   <excludeDefaults>true</excludeDefaults>
+   <!-- the above doesn't work, so we spell it out in full below -->
+   <plugins>
+     <plugin>
+       <groupId>org.apache.maven.plugins</groupId>
+       <artifactId>maven-project-info-reports-plugin</artifactId>
+       <inherited>true</inherited>
+       <reportSets>
+        <reportSet></reportSet>
+       </reportSets>
+     </plugin>   
+   </plugins>
+  </reporting>
+</project>
