@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project>
+  <parent>
+    <artifactId>spring-osgi</artifactId>
+    <groupId>org.springframework.osgi</groupId>
+    <version>1.0-m2</version>
+  </parent>
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.springframework.osgi</groupId>
+  <artifactId>spring-osgi-test-support</artifactId>
+  <packaging>pom</packaging>
+  <name>Spring JUnit support for OSGi</name>
+  <url>http://www.springframework.org/osgi</url>
+  
+  <modules>
+    <module>spring-osgi-test</module>
+    <module>spring-osgi-test-integration</module>
+  </modules>
+  <!-- Needed if trying to get stacktraces from the test framework -->
+
+  <build>
+  <plugins>
+      <!--
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+	      <groupId>org.apache.maven.plugins</groupId>
+          <configuration>
+            <source>1.5</source>
+            <target>1.5</target>
+            <debug>true</debug>
+          </configuration>
+      </plugin>
+      -->
+    </plugins>
+  </build>
+
+</project>
