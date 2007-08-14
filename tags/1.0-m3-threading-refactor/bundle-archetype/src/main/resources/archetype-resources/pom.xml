@@ -1,0 +1,149 @@
+<?xml version="1.0"?>
+<project>
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>${groupId}</groupId>
+  <artifactId>${artifactId}</artifactId>
+  <packaging>bundle</packaging>
+  <name>Spring OSGi Bundle</name>
+  <version>${version}</version>
+  <url>http://www.springframework.org/osgi</url>
+  
+  <properties>
+	<slf4j.version>1.4.0</slf4j.version>
+	<spring.maven.artifact.version>2.1-m3</spring.maven.artifact.version>
+  </properties>
+  
+  <dependencies>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>3.8.1</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.osgi</groupId>
+      <artifactId>spring-mock</artifactId>
+      <version>${spring.maven.artifact.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.osgi</groupId>
+      <artifactId>spring-core</artifactId>
+      <version>${spring.maven.artifact.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.osgi</groupId>
+      <artifactId>spring-context</artifactId>
+      <version>${spring.maven.artifact.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.osgi</groupId>
+      <artifactId>spring-beans</artifactId>
+      <version>${spring.maven.artifact.version}</version>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>jcl104-over-slf4j</artifactId>
+      <version>${slf4j.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>${slf4j.version}</version>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-log4j12</artifactId>
+      <version>${slf4j.version}</version>
+    </dependency>
+    
+    <dependency>
+     <groupId>org.osgi</groupId>
+     <artifactId>org.osgi.core</artifactId>
+     <version>4.0</version>
+    </dependency>
+  </dependencies>
+
+  <!-- for packaging as an OSGi bundle, we use the maven-bundle-plugin -->
+  
+  <!-- see http://cwiki.apache.org/FELIX/maven-bundle-plugin-bnd.html for more info -->
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.felix</groupId>
+        <artifactId>maven-bundle-plugin</artifactId>
+        <extensions>true</extensions>
+        <version>1.0.0</version>
+        <configuration>
+           <instructions>
+               <Export-Package>${package}*</Export-Package>
+               <Import-Package>*</Import-Package>
+           </instructions>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+  
+  <!-- ================================================ -->
+  <!--            Repository Configuration              -->
+  <!-- ================================================ -->
+
+  <repositories>
+    <repository>    
+      <id>apache.m2.incubator</id>
+      <name>Apache M2 Incubator Repository</name>
+      <url>http://people.apache.org/repo/m2-incubating-repository/</url>
+    </repository>  
+    <repository>
+            <id>eclipse-repository</id>
+        <name>Eclipse Repository</name>
+        <url>http://repo1.maven.org/eclipse/</url>
+    </repository>
+    <repository>
+      <id>safehaus-repository</id>
+      <name>Safehaus Repository</name>
+      <url>http://m2.safehaus.org</url>
+    </repository>
+    <repository>
+      <id>spring-ext</id>
+      <name>Spring External Dependencies Repository</name>
+      <url>
+        https://springframework.svn.sourceforge.net/svnroot/springframework/repos/repo-ext/
+      </url>
+    </repository>
+	<repository>
+	 <snapshots><enabled>true</enabled></snapshots>
+	<id>apache-snapshot-repo</id>
+      <name>Apache snapshot repo</name>
+      <url>http://cvs.apache.org/maven-snapshot-repository</url>
+	</repository>
+  </repositories>
+
+  <pluginRepositories>
+    <pluginRepository>
+      <id>spring-ext</id>
+      <name>Spring External Dependencies Repository</name>
+      <url>
+        https://springframework.svn.sourceforge.net/svnroot/springframework/repos/repo-ext/
+      </url>
+    </pluginRepository>
+
+    <pluginRepository>
+      <id>maven-repo</id>
+      <name>maven repo</name>
+      <url>http://repo1.maven.org/maven2/</url>
+    </pluginRepository>
+    
+    <!-- maven osgi bundle plugin -->
+    <pluginRepository>
+      <id>apache.m2.incubator</id>
+      <name>Apache M2 Incubator Repository</name>
+      <url>http://people.apache.org/repo/m2-incubating-repository/</url>
+    </pluginRepository>
+          
+  </pluginRepositories>
+  
+</project>
