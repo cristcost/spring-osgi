@@ -1,0 +1,322 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+"http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<book xmlns:xi="http://www.w3.org/2001/XInclude">
+  <bookinfo>
+    <title>Spring Dynamic Modules for <trademark>OSGi</trademark> Service
+    Platforms <superscript>*</superscript></title>
+	
+	<subtitle>Frequently Asked Questions</subtitle>
+    <releaseinfo>&version;</releaseinfo>
+
+    <authorgroup>
+      <author>
+        <firstname>Costin</firstname>
+        <surname>Leau</surname>
+      </author>
+    </authorgroup>
+
+    <legalnotice>
+      <para><superscript>*</superscript> - OSGi is a trademark of <ulink url="http://www.osgi.org">
+      the OSGi Alliance</ulink>,project name is pending OSGi Alliance approval.
+      </para>
+      
+      <para>Copies of this document may be made for your own use and for
+      distribution to others, provided that you do not charge any fee for such
+      copies and further provided that each copy contains this Copyright
+      Notice, whether distributed in print or electronically.</para>
+    </legalnotice>
+  </bookinfo>
+
+  <toc />
+
+  <chapter id="spring-osgi-faq">
+    <title>Frequently Asked Questions</title>
+
+    <section id="name-change">
+      <title>What happened to "Spring OSGi" project name?</title>
+
+        <para>The OSGi term is a trademark belonging to <ulink
+        url="http://www.osgi.org/">The OSGi Alliance</ulink>. In order to
+        comply with their guidelines, it was decided that the project name 
+        be changed to "Spring Dynamic Modules for OSGi Service Platforms" 
+        (aka Spring-DM). The new name is still pending final approval 
+        by the OSGi Alliance. 
+        The name change was the result of an amicable discussion between 
+        the OSGi Alliance and Interface21. Interface21 is a member of the 
+        OSGi Alliance, and the OSGi	Alliance remain very supportive of 
+        the project.</para>
+	</section>
+	
+	<section id="internal-package">
+      <title>Why doesn't <literal>internal</literal> package have any
+        javadocs?</title>
+
+        <para>Package <literal>org.springframework.osgi.internal</literal> is
+        meant (as the name implies) to be a private, non-public package. Thus,
+        there is no documentation, support or compatibility guarantee for
+        them. In fact, the Spring Dynamic Modules bundle does not even export
+        them to prevent accidental usage. Some module bundles (such as 
+        <literal>spring-osgi-core</literal>) do export some packages but these 
+        are for internal usage within the rest of Spring-DM (such as
+        <literal>spring-osgi-extender</literal>).</para>
+
+        <para>If you find classes under this package, which you really, really
+        depend on, then consider raising an issue on <ulink type=""
+        url="http://opensource.atlassian.com/projects/spring/browse/OSGI">JIRA</ulink>
+        to have access opened up.</para>
+	</section>
+	
+	<section id="requirements">
+	  <title>What are Spring Dynamic Modules requirements?</title>
+	  <para>
+	    Spring Dynamic Modules requires at least Java 1.4, OSGi 4.0 and Spring 2.5.
+	    It might be possible to use Spring Dynamic Modules on a lower <ulink 
+	    url="http://wiki.eclipse.org/index.php/Execution_Environments">execution environment</ulink>
+	    (such <ulink url="http://java.sun.com/products/cdc/">CDC</ulink>) but 
+	    it is not guaranteed to work.
+	    Both Spring and Spring Dynamic Modules rely on <ulink url="http://java.sun.com/products/javabeans/">
+	    JavaBeans</ulink> (java.beans package) which, unfortunately, is missing in most 
+	    restricted environments. See this <ulink url="http://java.sun.com/products/cdc/reference/cdc_packages.pdf" 
+	    type="application/pdf">PDF</ulink> for information on CDC profiles.
+	    Note that, Spring 2.5 also requires Java 1.4.
+	  </para>
+	  <para>
+	    Nevertheless, experiences and feedback on running Spring-DM in restricted environments 
+	    is welcomed - please use our mailing list.
+	  </para>
+    </section>
+    
+    <section id="supported-osgi-platforms">
+	  <title>What OSGi platforms are supported?</title>
+	  <para>
+	  Spring-DM requires an OSGi 4.0 platform. The framework has been tested
+	  on <ulink url="http://www.eclipse.org/equinox/">Equinox</ulink>, <ulink url="http://felix.apache.org">Felix</ulink> 
+	  and <ulink url="http://www.knopflerfish.org/">Knopflerfish</ulink> 
+	  - in fact, the test suite is <ulink url="http://build.springframework.org:8085/bamboo/browse/OSGI">ran</ulink> 
+	  against all of them as part of our continuous integration process.
+	  </para>
+	</section>
+	
+	<section id="osgi-intro">
+	  <title>Where can I learn about OSGi?</title>
+	  <para>
+	   The best place to start is The Osgi Alliance <ulink url="http://www.osgi.org/">home</ulink> and 
+	   <ulink url="http://www2.osgi.org/Main/HomePage">developer</ulink> pages which
+	   provide the OSGi specifications, introductions and many links and blogs on the topic.
+	   Below you can find a list (by no means comprehensive) of links to help you get started with OSGi: 
+	  </para>
+	  
+	  <itemizedlist>
+	   <listitem>Neil Bartlett's "Getting Started with OSGi" - <ulink url="http://neilbartlett.name/blog/osgi-articles/">here</ulink> and 
+	   	<ulink url="http://www.eclipse.org/resources/?author=Neil%20Bartlett">here</ulink>.
+	   </listitem>
+	   <listitem>
+   	    Equinox Documents - <ulink url="http://www.eclipse.org/equinox/documents/">here</ulink>
+	   </listitem>
+	  </itemizedlist>
+	  
+	  <para>
+	   In addition, all OSGi implementation websites host detailed, step-by-step tutorials and introduction.
+	  </para>
+	  
+	  <para>   
+	   If you discover any additional materials useful for OSGi newbies, please let us know to update the list.
+	   Thank you.
+	  </para>
+	</section>
+	
+	
+	<section id="backport-util-concurrent">
+	  <title>I get an exception about backport-util-concurrent library being required. Why is that?</title>
+
+        <para>This exception is thrown only when running on Java 1.4 
+        without backport-util-concurrent bundle installed.
+        </para>
+        <para>
+        OSGi platform is a concurrent environment. Beans from different
+        application contexts can interact with each other creating cycles 
+        between their owning contexts. This means that the backing
+        contexts have to be able to lookup and create/retrieve bean instances,
+        all at the same time, on multiple threads. A traditional synchronised
+        collection allows proper locking and thread coordination and prevents
+        race conditions, but can cause very easily deadlocks.</para>
+
+        <para>Consider two contexts each containing two beans: <mediaobject>
+            <imageobject role="fo">
+              <imagedata align="center"
+                         fileref="src/docbkx/resources/images/deadlock.png"
+                         format="PNG"/>
+            </imageobject>
+
+            <imageobject role="html">
+              <imagedata align="center" fileref="images/deadlock.png"
+                         format="PNG"/>
+            </imageobject>
+
+            <caption>
+              <para>Inter-application context bean interaction</para>
+            </caption>
+          </mediaobject></para>
+
+        <para>If both bean A and C are requested by two separate threads at
+        the same time, this scenario will deadlock since each thread waits for
+        the other one to release the "bean registry" lock even just for
+        reading. However, when using a concurrent collection, reading doesn't
+        require a lock so each thread can interact with the other context
+        without waiting for a lock. Java 1.5 and upwards provide <ulink
+        url="http://java.sun.com/j2se/1.5.0/docs/api/java/util/concurrent/package-summary.html">concurrent
+        collections</ulink> under <literal>java.util</literal> package.
+        However, since Java 1.4 does not, <ulink
+        url="http://dcl.mathcs.emory.edu/util/backport-util-concurrent/">backport-util-concurrent</ulink>
+        library is required.</para>
+      </section>
+
+      <section id="logging">
+        <title>How can I use logging in OSGi?</title>
+
+        <para>OSGi platforms do not change the way libraries work, it just
+        enforces tighter classloading. Thus, you can, in most of the cases,
+        use the same logging strategy used in non-OSGi environments.</para>
+
+        <para>Spring (and Spring-DM) use internally the <ulink
+        url="http://commons.apache.org/logging/">commons-logging API</ulink>
+        which acts as an "ultra-thin bridge between different logging
+        implementations". In OSGi, just like in a non-OSGi environment, Spring
+        and Spring-DM delegate all logging (including initialisation) to the
+        actual commons-logging API implementation.</para>
+
+        <para>Out of the box, <ulink type=""
+        url="http://www.slf4j.org/">SLF4J</ulink> library is provided, which
+        shares the same purpose as commons-logging but without the
+        classloading discovery mechanism that causes loading issues, using
+        static wiring (see the SLF4J site for more info). Please see <link linkend="commons-logging">this
+        question</link > for more details on why commons-logging jar is not
+        used.</para>
+
+        <para>Spring-DM uses SLF4J on top of <ulink
+        url="http://logging.apache.org/log4j/">Log4J</ulink> but this can be
+        easily changed. As part of log4j initialisation, a
+        <literal>log4j.properties</literal> or <literal>log4j.xml</literal>
+        configuration fille needs to be present in the bundle classpath. This
+        means that the configuration file has to be part of your bundle or one
+        of its attached fragments. Besides SLF4J, for another OSGi-aware
+        solution, one can try <ulink
+        url="http://wiki.ops4j.org/dokuwiki/doku.php?id=pax:logging">Pax
+        Logging</ulink>.</para>
+
+        <para>To learn more about log4j setup process, follow this <ulink
+        type=""
+        url="http://logging.apache.org/log4j/1.2/manual.html">link</ulink>.</para>
+      </section>
+
+      <section id="commons-logging">
+        <title>If you use commons-logging API, why rely on SLF4J and
+        not the commons-logging jar?</title>
+
+        <para>The commons-logging project provides the commons-logging API
+        (<literal>commons-logging-api-nn.jar</literal>) along with an
+        implementation (<literal>commons-logging-adapters-nn.jar</literal>)
+        that provides a wrapper between the API and the actual logging libraries
+        used underneath (such as log4j, java.util.logging, etc). However, in
+        order to determine what implementation should be used, commons-logging
+        library tries to do some classloading-based discovery that is fragile
+        and can fail unexpectedly. In an strict classloading environment such
+        as OSGi, this mechanism adds unnecessary complexity - that's why we
+        decided to use SFL4J which is not just simpler and actively maintained
+        but is also OSGi-friendly out of the box.</para>
+
+        <para>For more information about commons-logging classloading
+        problems, see these links: <ulink
+        url="http://radio.weblogs.com/0122027/2003/08/15.html">#1</ulink>
+        <ulink
+        url="http://www.qos.ch/logging/thinkAgain.jsp">#2</ulink></para>
+      </section>
+
+      <section id="logging-impl-choice">
+        <title>Why don't you use the OSGi logging service/[insert your favourite
+        logging library in here]?</title>
+
+        <para>It is completely up to you what logging implementation you want
+        Spring-DM to use. To route log messages to the OSGi logging service, 
+        just use a commons-logging API implementation that delegates to the 
+        OSGi logging service, such as Pax Logging.</para>
+      </section>
+      
+      
+      <section id="osgi-wrapping">
+        <title>I have to use [insert name] library/framework inside. What can I do?</title>
+        
+          <para>
+          OSGi requires JARs to contain certain <literal>MANIFEST.MF</literal> entries which indicate what classes are 
+          required and shared by each archive. This means that <emphasis>tradition</emphasis> jars cannot be used inside an OSGi environment. 
+          To solve the problem one can:
+          </para>
+          <itemizedlist>
+          	<listitem>
+          	  <para>Use a repository of pre-wrapped libraries such as <ulink url="http://www.eclipse.org/orbit/">Orbit</ulink>,
+          	  <ulink url="http://felix.apache.org/site/apache-felix-commons.html">Felix Commons</ulink> or Knopflerfish <ulink 
+          	  url="http://www.knopflerfish.org/repo/index.html">repository</ulink>.
+          	  Spring-DM also provides a small <ulink url="http://static.springframework.org/maven2-snapshots/org/springframework/osgi">
+          	  repository</ulink> for its internal usage, which you might find helpful.</para> 
+          	</listitem>
+          	<listitem>
+          	  <para>Wrap the necessary jars with proper OSGi manifest. While this can be done by hand, we strongly recommend Peter Kriens
+          	  excellent <ulink url="http://www.aqute.biz/Code/Bnd">bnd</ulink> tool which can do this for you automatically.
+          	  For Maven, see Felix <ulink url="http://felix.apache.org/site/maven-bundle-plugin-bnd.html">
+          	  maven-bundle-plugin</ulink>.
+          	  </para> 
+          	</listitem>
+          	<listitem>
+          	  <para>Include the jar inside your OSGi bundle and include it in the bundle classpath through <emphasis>Bundle-ClassPath</emphasis>
+          	  directive. See the OSGi specification for more information.</para>
+          	</listitem>
+          </itemizedlist>
+	  </section>
+	  
+      <!-- this should be part of an OSGi intro more likely -->
+
+      <section id="auto-export-visibility">
+        <title>The autoExport option doesn't work properly!</title>
+
+        <para>autoExport flag, part of the service exporter, will discover and
+        include for exporting only the <emphasis>visible</emphasis> interfaces/classes implemented
+        by the service object. Consider class
+        <literal>GenericApplicationContext</literal> which implements among
+        others, interfaces <literal>BeanFactory</literal> (from
+        <literal>org.springframework.beans.factory</literal> package) and
+        <literal>ResourceLoader</literal>
+        (<literal>org.springframework.core.io</literal>).</para>
+
+        <para>
+          <mediaobject>
+            <imageobject role="fo">
+              <imagedata align="center"
+                         fileref="src/docbkx/resources/images/visibility.png"
+                         format="PNG"/>
+            </imageobject>
+
+            <imageobject role="html">
+              <imagedata align="center" fileref="images/visibility.png"
+                         format="PNG"/>
+            </imageobject>
+
+            <caption>
+              <para>Class Hierarchy</para>
+            </caption>
+          </mediaobject>
+        </para>
+
+        <para>Depending on your OSGi imports, the exporting bundle can see
+        only one of the packages, none or both. Based on these visibility
+        settings, the exporter will only export the classes that are 'known'
+        to the exporting bundle. For example, if the exporting bundle sees
+        <literal>org.springframework.core.io</literal> but not
+        <literal>org.springframework.beans.factory</literal>, the service will
+        be exported as a <literal>ResourceLoader</literal> but not as a
+        <literal>BeanFactory</literal>. In fact, exporting the object as a
+        <literal>BeanFactory</literal> will fail since the bundle doesn't see
+        this interface and thus doesn't know how to handle its contract.</para>
+      </section>
+    </chapter>
+</book>
