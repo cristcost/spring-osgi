@@ -21,12 +21,9 @@ import java.util.Enumeration;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-import org.osgi.framework.Bundle;
-import org.osgi.framework.Constants;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.UrlResource;
-import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.osgi.io.OsgiBundleResource;
 import org.springframework.util.Assert;
@@ -52,19 +49,16 @@ public abstract class OsgiResourceUtils {
 	public static final int PREFIX_TYPE_UNKNOWN = -1;
 
 	// no prefix
-	public static final int PREFIX_TYPE_NOT_SPECIFIED = 0x00000000;
-
-	// osgibundlejar:
-	public static final int PREFIX_TYPE_BUNDLE_JAR = 0x00000001;
+	public static final int PREFIX_TYPE_NOT_SPECIFIED = 0;
 
 	// osgibundle:
-	public static final int PREFIX_TYPE_BUNDLE_SPACE = 0x00000010;
+	public static final int PREFIX_TYPE_BUNDLE_SPACE = 1;
 
 	// classpath:
-	public static final int PREFIX_TYPE_CLASS_SPACE = 0x00000100;
+	public static final int PREFIX_TYPE_CLASS_SPACE = 2;
 
-	// classpath*:
-	public static final int PREFIX_TYPE_CLASS_ALL_SPACE = 0x00000200;
+	// osgibundlejar:
+	public static final int PREFIX_TYPE_BUNDLE_JAR = 4;
 
 
 	/**
@@ -103,16 +97,12 @@ public abstract class OsgiResourceUtils {
 		else if (prefix.startsWith(ResourceLoader.CLASSPATH_URL_PREFIX))
 			type = PREFIX_TYPE_CLASS_SPACE;
 		else if (prefix.startsWith(ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX))
-			type = PREFIX_TYPE_CLASS_ALL_SPACE;
+			type = PREFIX_TYPE_CLASS_SPACE;
 
 		else
 			type = PREFIX_TYPE_UNKNOWN;
 
 		return type;
-	}
-
-	public static boolean isClassPathType(int type) {
-		return (type == PREFIX_TYPE_CLASS_SPACE || type == PREFIX_TYPE_CLASS_ALL_SPACE);
 	}
 
 	public static String stripPrefix(String path) {
@@ -141,14 +131,6 @@ public abstract class OsgiResourceUtils {
 			resources.add(new UrlResource((URL) enm.nextElement()));
 		}
 		return (Resource[]) resources.toArray(new Resource[resources.size()]);
-	}
-
-	public static String[] getBundleClassPath(Bundle bundle) {
-		if (bundle == null)
-			return new String[0];
-
-		String classpath = (String) bundle.getHeaders().get(Constants.BUNDLE_CLASSPATH);
-		return StringUtils.commaDelimitedListToStringArray(classpath);
 	}
 
 	/**

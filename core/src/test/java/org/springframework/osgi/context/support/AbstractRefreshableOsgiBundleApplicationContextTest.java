@@ -67,10 +67,10 @@ public class AbstractRefreshableOsgiBundleApplicationContextTest extends TestCas
 	}
 
 	public void testBundleContext() throws Exception {
-		MockControl bundleCtxCtrl = MockControl.createStrictControl(BundleContext.class);
+		MockControl bundleCtxCtrl = MockControl.createNiceControl(BundleContext.class);
 		BundleContext bundleCtx = (BundleContext) bundleCtxCtrl.getMock();
 
-		MockControl bundleCtrl = MockControl.createNiceControl(Bundle.class);
+		MockControl bundleCtrl = MockControl.createStrictControl(Bundle.class);
 		Bundle bundle = (Bundle) bundleCtrl.getMock();
 
 		bundleCtxCtrl.expectAndReturn(bundleCtx.getBundle(), bundle);
@@ -99,6 +99,4 @@ public class AbstractRefreshableOsgiBundleApplicationContextTest extends TestCas
 		bundleCtrl.verify();
 		bundleCtxCtrl.verify();
 	}
-	
-
 }

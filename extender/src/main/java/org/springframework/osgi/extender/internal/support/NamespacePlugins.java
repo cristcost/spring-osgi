@@ -60,7 +60,6 @@ public class NamespacePlugins implements NamespaceHandlerResolver, EntityResolve
 
 		private Plugin(Bundle bundle) {
 			this.bundle = bundle;
-
 			ClassLoader loader = BundleDelegatingClassLoader.createBundleClassLoaderFor(bundle);
 
 			entity = new DelegatingEntityResolver(loader);

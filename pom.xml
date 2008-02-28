@@ -4,7 +4,7 @@
   <groupId>org.springframework.osgi</groupId>
   <artifactId>spring-osgi</artifactId>
   <packaging>pom</packaging>
-  <version>1.1.0-m1-SNAPSHOT</version>
+  <version>1.0.1</version>
   <name>Spring Dynamic Modules</name>
   <url>http://www.springframework.org/osgi</url>
   <description>
@@ -24,11 +24,11 @@
     <!-- Felix BND plugin settings -->
     
     <!--- Spring OSGi packages imported version (respect the OSGi naming pattern)-->
-    <spring.osgi.import.version>1.1.0.m1</spring.osgi.import.version>
+    <spring.osgi.import.version>1.0.1</spring.osgi.import.version>
     
     <!--- Spring OSGi packages exported version -->
-    <spring.osgi.export.version>1.1.0.m1</spring.osgi.export.version>
-    <spring.osgi.bundle.version>1.1.0.m1</spring.osgi.bundle.version>
+    <spring.osgi.export.version>1.0.1</spring.osgi.export.version>
+    <spring.osgi.bundle.version>1.0.1</spring.osgi.bundle.version>
 
    
     <spring.osgi.import.pkg>*</spring.osgi.import.pkg>
@@ -62,8 +62,8 @@
    
    <!-- platform versions -->
    <equinox.ver>3.2.2</equinox.ver>
-   <kf.ver>2.0.4</kf.ver>
-   <felix.ver>1.0.3</felix.ver>
+   <kf.ver>2.0.3</kf.ver>
+   <felix.ver>1.0.1</felix.ver>
    
    <!-- javadoc configuration -->
    <javadoc.loc>${basedir}/docs/src/javadoc</javadoc.loc>

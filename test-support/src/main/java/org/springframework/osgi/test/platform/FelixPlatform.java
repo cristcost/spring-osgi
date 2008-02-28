@@ -17,31 +17,34 @@
 package org.springframework.osgi.test.platform;
 
 import java.io.File;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.net.URL;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.Properties;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.felix.framework.Felix;
 import org.apache.felix.main.Main;
+import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.springframework.osgi.test.internal.util.IOUtils;
-import org.springframework.util.ReflectionUtils;
+import org.springframework.util.ClassUtils;
 
 /**
- * Apache Felix (1.0.3+) OSGi platform.
+ * Apache Felix (1.0.x) OSGi platform.
  * 
  * @author Costin Leau
  * 
  */
 public class FelixPlatform extends AbstractOsgiPlatform {
 
-	private static final String BUNDLE_CONTEXT_METHOD = "getBundleContext";
-
-	private static final String FELIX_PRIVATE_FIELD = "m_felix";
-
 	private static final Log log = LogFactory.getLog(FelixPlatform.class);
+
+	private static final String FELIX_CONF_FILE = "felix.config.properties";
+
+	private static final String FELIX_CONFIG_PROPERTY = "felix.config.properties";
 
 	private static final String FELIX_PROFILE_DIR_PROPERTY = "felix.cache.profiledir";
 
@@ -59,11 +62,8 @@ public class FelixPlatform extends AbstractOsgiPlatform {
 	protected Properties getPlatformProperties() {
 		// load Felix configuration
 		Properties props = new Properties();
-		createStorageDir(props);
-		// disable logging
-		props.put("felix.log.level", "0");
-		// use embedded mode
-		props.put("felix.embedded.execution", "true");
+		props.putAll(getFelixConfiguration());
+		props.putAll(getLocalConfiguration());
 		return props;
 	}
 
@@ -76,38 +76,59 @@ public class FelixPlatform extends AbstractOsgiPlatform {
 	 * 
 	 * @return
 	 */
-	private void createStorageDir(Properties configProperties) {
-		// create a temporary file if none is set
-		if (felixStorageDir == null) {
-			felixStorageDir = createTempDir("felix");
-			felixStorageDir.deleteOnExit();
+	private Properties getLocalConfiguration() {
+		Properties props = new Properties();
 
-			if (log.isTraceEnabled())
-				log.trace("Felix storage dir is " + felixStorageDir.getAbsolutePath());
-		}
+		felixStorageDir = createTempDir("felix");
+		props.setProperty(FELIX_PROFILE_DIR_PROPERTY, this.felixStorageDir.getAbsolutePath());
+		if (log.isTraceEnabled())
+			log.trace("felix storage dir is " + felixStorageDir.getAbsolutePath());
 
-		configProperties.setProperty(FELIX_PROFILE_DIR_PROPERTY, this.felixStorageDir.getAbsolutePath());
+		return props;
+	}
+
+	/**
+	 * Loads Felix config.properties.
+	 * 
+	 * <strong>Note</strong> the current implementation uses Felix's Main class
+	 * to resolve placeholders as opposed to loading the properties manually
+	 * (through JDK's Properties class or Spring's PropertiesFactoryBean).
+	 * 
+	 * @return
+	 */
+	// TODO: this method should be removed once Felix 1.0.2 is released
+	private Properties getFelixConfiguration() {
+		String location = "/".concat(ClassUtils.classPackageAsResourcePath(FelixPlatform.class)).concat("/").concat(
+			FELIX_CONF_FILE);
+		URL url = FelixPlatform.class.getResource(location);
+		if (url == null)
+			throw new RuntimeException("cannot find felix configuration properties file:" + location);
+
+		// used with Main
+		System.getProperties().setProperty(FELIX_CONFIG_PROPERTY, url.toExternalForm());
+
+		// load config.properties (use Felix's Main for resolving placeholders)
+		return Main.loadConfigProperties();
 	}
 
 	public void start() throws Exception {
-		// use Felix main and then read the felix instance
 
-		// initialize properties and set them as system wide so Felix can pick them up
-		System.getProperties().putAll(getPlatformProperties());
+		platform = new Felix(getConfigurationProperties(), null);
+		platform.start();
 
-		Main.main(new String[0]);
-
-		// read the Felix private field
-		Field field = Main.class.getDeclaredField(FELIX_PRIVATE_FIELD);
-		ReflectionUtils.makeAccessible(field);
-		platform = (Felix) field.get(Main.class);
+		Bundle systemBundle = platform;
 
 		// call getBundleContext
-		final Method getContext = platform.getClass().getDeclaredMethod(BUNDLE_CONTEXT_METHOD, null);
+		final Method getContext = systemBundle.getClass().getDeclaredMethod("getBundleContext", null);
 
-		ReflectionUtils.makeAccessible(getContext);
+		AccessController.doPrivileged(new PrivilegedAction() {
 
-		context = (BundleContext) getContext.invoke(platform, null);
+			public Object run() {
+				getContext.setAccessible(true);
+				return null;
+			}
+		});
+		context = (BundleContext) getContext.invoke(systemBundle, null);
 	}
 
 	public void stop() throws Exception {

@@ -56,7 +56,7 @@ class OsgiPropertyEditorRegistrar implements PropertyEditorRegistrar {
 		}
 		catch (IOException ex) {
 			throw (RuntimeException) new IllegalStateException(
-					"cannot load default propertiy editorsConfig configuration").initCause(ex);
+					"Cannot load default propertiy editorsConfig configuration").initCause(ex);
 		}
 
 		if (log.isTraceEnabled())
