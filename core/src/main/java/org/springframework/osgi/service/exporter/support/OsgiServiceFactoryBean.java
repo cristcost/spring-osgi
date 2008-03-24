@@ -68,8 +68,9 @@ import org.springframework.util.StringUtils;
  * <li>org.springframework.osgi.bean.name="&lt;bean name&gt;</li>
  * </ul>
  * 
- * <p/> <strong>Note:</strong>If thread context class loader management is used ({@link #setContextClassLoader(ExportContextClassLoader)},
- * since proxying is required, the target class has to meet certain criterias
+ * <p/> <strong>Note:</strong>If thread context class loader management is
+ * used ({@link #setContextClassLoader(ExportContextClassLoader)}, since
+ * proxying is required, the target class has to meet certain criterias
  * described in the Spring AOP documentation. In short, final classes are not
  * supported when class enhancement is used.
  * 
@@ -167,16 +168,12 @@ public class OsgiServiceFactoryBean extends AbstractOsgiServiceExporter implemen
 
 
 	public void afterPropertiesSet() throws Exception {
+		Assert.notNull(beanFactory, "required property 'beanFactory' has not been set");
 		Assert.notNull(bundleContext, "required property 'bundleContext' has not been set");
 
 		hasNamedBean = StringUtils.hasText(targetBeanName);
 
 		Assert.isTrue(hasNamedBean || target != null, "either 'targetBeanName' or 'target' properties have to be set");
-
-		// if we have a name, we need a bean factory
-		if (hasNamedBean)
-			Assert.notNull(beanFactory, "required property 'beanFactory' has not been set");
-		
 		// initialize bean only when dealing with singletons and named beans
 		if (hasNamedBean) {
 			if (beanFactory.isSingleton(targetBeanName)) {
@@ -186,6 +183,7 @@ public class OsgiServiceFactoryBean extends AbstractOsgiServiceExporter implemen
 			else {
 				targetClass = beanFactory.getType(targetBeanName);
 			}
+
 		}
 		else
 			targetClass = target.getClass();
@@ -384,9 +382,9 @@ public class OsgiServiceFactoryBean extends AbstractOsgiServiceExporter implemen
 	 * {@link ExportContextClassLoader#UNMANAGED} is used.
 	 * 
 	 * <p/> <strong>Note:</strong> Since proxying is required for context class
-	 * loader manager, the target class has to meet certain criterias described
-	 * in the Spring AOP documentation. In short, final classes are not
-	 * supported when class enhancement is used.
+	 * loader manager, the target class has to meet certain criterias
+	 * described in the Spring AOP documentation. In short, final classes are
+	 * not supported when class enhancement is used.
 	 * 
 	 * @param ccl context class loader strategy to use
 	 * @see ExportContextClassLoader

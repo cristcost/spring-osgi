@@ -3,7 +3,7 @@
     <parent>
         <artifactId>spring-osgi</artifactId>
         <groupId>org.springframework.osgi</groupId>
-        <version>1.1.0-m1-SNAPSHOT</version>
+        <version>1.0.2</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.springframework.osgi</groupId>
@@ -14,7 +14,7 @@
   
     <dependencies>
 
-        <!-- Configuration Admin (might be removed with the Felix bundle) -->
+        <!-- Configuration Admin -->
         <dependency>
             <groupId>org.knopflerfish.bundles</groupId>
             <artifactId>cm_all</artifactId>
@@ -28,14 +28,6 @@
             <version>2.0.0</version>
             <scope>compile</scope>
         </dependency>
-        
-        <!-- config admin (from Felix) -->
-        <dependency>
-		   <groupId>org.apache.felix</groupId>
-		   <artifactId>org.apache.felix.configadmin</artifactId>
-		   <version>1.0.0</version>
-		   <scope>provided</scope>
-		</dependency>
   
 	
 	    <dependency>
@@ -146,25 +138,7 @@
 			<artifactId>osgi_R4_compendium</artifactId>
 			<version>1.0</version>
 			<scope>provided</scope>
-		</dependency>
-
-
-		<!-- this dependency exists only to test clogging 1.0.4 behaviour -->
-		<!-- slf4j is strongly recommended as a replacement for clogging at least for OSGi environments -->
-		<dependency>
-			<groupId>org.eclipse.bundles</groupId>
-			<artifactId>commons-logging</artifactId>
-			<version>20070611</version>
-			<scope>provided</scope>
-		</dependency>
-
-		<dependency>
-			<groupId>org.springframework.osgi</groupId>
-			<artifactId>servlet-api.osgi</artifactId>
-			<version>2.5-SNAPSHOT</version>
-			<scope>provided</scope>
-		</dependency>
-		
+		</dependency>         
     </dependencies>
 
     <profiles>

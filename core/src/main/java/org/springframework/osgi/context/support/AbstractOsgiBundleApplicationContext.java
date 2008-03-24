@@ -283,7 +283,6 @@ public abstract class AbstractOsgiBundleApplicationContext extends AbstractRefre
 						+ APPLICATION_CONTEXT_SERVICE_PROPERTY_NAME + "=" + getBundleSymbolicName() + ")");
 			}
 
-			// export only interfaces
 			Class[] classes = org.springframework.osgi.util.internal.ClassUtils.getClassHierarchy(getClass(),
 				org.springframework.osgi.util.internal.ClassUtils.INCLUDE_INTERFACES);
 

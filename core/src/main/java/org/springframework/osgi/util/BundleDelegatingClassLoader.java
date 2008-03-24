@@ -170,14 +170,4 @@ public class BundleDelegatingClassLoader extends ClassLoader {
 	public String toString() {
 		return "BundleDelegatingClassLoader for [" + OsgiStringUtils.nullSafeNameAndSymName(backingBundle) + "]";
 	}
-
-	/**
-	 * Returns the bundle to which this class loader delegates calls to.
-	 * 
-	 * @return the backing bundle
-	 */
-	public Bundle getBundle() {
-		return backingBundle;
-	}
-
 }

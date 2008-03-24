@@ -3,7 +3,7 @@
 	<parent>
 		<artifactId>spring-osgi</artifactId>
 		<groupId>org.springframework.osgi</groupId>
-		<version>1.1.0-m1-SNAPSHOT</version>
+		<version>1.0.2</version>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.springframework.osgi</groupId>
@@ -27,7 +27,11 @@
 	<!-- add this until FELIX-390 gets fixed -->
 	<spring.osgi.import.pkg>
 	 org.apache.commons.logging*,
-	 org.xml.sax;resolution:=optional
+	 org.springframework.osgi*;version=${spring.osgi.import.version},
+	 org.springframework.beans.factory.xml;version=${spring.base.version},
+	 org.springframework*;version=${spring.base.version},
+	 org.xml.sax;resolution:=optional,
+	 *
 	</spring.osgi.import.pkg>
 	<spring.osgi.symbolic.name>${symName.prefix}.extender</spring.osgi.symbolic.name>
   </properties>

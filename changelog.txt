@@ -2,31 +2,12 @@ SPRING DYNAMIC MODULES FRAMEWORK CHANGELOG
 ==========================================
 http://www.springframework.org/osgi
 
-Changes in version 1.1.0 (200y-mm-dd)
------------------------------------------
-
-General
-* Knopflerfish 2.0.4+ required
-* Felix 1.0.3+ required
-
-Package org.springframework.osgi.context
-* AbstractDelegatedExecutionApplicationContext calls "cancelRefresh" if exceptions appear during the delegeted refresh
-
-Package org.springframework.osgi.io
-* added support for classpath: and classpath*: patterns
-
-Package org.springframework.osgi.test
-* FelixPlatform uses the Felix distribution default system packages
-* KnopflerfishPlatform uses the KF distribution default system packages
-
-Package org.springframework.osgi.util
-* BundleDelegatingClassLoader exposes the internal Bundle through getBundle() method
-
-Changes in version 1.0.2 (2008-03-xx)
+Changes in version 1.0.2 (2008-03-25)
 -------------------------------------
 
 General
-* adjusted the manifests so no internal packages are exposed and the versions both spring and spring-osgi are present
+* adjusted the manifests so internal packages are not exported and the versions for both spring and spring-osgi are
+  present
 
 Package org.springframework.osgi.context
 * AbstractOsgiBundleApplicationContext registers the application context as an OSGi service using just the interfaces
@@ -38,7 +19,7 @@ Package org.springframework.osgi.util
 * BundleDelegatingClassLoader relies on default hashCode/equals methods to prevent class caching on bundle updates
 
 Package org.springframework.osgi.test
-* Instalation bundles have the location set to the backing resource URL if possible, falling back to the description
+* Installed bundles have the location set to the backing resource URL if possible, falling back to the description
 
 
 Changes in version 1.0.1 (2008-02-29)

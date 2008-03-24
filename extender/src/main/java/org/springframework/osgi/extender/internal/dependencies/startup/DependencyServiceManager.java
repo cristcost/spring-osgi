@@ -205,7 +205,8 @@ public class DependencyServiceManager {
 
 				dependencies.add(dependency);
 				if (!dependency.isServicePresent()) {
-					log.info("adding OSGi service dependency for importer " + beanName);
+					if (debug)
+						log.debug("adding OSGi service dependency for importer " + beanName);
 					unsatisfiedDependencies.add(dependency);
 				}
 			}
@@ -214,10 +215,8 @@ public class DependencyServiceManager {
 			currentThread.setContextClassLoader(oldTCCL);
 		}
 
-		if (debug) {
-			log.debug(dependencies.size() + " OSGi service dependencies, " + unsatisfiedDependencies.size()
-					+ " unsatisfied for " + context.getDisplayName());
-		}
+		log.info(dependencies.size() + " OSGi service dependencies, " + unsatisfiedDependencies.size()
+				+ " unsatisfied for " + context.getDisplayName());
 
 	}
 

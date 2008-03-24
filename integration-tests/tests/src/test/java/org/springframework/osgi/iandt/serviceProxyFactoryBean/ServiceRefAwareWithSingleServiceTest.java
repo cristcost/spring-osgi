@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.springframework.osgi.iandt.serviceProxyFactoryBean;
 
 import java.util.Date;
@@ -37,7 +36,6 @@ import org.springframework.osgi.util.BundleDelegatingClassLoader;
 public class ServiceRefAwareWithSingleServiceTest extends ServiceBaseTest {
 
 	private OsgiServiceProxyFactoryBean fb;
-
 
 	protected void onSetUp() throws Exception {
 		fb = new OsgiServiceProxyFactoryBean();

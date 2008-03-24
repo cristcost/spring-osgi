@@ -3,7 +3,7 @@
   <parent>
     <artifactId>spring-osgi</artifactId>
     <groupId>org.springframework.osgi</groupId>
-    <version>1.1.0-m1-SNAPSHOT</version>
+    <version>1.0.2</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.springframework.osgi</groupId>
@@ -57,7 +57,6 @@
     <module>tccl.bundle</module>
     <module>config.file.with.dots.bundle</module>
     <module>proxy.creator.bundle</module>
-    <module>web.bundles</module>
   </modules>
 
 <profiles>
@@ -69,7 +68,6 @@
       <modules>
        <module>annotation.test.bundle</module>
        <module>annotation.dependency.test.bundle</module>
-       <module>jdk5/component.scan.bundle</module>
 	  </modules>
    </profile>
 </profiles>

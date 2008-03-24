@@ -26,11 +26,9 @@ import org.osgi.framework.Bundle;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContextException;
 import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.context.event.ApplicationEventMulticaster;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.osgi.context.DelegatedExecutionOsgiBundleApplicationContext;
 import org.springframework.osgi.context.OsgiBundleApplicationContextExecutor;
-import org.springframework.osgi.context.event.OsgiBundleContextFailedEvent;
 import org.springframework.osgi.extender.internal.util.concurrent.Counter;
 import org.springframework.osgi.util.OsgiStringUtils;
 import org.springframework.util.Assert;
@@ -95,9 +93,6 @@ public class DependencyWaiterApplicationContextExecutor implements OsgiBundleApp
 	 */
 	private final Counter waitBarrier = new Counter("syncCounterWait");
 
-	/** delegated multicaster */
-	private ApplicationEventMulticaster delegatedMulticaster;
-
 
 	/**
 	 * The task for the watch dog.
@@ -125,7 +120,7 @@ public class DependencyWaiterApplicationContextExecutor implements OsgiBundleApp
 		public void run() {
 			boolean debug = log.isDebugEnabled();
 			if (debug)
-				log.debug("Completing refresh for " + getDisplayName());
+				log.debug("completing refresh for " + getDisplayName());
 
 			synchronized (monitor) {
 				if (state != ContextState.DEPENDENCIES_RESOLVED) {
@@ -159,7 +154,7 @@ public class DependencyWaiterApplicationContextExecutor implements OsgiBundleApp
 	 */
 	public void refresh() throws BeansException, IllegalStateException {
 		if (log.isDebugEnabled())
-			log.debug("Starting first stage of refresh for " + getDisplayName());
+			log.debug("starting first stage of refresh for " + getDisplayName());
 
 		// sanity check
 		init();
@@ -245,6 +240,7 @@ public class DependencyWaiterApplicationContextExecutor implements OsgiBundleApp
 
 			// all dependencies are met, just go with stageTwo
 			if (dl.isSatisfied()) {
+
 				log.info("No outstanding OSGi service dependencies, completing initialization for " + getDisplayName());
 				stageTwo();
 			}
@@ -398,9 +394,6 @@ public class DependencyWaiterApplicationContextExecutor implements OsgiBundleApp
 
 		log.error(message.toString(), t);
 
-		// send notification
-		delegatedMulticaster.multicastEvent(new OsgiBundleContextFailedEvent(delegateContext, t));
-
 		// rethrow the exception wrapped to the caller (and prevent bundles
 		// started in sync mode to complete).
 		// throw new ApplicationContextException("cannot refresh context", t);
@@ -516,15 +509,6 @@ public class DependencyWaiterApplicationContextExecutor implements OsgiBundleApp
 	 */
 	public void setMonitoringCounter(Counter contextsStarted) {
 		this.monitorCounter = contextsStarted;
-	}
-
-	/**
-	 * Sets the multicaster for delegating failing events.
-	 * 
-	 * @param multicaster
-	 */
-	public void setDelegatedMulticaster(ApplicationEventMulticaster multicaster) {
-		this.delegatedMulticaster = multicaster;
 	}
 
 }

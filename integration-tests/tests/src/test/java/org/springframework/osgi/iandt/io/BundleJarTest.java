@@ -52,4 +52,5 @@ public class BundleJarTest extends BaseIoTest {
 		Resource[] res = patternLoader.getResources("osgibundlejar:/**/fragment*.file");
 		assertEquals(0, res.length);
 	}
+
 }

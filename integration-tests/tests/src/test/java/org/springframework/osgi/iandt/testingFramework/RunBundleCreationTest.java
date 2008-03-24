@@ -13,11 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.springframework.osgi.iandt.testingFramework;
 
 import junit.framework.TestCase;
-import junit.framework.TestFailure;
 import junit.framework.TestResult;
 
 /**
@@ -33,7 +31,6 @@ public class RunBundleCreationTest extends TestCase {
 
 	private TestResult result;
 
-
 	protected void setUp() throws Exception {
 		test = new BundleCreationTst();
 		result = new TestResult();
@@ -47,39 +44,29 @@ public class RunBundleCreationTest extends TestCase {
 
 	public void testAssertionFailure() {
 		executeTest("testAssertionFailure");
-		assertEquals("failure counted as error", 0, result.errorCount());
-		assertEquals("failure ignored", 1, result.failureCount());
+		assertEquals(0, result.errorCount());
+		assertEquals(1, result.failureCount());
 
 	}
 
 	public void testFailure() {
 		executeTest("testFailure");
-		assertEquals("failure counted as error", 0, result.errorCount());
-		assertEquals("failure ignored", 1, result.failureCount());
+		assertEquals(0, result.errorCount());
+		assertEquals(1, result.failureCount());
+
 	}
 
 	public void testException() {
 		executeTest("testException");
-		assertEquals("error not considered", 1, result.errorCount());
-		assertEquals("error considered failure", 0, result.failureCount());
-	}
-
-	public void testExceptionClass() throws Exception {
-		executeTest("testException");
-		TestFailure failure = (TestFailure) result.errors().nextElement();
-		assertTrue(failure.thrownException() instanceof RuntimeException);
+		assertEquals(1, result.errorCount());
+		assertEquals(0, result.failureCount());
 	}
 
 	public void testError() {
 		executeTest("testError");
-		assertEquals("error not considered", 1, result.errorCount());
-		assertEquals("error considered failure", 0, result.failureCount());
-	}
+		assertEquals(1, result.errorCount());
+		assertEquals(0, result.failureCount());
 
-	public void testErrorClass() throws Exception {
-		executeTest("testError");
-		TestFailure failure = (TestFailure) result.errors().nextElement();
-		assertTrue(failure.thrownException() instanceof Error);
 	}
 
 	private void executeTest(String testMethod) {

@@ -11,8 +11,8 @@
   
   <properties>
 	<slf4j.version>1.4.3</slf4j.version>
-	<spring.maven.artifact.version>2.5.2</spring.maven.artifact.version>
-	<spring.osgi.version>1.1.0-m1-SNAPSHOT</spring.osgi.version>
+	<spring.maven.artifact.version>2.5.1</spring.maven.artifact.version>
+	<spring.osgi.version>1.0.2</spring.osgi.version>
 	<equinox.ver>3.2.2</equinox.ver>
   </properties>
   
@@ -136,7 +136,7 @@
         <groupId>org.apache.felix</groupId>
         <artifactId>maven-bundle-plugin</artifactId>
         <extensions>true</extensions>
-        <version>1.4.0</version>
+        <version>1.0.0</version>
         <configuration>
 		   <manifestLocation>META-INF</manifestLocation>
            <instructions>
