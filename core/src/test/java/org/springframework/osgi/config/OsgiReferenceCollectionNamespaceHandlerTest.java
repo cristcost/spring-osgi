@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.springframework.osgi.config;
 
 import java.io.Externalizable;
@@ -36,12 +35,12 @@ import org.springframework.osgi.TestUtils;
 import org.springframework.osgi.context.support.BundleContextAwareProcessor;
 import org.springframework.osgi.mock.MockBundleContext;
 import org.springframework.osgi.service.importer.OsgiServiceLifecycleListener;
+import org.springframework.osgi.service.importer.internal.collection.OsgiServiceList;
+import org.springframework.osgi.service.importer.internal.collection.OsgiServiceSet;
+import org.springframework.osgi.service.importer.internal.collection.OsgiServiceSortedList;
+import org.springframework.osgi.service.importer.internal.collection.OsgiServiceSortedSet;
+import org.springframework.osgi.service.importer.internal.collection.comparator.ServiceReferenceComparator;
 import org.springframework.osgi.service.importer.support.OsgiServiceCollectionProxyFactoryBean;
-import org.springframework.osgi.service.importer.support.internal.collection.OsgiServiceList;
-import org.springframework.osgi.service.importer.support.internal.collection.OsgiServiceSet;
-import org.springframework.osgi.service.importer.support.internal.collection.OsgiServiceSortedList;
-import org.springframework.osgi.service.importer.support.internal.collection.OsgiServiceSortedSet;
-import org.springframework.osgi.service.importer.support.internal.collection.comparator.ServiceReferenceComparator;
 
 /**
  * @author Costin Leau
@@ -50,7 +49,6 @@ import org.springframework.osgi.service.importer.support.internal.collection.com
 public class OsgiReferenceCollectionNamespaceHandlerTest extends TestCase {
 
 	private GenericApplicationContext appContext;
-
 
 	protected void setUp() throws Exception {
 		// reset counter just to be sure
@@ -64,7 +62,6 @@ public class OsgiReferenceCollectionNamespaceHandlerTest extends TestCase {
 		DummyListenerServiceSignature2.UNBIND_CALLS = 0;
 
 		BundleContext bundleContext = new MockBundleContext() {
-
 			// service reference already registered
 			public ServiceReference[] getServiceReferences(String clazz, String filter) throws InvalidSyntaxException {
 				return new ServiceReference[0];
@@ -101,22 +98,6 @@ public class OsgiReferenceCollectionNamespaceHandlerTest extends TestCase {
 		Object bean = appContext.getBean("simpleSet");
 		assertFalse(bean instanceof OsgiServiceSet);
 		assertTrue(bean instanceof Set);
-	}
-
-	public void testSimpleListWithGreedyProxyingOn() throws Exception {
-		Object factoryBean = appContext.getBean("&simpleListWithGreedyProxying");
-		assertTrue(factoryBean instanceof OsgiServiceCollectionProxyFactoryBean);
-		assertEquals(Boolean.TRUE, (Boolean) TestUtils.getFieldValue(factoryBean, "greedyProxying"));
-		// get the factory product
-		Object bean = appContext.getBean("simpleListWithGreedyProxying");
-		assertFalse(bean instanceof OsgiServiceList);
-		assertTrue(bean instanceof List);
-	}
-
-	public void testSimpleListWithDefaultProxying() throws Exception {
-		Object factoryBean = appContext.getBean("&simpleSet");
-		assertTrue(factoryBean instanceof OsgiServiceCollectionProxyFactoryBean);
-		assertEquals(Boolean.FALSE, (Boolean) TestUtils.getFieldValue(factoryBean, "greedyProxying"));
 	}
 
 	public void testImplicitSortedList() {

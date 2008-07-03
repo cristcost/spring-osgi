@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.springframework.osgi.service.importer;
 
 import java.io.Serializable;
@@ -25,7 +24,7 @@ import junit.framework.TestCase;
 import org.easymock.MockControl;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
-import org.springframework.aop.SpringProxy;
+import org.springframework.aop.framework.Advised;
 import org.springframework.context.ApplicationContext;
 import org.springframework.osgi.mock.MockBundleContext;
 import org.springframework.osgi.mock.MockServiceReference;
@@ -45,7 +44,6 @@ public class OsgiSingleServiceProxyFactoryBeanTest extends TestCase {
 	private MockControl mockControl;
 
 	private BundleContext bundleContext;
-
 
 	protected void setUp() throws Exception {
 		super.setUp();
@@ -127,7 +125,8 @@ public class OsgiSingleServiceProxyFactoryBeanTest extends TestCase {
 
 		Object proxy = serviceFactoryBean.getObject();
 		assertTrue(proxy instanceof Serializable);
-		assertTrue("should be proxied", proxy instanceof SpringProxy);
+		assertTrue("should be proxied", proxy instanceof Advised);
+
 	}
 
 	public void testClassLoadingOptionsConstant() throws Exception {

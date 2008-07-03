@@ -40,23 +40,38 @@ public class AbstractRefreshableOsgiBundleApplicationContextTest extends TestCas
 	private AbstractOsgiBundleApplicationContext context;
 
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see junit.framework.TestCase#setUp()
+	 */
 	protected void setUp() throws Exception {
 		context = new AbstractOsgiBundleApplicationContext() {
 
+			/*
+			 * (non-Javadoc)
+			 * 
+			 * @see org.springframework.context.support.AbstractRefreshableApplicationContext#loadBeanDefinitions(org.springframework.beans.factory.support.DefaultListableBeanFactory)
+			 */
 			protected void loadBeanDefinitions(DefaultListableBeanFactory arg0) throws IOException, BeansException {
 			}
 		};
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see junit.framework.TestCase#tearDown()
+	 */
 	protected void tearDown() throws Exception {
 		context = null;
 	}
 
 	public void testBundleContext() throws Exception {
-		MockControl bundleCtxCtrl = MockControl.createStrictControl(BundleContext.class);
+		MockControl bundleCtxCtrl = MockControl.createNiceControl(BundleContext.class);
 		BundleContext bundleCtx = (BundleContext) bundleCtxCtrl.getMock();
 
-		MockControl bundleCtrl = MockControl.createNiceControl(Bundle.class);
+		MockControl bundleCtrl = MockControl.createStrictControl(Bundle.class);
 		Bundle bundle = (Bundle) bundleCtrl.getMock();
 
 		bundleCtxCtrl.expectAndReturn(bundleCtx.getBundle(), bundle);

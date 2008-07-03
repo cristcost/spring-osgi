@@ -4,7 +4,7 @@
   <groupId>org.springframework.osgi</groupId>
   <artifactId>spring-osgi</artifactId>
   <packaging>pom</packaging>
-  <version>1.1.0-SNAPSHOT</version>
+  <version>1.0.3</version>
   <name>Spring Dynamic Modules</name>
   <url>http://www.springframework.org/osgi</url>
   <description>
@@ -19,17 +19,19 @@
 
   <properties>
     <!-- Spring version -->   
-    <spring.maven.artifact.version>2.5.5</spring.maven.artifact.version>
-    <spring.base.version>2.5.4</spring.base.version>
+    <spring.maven.artifact.version>2.5.1</spring.maven.artifact.version>
+    <spring.base.version>2.5</spring.base.version>
     
     <!-- Felix BND plugin settings -->
-    
+    <!-- Spring OSGi base version -->
+    <spring.osgi.base.version>1.0</spring.osgi.base.version>
+   
     <!--- Spring OSGi packages imported version (respect the OSGi naming pattern)-->
-    <spring.osgi.import.version>1.1.0</spring.osgi.import.version>
+    <spring.osgi.import.version>1.0.3</spring.osgi.import.version>
     
     <!--- Spring OSGi packages exported version -->
-    <spring.osgi.export.version>1.1.0</spring.osgi.export.version>
-    <spring.osgi.bundle.version>1.1.0</spring.osgi.bundle.version>
+    <spring.osgi.export.version>1.0.3</spring.osgi.export.version>
+    <spring.osgi.bundle.version>1.0.3</spring.osgi.bundle.version>
 
    
     <spring.osgi.import.pkg>*</spring.osgi.import.pkg>
@@ -37,20 +39,7 @@
     
     <!-- complete access to export/import properties -->
     <spring.osgi.export>!${spring.osgi.private.pkg}, ${spring.osgi.export.pkg}*;version=${spring.osgi.export.version}</spring.osgi.export>
-    
-    <!-- add spring packages since the tool doesn't always picks up the versions -->
-    <spring.osgi.import>
-		${spring.osgi.import.pkg},
-		org.springframework.osgi*;version=${spring.osgi.import.version},
-		org.springframework*;version=${spring.base.version},
-		org.osgi.framework;version=1.3,
-		org.apache.commons.logging*,
-		*;resolution:=optional
-	</spring.osgi.import>
-
-	<!-- decoration osgi import - used internally when the jars are pre-processed and bnd doens't have to know about it -->
-    <spring.decorate.osgi.import>${spring.osgi.import}</spring.decorate.osgi.import>
-    
+    <spring.osgi.import>${spring.osgi.import.pkg}</spring.osgi.import>
 
 
     <symName.prefix>org.springframework.bundle.osgi</symName.prefix>
@@ -70,20 +59,20 @@
     
     <!-- End Felix BND plugin settings -->
 
+    <cobertura.file>${basedir}/target/cobertura/cobertura.ser</cobertura.file>
    <!-- other properties -->
-   <slf4j.version>1.5.0</slf4j.version>
+   <slf4j.version>1.4.3</slf4j.version>
    
    <!-- platform versions -->
    <equinox.ver>3.2.2</equinox.ver>
-   <kf.ver>2.1.0</kf.ver>
-   <felix.ver>1.0.4</felix.ver>
+   <kf.ver>2.0.3</kf.ver>
+   <felix.ver>1.0.1</felix.ver>
    
    <!-- javadoc configuration -->
    <javadoc.loc>${basedir}/docs/src/javadoc</javadoc.loc>
    
    <!-- JDK classifier property -->
    <jdk-classifier>jdk14</jdk-classifier>
-   <source-jdk>1.4</source-jdk>
   </properties>
 
   <!-- ============================================= -->
@@ -123,7 +112,9 @@
     <developerConnection>
       scm:svn:https://springframework.svn.sourceforge.net/svnroot/springframework/spring-osgi/trunk
     </developerConnection>
-    <url>https://fisheye.springframework.org/browse/spring-osgi</url>
+    <url>
+      http://fisheye3.cenqua.com/browse/springframework/spring-osgi
+    </url>
   </scm>
 
   <inceptionYear>2006</inceptionYear>
@@ -187,7 +178,7 @@
       <name>Apache License, Version 2.0</name>
       <url>http://www.apache.org/licenses/LICENSE-2.0</url>
       <comments>
-Copyright 2006-2008 the original author or authors.
+Copyright 2006-2007 the original author or authors.
  
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -216,190 +207,19 @@ limitations under the License.
     <module>core</module>
     <module>extender</module>
     <module>test-support</module>
-    <module>web</module>
-    <module>web-extender</module>
     <module>bundle-archetype</module>
     <!-- unused at the moment
     <module>release</module>
     -->
   </modules>
 
-
-  <dependencyManagement>
-  	<dependencies>
-  		<!-- Spring-DM -->
-  		<dependency>
-  		  <groupId>org.springframework.osgi</groupId>
-          <artifactId>spring-osgi-mock</artifactId>
-          <version>${project.version}</version>
-  		</dependency>
-  		<dependency>
-  		  <groupId>org.springframework.osgi</groupId>
-          <artifactId>spring-osgi-io</artifactId>
-          <version>${project.version}</version>
-  		</dependency>
-  		<dependency>
-  		  <groupId>org.springframework.osgi</groupId>
-          <artifactId>spring-osgi-core</artifactId>
-          <version>${project.version}</version>
-  		</dependency>
-  		<dependency>
-  		  <groupId>org.springframework.osgi</groupId>
-          <artifactId>spring-osgi-extender</artifactId>
-          <version>${project.version}</version>
-  		</dependency>
-  		<dependency>
-  		  <groupId>org.springframework.osgi</groupId>
-          <artifactId>spring-osgi-test</artifactId>
-          <version>${project.version}</version>
-  		</dependency>
-  		<dependency>
-  		  <groupId>org.springframework.osgi</groupId>
-          <artifactId>spring-osgi-web</artifactId>
-          <version>${project.version}</version>
-  		</dependency>
-  		<dependency>
-  		  <groupId>org.springframework.osgi</groupId>
-          <artifactId>spring-osgi-web-extender</artifactId>
-          <version>${project.version}</version>
-  		</dependency>
-  		<dependency>
-  		  <groupId>org.springframework.osgi</groupId>
-          <artifactId>spring-osgi-annotation</artifactId>
-          <version>${project.version}</version>
-  		</dependency>  		
-  		<!-- Spring -->
-        <dependency>
-          <groupId>org.springframework</groupId>
-          <artifactId>spring-core</artifactId>
-          <version>${spring.maven.artifact.version}</version>
-        </dependency>
-        <dependency>
-          <groupId>org.springframework</groupId>
-          <artifactId>spring-core</artifactId>
-          <version>${spring.maven.artifact.version}</version>
-        </dependency>
-        <dependency>
-	      <groupId>org.springframework</groupId>
-	      <artifactId>spring-aop</artifactId>
-	      <version>${spring.maven.artifact.version}</version>
-	      <exclusions>
-	      	<exclusion>
-	          <groupId>aopalliance</groupId>
-		      <artifactId>aopalliance</artifactId>
-	      	</exclusion>
-	      	<exclusion>
-	          <groupId>commons-logging</groupId>
-		      <artifactId>commons-logging</artifactId>
-	      	</exclusion>
-	      </exclusions>
-		</dependency>
-	    <dependency>
-	      <groupId>org.springframework</groupId>
-	      <artifactId>spring-beans</artifactId>
-	      <version>${spring.maven.artifact.version}</version>
-	      <exclusions>
-	      	<exclusion>
-	          <groupId>commons-logging</groupId>
-		      <artifactId>commons-logging</artifactId>
-	      	</exclusion>
-	      </exclusions>
-	    </dependency>
- 		<dependency>
-          <groupId>org.springframework</groupId>
-          <artifactId>spring-core</artifactId>
-          <version>${spring.maven.artifact.version}</version>
-	      <exclusions>      
-	      	<exclusion>
-	          <groupId>commons-logging</groupId>
-		      <artifactId>commons-logging</artifactId>
-	      	</exclusion>
-	      </exclusions>        
-        </dependency>
-	    <dependency>
-	      <groupId>org.springframework</groupId>
-	      <artifactId>spring-context</artifactId>
-	      <version>${spring.maven.artifact.version}</version>
-	      <exclusions>
-	      	<exclusion>
-	          <groupId>aopalliance</groupId>
-		      <artifactId>aopalliance</artifactId>
-	      	</exclusion>
-	      	<exclusion>
-	          <groupId>commons-logging</groupId>
-		      <artifactId>commons-logging</artifactId>
-	      	</exclusion>
-	      </exclusions>      
-	    </dependency>
-	    <dependency>
-	      <groupId>org.springframework</groupId>
-	      <artifactId>spring-test</artifactId>
-	      <version>${spring.maven.artifact.version}</version>
-	      <exclusions>
-	      	<exclusion>
-	          <groupId>commons-logging</groupId>
-		      <artifactId>commons-logging</artifactId>
-	      	</exclusion>
-	      	<exclusion>
-	          <groupId>junit</groupId>
-		      <artifactId>junit</artifactId>
-	      	</exclusion>      	
-	      </exclusions>
-	    </dependency>
-	    <dependency>
-	      <groupId>org.aopalliance</groupId>
-	      <artifactId>com.springsource.org.aopalliance</artifactId>
-	      <version>1.0.0</version>
-	    </dependency>
-		<dependency>
-	      <groupId>org.springframework</groupId>
-	      <artifactId>spring-web</artifactId>
-	      <version>${spring.maven.artifact.version}</version>
-	      <exclusions>
-	      	<exclusion>
-	          <groupId>aopalliance</groupId>
-		      <artifactId>aopalliance</artifactId>
-	      	</exclusion>
-	      	<exclusion>
-	          <groupId>commons-logging</groupId>
-		      <artifactId>commons-logging</artifactId>
-	      	</exclusion>
-	      </exclusions>      
-	    </dependency>
-		<dependency>
-	      <groupId>org.springframework</groupId>
-	      <artifactId>spring-webmvc</artifactId>
-	      <version>${spring.maven.artifact.version}</version>
-	      <exclusions>
-	      	<exclusion>
-	          <groupId>aopalliance</groupId>
-		      <artifactId>aopalliance</artifactId>
-	      	</exclusion>
-	      	<exclusion>
-	          <groupId>commons-logging</groupId>
-		      <artifactId>commons-logging</artifactId>
-	      	</exclusion>
-	      </exclusions>      
-	    </dependency>
-	    <dependency>
-	      <groupId>org.osgi</groupId>
-	      <artifactId>osgi_R4_compendium</artifactId>
-	      <version>1.0</version>
-	    </dependency>
-		<dependency>
-		  <groupId>org.junit</groupId>
-		  <artifactId>com.springsource.junit</artifactId>
-		  <version>3.8.2</version>
-		</dependency>
-  	</dependencies>
-  </dependencyManagement>
   <!-- shared dependencies across modules -->
   <dependencies>
     <!-- junit -->
     <dependency>
-      <groupId>org.junit</groupId>
-      <artifactId>com.springsource.junit</artifactId>
-      <version>3.8.2</version>
+      <groupId>org.springframework.osgi</groupId>
+      <artifactId>junit.osgi</artifactId>
+      <version>3.8.2-SNAPSHOT</version>
       <scope>test</scope>
     </dependency>
 	<dependency>
@@ -412,29 +232,25 @@ limitations under the License.
     <!-- commons-logging in slf4j wrapper -->
     <dependency>
       <groupId>org.slf4j</groupId>
-      <artifactId>com.springsource.slf4j.org.apache.commons.logging</artifactId>
+      <artifactId>jcl104-over-slf4j</artifactId>
       <version>${slf4j.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
-      <artifactId>com.springsource.slf4j.api</artifactId>
+      <artifactId>slf4j-api</artifactId>
       <version>${slf4j.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
-      <artifactId>com.springsource.slf4j.log4j</artifactId>
+      <artifactId>slf4j-log4j12</artifactId>
       <version>${slf4j.version}</version>
       <scope>provided</scope>
 	  <exclusions>
 		<exclusion>
 			<groupId>log4j</groupId>
 			<artifactId>log4j</artifactId>
-		</exclusion>
-		<exclusion>
-			<groupId>org.apache.log4j</groupId>
-			<artifactId>com.springsource.org.apache.log4j</artifactId>
 		</exclusion>
 	  </exclusions>      
     </dependency>
@@ -444,19 +260,19 @@ limitations under the License.
       <artifactId>log4j.osgi</artifactId>
       <version>1.2.15-SNAPSHOT</version>
       <scope>test</scope>
-    </dependency>
-    
+    </dependency>    
   </dependencies>
   
  <build>
+    
     <extensions>
       <extension>
          <groupId>org.springframework.aws</groupId>
          <artifactId>spring-aws-maven</artifactId>
-         <version>1.2.3</version>
+         <version>1.2.2</version>
        </extension>
     </extensions>
-
+    
     <resources>
       <resource>
         <filtering>true</filtering>
@@ -473,18 +289,18 @@ limitations under the License.
         </plugin>
       </plugins>
     </pluginManagement>
-    
+
+
     <plugins>
+    
        <!-- OSGi Felix bundle plugin -->
        <plugin>
         <groupId>org.apache.felix</groupId>
         <artifactId>maven-bundle-plugin</artifactId>
-        <version>1.4.0</version>
-        <extensions>true</extensions>
-
+        <version>1.0.0</version>
         <configuration>
-          <obrRepository>NONE</obrRepository>        
           <instructions>
+           
            <!-- bundle specific conf -->      
            <Bundle-Name>${artifactId}</Bundle-Name>
            <Bundle-SymbolicName>${spring.osgi.symbolic.name}</Bundle-SymbolicName>
@@ -500,12 +316,10 @@ limitations under the License.
 		   <!-- Spring specific entries -->
 		   <Spring-DM-Version>${pom.version}</Spring-DM-Version>
 		   <Spring-Version>${spring.maven.artifact.version}</Spring-Version>
-		   <!-- build version properties -->
-   		   <Build-Plan>${env.buildPlan}</Build-Plan>
-		   <Build-Number>${env.buildNumber}</Build-Number>
-		   <SVN-Revision>${env.svnRevision}</SVN-Revision>
+		   
 		  </instructions>
         </configuration>
+        <extensions>true</extensions>
       </plugin> 
       
 
@@ -518,6 +332,11 @@ limitations under the License.
               <name>org.springframework.osgi.test.framework</name>
               <value>${osgi.test.platform}</value>
             </property>
+            <property>
+				<name>net.sourceforge.cobertura.datafile</name>
+				<value>${cobertura.file}</value>
+			</property>
+
           </systemProperties>
         </configuration>
       </plugin>
@@ -525,8 +344,8 @@ limitations under the License.
         <artifactId>maven-compiler-plugin</artifactId>
 	      <groupId>org.apache.maven.plugins</groupId>
           <configuration>
-            <source>${source-jdk}</source>
-            <target>${source-jdk}</target>
+            <source>1.4</source>
+            <target>1.4</target>
             <debug>true</debug>
           </configuration>
       </plugin>
@@ -538,37 +357,6 @@ limitations under the License.
           </descriptors>
         </configuration>
       </plugin>
-      
-      <!-- clover plug-in -->
-      <plugin>
-          <groupId>com.atlassian.maven.plugins</groupId>
-          <artifactId>maven-clover2-plugin</artifactId>
-          <version>2.3.1</version>
-          <configuration>
-              <licenseLocation>${clover.licenseLocation}</licenseLocation>
-              <generatePdf>false</generatePdf>
-			  <generateXml>true</generateXml>
-              <generateHtml>true</generateHtml>
-              <!--
-              <flushPolicy>interval</flushPolicy>
-			  <flushInterval>10000</flushInterval>
-			  -->
-              <generateHistorical>false</generateHistorical>
-              <!-- saving history is problematic since each module would override
-              the previous unless a different folder is used for the root
-              <historyDir>${basedir}/clover/history</historyDir>
-              -->
-              <jdk>${source-jdk}</jdk>
-              <includesTestSourceRoots>false</includesTestSourceRoots>
-
-              <!-- exclusions -->
-              <excludes>
-                <!-- integration tests -->
-				<exclude>org/springframework/osgi/iandt/**</exclude>
-				<exclude>org/springframework/osgi/test/parsing/**</exclude>
-              </excludes>
-          </configuration>
-      </plugin>      
 
     </plugins>
   </build>
@@ -690,31 +478,7 @@ limitations under the License.
       	<module>samples</module>
       </modules>
     </profile>
-
-	<!-- clover profile -->
-    <profile>
-      <id>clover</id>
-      <properties>
-        <clover.enabled>true</clover.enabled>
-        <spring.decorate.osgi.import>!com_cenqua_clover*,${spring.osgi.import}</spring.decorate.osgi.import>
-      </properties>
-	
-	  <dependencies>
-	    <dependency>
- 		  <groupId>com.cenqua.clover</groupId>
-		  <artifactId>clover</artifactId>
-		  <version>2.3.1</version>
-		  <type>jar</type>
-		  <scope>provided</scope>
-        </dependency>
-	  </dependencies>
-	  
-      <modules>
-      	<module>integration-tests/tests</module>
-      	<module>integration-tests/tests-tiger</module>
-      </modules>
-      
-    </profile>
+    
   </profiles>
        
        
@@ -763,12 +527,6 @@ limitations under the License.
                <title>Spring Dynamic Modules IO</title>
                <packages>org.springframework.osgi.io*</packages>
             </group>
-
-            <group>
-               <title>Spring Dynamic Modules Web Support</title>
-               <packages>org.springframework.osgi.web*</packages>
-            </group>
-            
             <group>
                <title>Spring Dynamic Modules Integration Testing Framework</title>
                <packages>org.springframework.osgi.test*</packages>
@@ -805,11 +563,9 @@ limitations under the License.
             <link>http://logging.apache.org/log4j/docs/api/</link>
             <link>http://jakarta.apache.org/commons/logging/apidocs/</link>
             <link>http://junit.sourceforge.net/javadoc/</link>
-            <link>http://aopalliance.sourceforge.net/doc/</link>
-            <link>http://tomcat.apache.org/tomcat-5.5-doc/servletapi/</link>
-            <link>http://tomcat.apache.org/tomcat-5.5-doc/catalina/docs/api/</link>
-            <link>http://www.mortbay.org/apidocs/</link>
+            <link>http://aopalliance.sourceforge.net/doc</link>
             <!--
+            <link>http://tomcat.apache.org/tomcat-5.5-doc/servletapi/</link>
             <link>http://dcl.mathcs.emory.edu/util/backport-util-concurrent/doc/api/</link>
             -->
           </links>
@@ -824,22 +580,22 @@ limitations under the License.
       <!-- ============== -->
       <!--     FindBugs   -->
       <!-- ============== -->
-	  <plugin>
-		<groupId>org.codehaus.mojo</groupId>
-		<artifactId>findbugs-maven-plugin</artifactId>
-		<configuration>
-		<!--
-		  <xmlOutput>true</xmlOutput>
-		  <xmlOutputDirectory>target</xmlOutputDirectory>
-		  -->
-		  <threshold>Low</threshold>
-		  <effort>Max</effort>
-		  <!--
-		  <debug>true</debug>
-		  <relaxed>true</relaxed>
-		  -->
-		</configuration>
-	  </plugin>
+  <plugin>
+    <groupId>org.codehaus.mojo</groupId>
+    <artifactId>findbugs-maven-plugin</artifactId>
+    <configuration>
+    <!--
+      <xmlOutput>true</xmlOutput>
+      <xmlOutputDirectory>target</xmlOutputDirectory>
+      -->
+      <threshold>Low</threshold>
+      <effort>Max</effort>
+      <!--
+      <debug>true</debug>
+      <relaxed>true</relaxed>
+      -->
+    </configuration>
+  </plugin>
   
       <!-- =========== -->
       <!--     PMD     -->
@@ -862,6 +618,7 @@ limitations under the License.
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>jdepend-maven-plugin</artifactId>
       </plugin>
+      
     </plugins>
    </reporting>
 
@@ -897,7 +654,22 @@ limitations under the License.
       <url>http://repo1.maven.org/maven2/</url>
     </pluginRepository>
 
-   <!--  Do NOT enable this repository
+    <pluginRepository>
+      <id>agilejava</id>
+      <url>http://agilejava.com/maven/</url>
+    </pluginRepository>
+
+
+	<!-- alternative felix BND plugin snapshot -->
+	<pluginRepository>
+		<id>ops4j-snapshots</id>
+		<url>http://repository.ops4j.org/mvn-snapshots</url>
+		<releases>
+			<enabled>false</enabled>
+		</releases>
+	</pluginRepository>
+
+    <!--  Do NOT enable this repository
     
     <pluginRepository>
 	 <snapshots><enabled>true</enabled></snapshots>
@@ -906,12 +678,6 @@ limitations under the License.
       <url>http://cvs.apache.org/maven-snapshot-repository</url>
 	</pluginRepository>
     -->
-    <!-- clover repository -->
-    <pluginRepository>
-      <id>atlassian-m2-repository</id>
-      <name>Atlassian Maven 2.x Repository</name>
-      <url>http://repository.atlassian.com/maven2</url>
-    </pluginRepository>    
   </pluginRepositories>
 
 
@@ -922,28 +688,11 @@ limitations under the License.
       <url>http://repo1.maven.org/eclipse/</url>
     </repository>
 
-
-	<repository>
-	   <id>com.springsource.repository.bundles.external</id>
-	   <name>SpringSource Enterprise Bundle Repository - External Bundle Releases</name>
-	   <url>http://repository.springsource.com/maven/bundles/external</url>
-	</repository>
-
-	<repository>
-		<id>spring-release</id>
-		<name>Spring Portfolio Release Repository</name>
-		<url>http://maven.springframework.org/release</url>
-	</repository>
-	<repository>
-		<id>spring-external</id>
-		<name>Spring Portfolio Release Repository</name>
-		<url>http://maven.springframework.org/external</url>
-	</repository>
-	<repository>
-		<id>spring-milestone</id>
-		<name>Spring Portfolio Milestone Repository</name>
-		<url>http://maven.springframework.org/milestone</url>
-	</repository>
+    <repository>
+      <id>safehaus-repository</id>
+      <name>Safehaus Repository</name>
+      <url>http://m2.safehaus.org</url>
+    </repository>
 
     <repository>
       <id>spring-ext</id>
@@ -954,24 +703,31 @@ limitations under the License.
     </repository>
 
 
-	<!-- used when building against Spring snapshots -->
-	<repository>
-		<id>spring-snapshot</id>
-		<name>Spring Portfolio Milestone Repository</name>
-		<url>http://maven.springframework.org/snapshot</url>
- 	    <snapshots>
-		 <enabled>true</enabled>
-		</snapshots>
-	</repository>
-	
+		<repository>
+			<id>spring-release</id>
+			<name>Spring Portfolio Release Repository</name>
+			<url>http://s3.amazonaws.com/maven.springframework.org/release</url>
+		</repository>
+		<repository>
+			<id>spring-external</id>
+			<name>Spring Portfolio Release Repository</name>
+			<url>http://s3.amazonaws.com/maven.springframework.org/external</url>
+		</repository>
+		<repository>
+			<id>spring-milestone</id>
+			<name>Spring Portfolio Milestone Repository</name>
+			<url>http://s3.amazonaws.com/maven.springframework.org/milestone</url>
+		</repository>
+    
     <repository>
       <id>i21-s3-osgi-repo</id>
       <name>i21 osgi artifacts repo</name>
       <snapshots>
          <enabled>true</enabled>
       </snapshots>
-      <url>http://maven.springframework.org/osgi</url>
+      <url>http://s3.amazonaws.com/maven.springframework.org/osgi</url>
     </repository>
+    
   </repositories>
 
 </project>

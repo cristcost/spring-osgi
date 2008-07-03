@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.springframework.osgi.iandt.serviceProxyFactoryBean;
 
 import java.util.ArrayList;
@@ -23,10 +22,11 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.osgi.framework.ServiceRegistration;
-import org.springframework.core.InfrastructureProxy;
+import org.springframework.aop.framework.ProxyFactory;
 import org.springframework.osgi.service.importer.ImportedOsgiServiceProxy;
 import org.springframework.osgi.service.importer.support.Cardinality;
 import org.springframework.osgi.service.importer.support.OsgiServiceCollectionProxyFactoryBean;
+import org.springframework.osgi.util.BundleDelegatingClassLoader;
 
 /**
  * @author Costin Leau
@@ -36,17 +36,19 @@ public class ServiceRefAwareWithMultiServiceTest extends ServiceBaseTest {
 
 	private OsgiServiceCollectionProxyFactoryBean fb;
 
-
 	protected void onSetUp() throws Exception {
 		fb = new OsgiServiceCollectionProxyFactoryBean();
 		fb.setBundleContext(bundleContext);
-		fb.setBeanClassLoader(getClass().getClassLoader());
+		ClassLoader classLoader = BundleDelegatingClassLoader.createBundleClassLoaderFor(bundleContext.getBundle(),
+			ProxyFactory.class.getClassLoader());
+		fb.setBeanClassLoader(classLoader);
 	}
 
 	protected void onTearDown() throws Exception {
 		fb = null;
 	}
 
+	// this fails due to some CGLIB problems
 	public void testProxyForMultipleCardinality() throws Exception {
 		fb.setCardinality(Cardinality.C_0__N);
 		fb.setInterfaces(new Class[] { Date.class });
@@ -55,7 +57,7 @@ public class ServiceRefAwareWithMultiServiceTest extends ServiceBaseTest {
 		List registrations = new ArrayList(3);
 
 		long time = 321;
-		Date dateA = new Date(time);
+		Date date = new Date(time);
 
 		try {
 			Object result = fb.getObject();
@@ -66,7 +68,7 @@ public class ServiceRefAwareWithMultiServiceTest extends ServiceBaseTest {
 			Iterator iter = col.iterator();
 
 			assertFalse(iter.hasNext());
-			registrations.add(publishService(dateA));
+			registrations.add(publishService(date));
 			assertTrue(iter.hasNext());
 			Object service = iter.next();
 			assertTrue(service instanceof Date);
@@ -74,12 +76,11 @@ public class ServiceRefAwareWithMultiServiceTest extends ServiceBaseTest {
 
 			assertTrue(service instanceof ImportedOsgiServiceProxy);
 			assertNotNull(((ImportedOsgiServiceProxy) service).getServiceReference());
-			assertSame(dateA, ((InfrastructureProxy) service).getWrappedObject());
 
 			assertFalse(iter.hasNext());
 			time = 111;
-			Date dateB = new Date(time);
-			registrations.add(publishService(dateB));
+			date = new Date(time);
+			registrations.add(publishService(date));
 			assertTrue(iter.hasNext());
 			service = iter.next();
 			assertTrue(service instanceof Date);
@@ -87,8 +88,6 @@ public class ServiceRefAwareWithMultiServiceTest extends ServiceBaseTest {
 			assertTrue(service instanceof ImportedOsgiServiceProxy);
 			assertNotNull(((ImportedOsgiServiceProxy) service).getServiceReference());
 
-			assertTrue(service instanceof InfrastructureProxy);
-			assertSame(dateB, ((InfrastructureProxy) service).getWrappedObject());
 		}
 		finally {
 			for (int i = 0; i < registrations.size(); i++) {

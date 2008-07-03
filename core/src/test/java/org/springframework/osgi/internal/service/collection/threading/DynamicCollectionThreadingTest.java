@@ -18,7 +18,7 @@ package org.springframework.osgi.internal.service.collection.threading;
 import java.util.Collection;
 import java.util.Iterator;
 
-import org.springframework.osgi.service.importer.support.internal.collection.DynamicCollection;
+import org.springframework.osgi.service.importer.internal.collection.DynamicCollection;
 
 /**
  * Multithreading test for DynamicCollection.
@@ -92,4 +92,6 @@ public class DynamicCollectionThreadingTest extends BaseThreadingTest {
 		waitForTick(70);
 		assertFalse(iter.hasNext());
 	}
+	
+
 }

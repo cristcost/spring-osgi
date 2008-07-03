@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.springframework.osgi.service.importer.support;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import org.aopalliance.aop.Advice;
@@ -24,14 +24,13 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
-import org.springframework.osgi.service.importer.support.internal.aop.ImportedOsgiServiceProxyAdvice;
-import org.springframework.osgi.service.importer.support.internal.aop.InfrastructureOsgiProxyAdvice;
-import org.springframework.osgi.service.importer.support.internal.aop.ProxyPlusCallback;
-import org.springframework.osgi.service.importer.support.internal.aop.ServiceInvoker;
-import org.springframework.osgi.service.importer.support.internal.aop.ServiceProxyCreator;
-import org.springframework.osgi.service.util.internal.aop.ProxyUtils;
-import org.springframework.osgi.service.util.internal.aop.ServiceTCCLInterceptor;
+import org.springframework.aop.framework.ProxyFactory;
+import org.springframework.osgi.service.importer.internal.aop.ImportedOsgiServiceProxyAdvice;
+import org.springframework.osgi.service.importer.internal.aop.ServiceTCCLInterceptor;
+import org.springframework.osgi.service.importer.internal.aop.ServiceProxyCreator;
+import org.springframework.osgi.util.DebugUtils;
 import org.springframework.osgi.util.OsgiStringUtils;
+import org.springframework.osgi.util.internal.ClassUtils;
 import org.springframework.util.Assert;
 
 /**
@@ -64,7 +63,6 @@ abstract class AbstractServiceProxyCreator implements ServiceProxyCreator {
 
 	private final ImportContextClassLoader iccl;
 
-
 	AbstractServiceProxyCreator(Class[] classes, ClassLoader classLoader, BundleContext bundleContext,
 			ImportContextClassLoader iccl) {
 		Assert.notNull(bundleContext);
@@ -79,7 +77,7 @@ abstract class AbstractServiceProxyCreator implements ServiceProxyCreator {
 		invokerBundleContextAdvice = new LocalBundleContextAdvice(bundleContext);
 	}
 
-	public ProxyPlusCallback createServiceProxy(ServiceReference reference) {
+	public Object createServiceProxy(ServiceReference reference) {
 		List advices = new ArrayList(4);
 
 		// 1. the ServiceReference-like mixin
@@ -87,7 +85,7 @@ abstract class AbstractServiceProxyCreator implements ServiceProxyCreator {
 		advices.add(mixin);
 
 		// 2. publication of bundleContext (if there is any)
-		// TODO: make this configurable (so it can be disabled)
+		// FIXME: make this configurable (so it can be disabled)
 		advices.add(invokerBundleContextAdvice);
 
 		// 3. TCCL handling (if there is any)
@@ -96,16 +94,9 @@ abstract class AbstractServiceProxyCreator implements ServiceProxyCreator {
 		if (tcclAdvice != null)
 			advices.add(tcclAdvice);
 
-		// 4. add the infrastructure proxy
-		// but first create the dispatcher since we need
-		ServiceInvoker dispatcherInterceptor = createDispatcherInterceptor(reference);
-		Advice infrastructureMixin = new InfrastructureOsgiProxyAdvice(dispatcherInterceptor);
+		advices.add(createDispatcherInterceptor(reference));
 
-		advices.add(infrastructureMixin);
-		advices.add(dispatcherInterceptor);
-
-		return new ProxyPlusCallback(ProxyUtils.createProxy(getInterfaces(reference), null, classLoader, bundleContext,
-			advices), dispatcherInterceptor);
+		return createProxy(getInterfaces(reference), classLoader, bundleContext, advices);
 	}
 
 	private Advice determineTCCLAdvice(ServiceReference reference) {
@@ -130,6 +121,29 @@ abstract class AbstractServiceProxyCreator implements ServiceProxyCreator {
 		}
 	}
 
+	private Object createProxy(Class[] classes, ClassLoader classLoader, BundleContext bundleContext, List advices) {
+		ProxyFactory factory = new ProxyFactory();
+
+		ClassUtils.configureFactoryForClass(factory, classes);
+
+		for (Iterator iterator = advices.iterator(); iterator.hasNext();) {
+			Advice advice = (Advice) iterator.next();
+			factory.addAdvice(advice);
+		}
+
+		// no need to add optimize since it means implicit usage of CGLib always
+		// which is determined automatically anyway
+		// factory.setOptimize(true);
+		factory.setFrozen(true);
+		try {
+			return factory.getProxy(classLoader);
+		}
+		catch (NoClassDefFoundError ncdfe) {
+			DebugUtils.debugClassLoadingThrowable(ncdfe, bundleContext.getBundle(), classes);
+			throw ncdfe;
+		}
+	}
+
 	Class[] getInterfaces(ServiceReference reference) {
 		return classes;
 	}
@@ -150,5 +164,6 @@ abstract class AbstractServiceProxyCreator implements ServiceProxyCreator {
 	 * @param reference service reference
 	 * @return AOP advice
 	 */
-	abstract ServiceInvoker createDispatcherInterceptor(ServiceReference reference);
+	abstract Advice createDispatcherInterceptor(ServiceReference reference);
+
 }

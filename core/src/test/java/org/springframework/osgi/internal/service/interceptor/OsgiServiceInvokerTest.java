@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.springframework.osgi.internal.service.interceptor;
 
 import junit.framework.TestCase;
 
 import org.aopalliance.intercept.MethodInvocation;
-import org.springframework.osgi.service.importer.support.internal.aop.ServiceInvoker;
+import org.springframework.osgi.service.importer.internal.aop.ServiceInvoker;
 
 /**
  * @author Costin Leau
@@ -31,25 +30,24 @@ public class OsgiServiceInvokerTest extends TestCase {
 
 	private Object target;
 
-
 	/*
 	 * (non-Javadoc)
-	 * 
 	 * @see junit.framework.TestCase#setUp()
 	 */
 	protected void setUp() throws Exception {
 		target = new Object();
 		invoker = new ServiceInvoker() {
-
 			protected Object getTarget() {
 				return target;
 			}
 
-			public void destroy() {
-			}
 		};
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see junit.framework.TestCase#tearDown()
+	 */
 	protected void tearDown() throws Exception {
 		target = null;
 		invoker = null;

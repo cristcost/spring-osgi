@@ -20,6 +20,7 @@ import junit.framework.TestCase;
 
 import org.osgi.framework.Version;
 import org.springframework.osgi.TestUtils;
+import org.springframework.util.ObjectUtils;
 
 /**
  * Test for the critical logging path in debug utils.
@@ -31,6 +32,14 @@ public class DebugUtilsTest extends TestCase {
 
 	private Version getVersion(String statement, String pkg) {
 		return (Version) TestUtils.invokeStaticMethod(DebugUtils.class, "getVersion", new String[] { statement, pkg });
+	}
+
+	public void tstStringSplit() throws Exception {
+		String str = "gigel;version=\"[12,3.4)\";resolution:=optional,costel;resolution:=optional;version=\"1.2\",florel;resolution:=optional;version=1.2";
+		String split = ",+?";
+		String[] tokens = str.split(split);
+		System.out.println("tokens found " + tokens.length);
+		System.out.println("split is " + ObjectUtils.nullSafeToString(tokens));
 	}
 
 	public void testNoVersion() throws Exception {
@@ -67,12 +76,6 @@ public class DebugUtilsTest extends TestCase {
 		String version = "1.2.0.bla";
 		assertEquals(Version.parseVersion(version), getVersion(pkg + ";version=" + version + ";resolution:=optional",
 			pkg));
-	}
-
-	public void testSingleVersionWithQuotes() throws Exception {
-		String pkg = "foo";
-		String version = "3.4.5.pausesti";
-		assertEquals(Version.parseVersion(version), getVersion(pkg + ";version=\"" + version + "\"", pkg));
 	}
 
 }

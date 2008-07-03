@@ -37,9 +37,9 @@ import org.springframework.util.StringUtils;
  * 
  * <p/>This implementation uses internally an {@link ArtifactLocator} to
  * retrieve the required dependencies for the running test. By default, the
- * artifact locator uses the local maven 2 repository. Maven configurations
- * (such as &lt;settings.xml&gt;) are supported. Alternatively for Maven
- * repositories located in non-default locations, one can use the
+ * artifact locator uses the local maven 2 repository. Currently, no Maven
+ * configurations (such as &lt;settings.xml&gt;) are supported. If the maven
+ * repository is located in a non-default location, use the
  * <code>localRepository</code> system property to specify the folder URL.
  * 
  * @author Costin Leau
@@ -190,9 +190,6 @@ public abstract class AbstractDependencyManagerTests extends AbstractSynchronize
 			logger.trace("JDK " + JdkVersion.getJavaVersion() + " excluded bundles " + excluded);
 
 		String[] bundles = (String[]) props.keySet().toArray(new String[props.size()]);
-		// sort the array (as the Properties file doesn't respect the order)
-		bundles = StringUtils.sortStringArray(bundles);
-		
 		if (logger.isDebugEnabled())
 			logger.debug("Default framework bundles :" + ObjectUtils.nullSafeToString(bundles));
 
@@ -259,7 +256,7 @@ public abstract class AbstractDependencyManagerTests extends AbstractSynchronize
 	/**
 	 * {@inheritDoc}
 	 * 
-	 * <p/>Sets specific log4j property to avoid class loading problems during
+	 * <p/>Sets specific log4j propety to avoid class loading problems during
 	 * start up related to the thread context class loader.
 	 */
 	protected void preProcessBundleContext(BundleContext platformBundleContext) throws Exception {

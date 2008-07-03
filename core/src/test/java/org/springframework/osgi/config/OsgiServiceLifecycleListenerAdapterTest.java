@@ -28,12 +28,13 @@ import junit.framework.TestCase;
 
 import org.easymock.MockControl;
 import org.osgi.framework.ServiceReference;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.osgi.mock.MockServiceReference;
 import org.springframework.osgi.service.importer.ImportedOsgiServiceProxy;
 import org.springframework.osgi.service.importer.OsgiServiceLifecycleListener;
-import org.springframework.osgi.service.importer.ServiceReferenceProxy;
-import org.springframework.osgi.service.importer.support.internal.aop.StaticServiceReferenceProxy;
 import org.springframework.osgi.util.internal.MapBasedDictionary;
 
 /**
@@ -592,9 +593,10 @@ public class OsgiServiceLifecycleListenerAdapterTest extends TestCase {
 			return new HashMap();
 		}
 
-		public ServiceReferenceProxy getServiceReference() {
-			return new StaticServiceReferenceProxy(new MockServiceReference());
+		public ServiceReference getServiceReference() {
+			return new MockServiceReference();
 		}
+
 	}
 
 

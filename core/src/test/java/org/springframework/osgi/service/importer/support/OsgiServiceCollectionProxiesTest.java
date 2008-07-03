@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.springframework.osgi.service.importer.support;
 
 import java.util.Date;
@@ -27,10 +26,10 @@ import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
 import org.springframework.osgi.mock.MockBundleContext;
 import org.springframework.osgi.mock.MockServiceReference;
-import org.springframework.osgi.service.importer.ImportedOsgiServiceProxy;
-import org.springframework.osgi.service.importer.ServiceReferenceProxy;
-import org.springframework.osgi.service.importer.support.internal.aop.ServiceProxyCreator;
-import org.springframework.osgi.service.importer.support.internal.collection.OsgiServiceCollection;
+import org.springframework.osgi.service.importer.internal.aop.ServiceProxyCreator;
+import org.springframework.osgi.service.importer.internal.collection.OsgiServiceCollection;
+import org.springframework.util.ClassUtils;
+import org.springframework.util.ObjectUtils;
 
 /**
  * Unit test for the static proxies returned by Osgi collection.
@@ -49,12 +48,10 @@ public class OsgiServiceCollectionProxiesTest extends TestCase {
 
 	private ServiceProxyCreator proxyCreator;
 
-
 	protected void setUp() throws Exception {
 		services = new LinkedHashMap();
 
 		BundleContext ctx = new MockBundleContext() {
-
 			public ServiceReference[] getServiceReferences(String clazz, String filter) throws InvalidSyntaxException {
 				return new ServiceReference[0];
 			}
@@ -67,7 +64,7 @@ public class OsgiServiceCollectionProxiesTest extends TestCase {
 		};
 
 		proxyCreator = new StaticServiceProxyCreator(new Class[] { Cloneable.class }, getClass().getClassLoader(), ctx,
-			ImportContextClassLoader.UNMANAGED, false);
+				ImportContextClassLoader.UNMANAGED);
 	}
 
 	protected void tearDown() throws Exception {
@@ -80,7 +77,7 @@ public class OsgiServiceCollectionProxiesTest extends TestCase {
 		ServiceReference ref = new MockServiceReference(classInterfaces);
 		services.put(ref, date);
 
-		Object proxy = proxyCreator.createServiceProxy(ref).proxy;
+		Object proxy = proxyCreator.createServiceProxy(ref);
 
 		assertFalse("proxy and service should have different hashcodes", date.hashCode() == proxy.hashCode());
 
@@ -92,8 +89,8 @@ public class OsgiServiceCollectionProxiesTest extends TestCase {
 		ServiceReference ref = new MockServiceReference(classInterfaces);
 		services.put(ref, date);
 
-		Object proxy = proxyCreator.createServiceProxy(ref).proxy;
-		Object proxy2 = proxyCreator.createServiceProxy(ref).proxy;
+		Object proxy = proxyCreator.createServiceProxy(ref);
+		Object proxy2 = proxyCreator.createServiceProxy(ref);
 		assertEquals("proxies for the same service should have the same hashcode", proxy.hashCode(), proxy2.hashCode());
 	}
 
@@ -103,7 +100,7 @@ public class OsgiServiceCollectionProxiesTest extends TestCase {
 		ServiceReference ref = new MockServiceReference(classInterfaces);
 		services.put(ref, date);
 
-		Object proxy = proxyCreator.createServiceProxy(ref).proxy;
+		Object proxy = proxyCreator.createServiceProxy(ref);
 
 		assertFalse("proxy and service should not be equal", date.equals(proxy));
 	}
@@ -114,8 +111,8 @@ public class OsgiServiceCollectionProxiesTest extends TestCase {
 		ServiceReference ref = new MockServiceReference(classInterfaces);
 		services.put(ref, date);
 
-		Object proxy = proxyCreator.createServiceProxy(ref).proxy;
-		Object proxy2 = proxyCreator.createServiceProxy(ref).proxy;
+		Object proxy = proxyCreator.createServiceProxy(ref);
+		Object proxy2 = proxyCreator.createServiceProxy(ref);
 		assertEquals("proxies for the same target should be equal", proxy, proxy2);
 	}
 
@@ -125,7 +122,7 @@ public class OsgiServiceCollectionProxiesTest extends TestCase {
 		ServiceReference ref = new MockServiceReference(classInterfaces);
 		services.put(ref, date);
 
-		Object proxy = proxyCreator.createServiceProxy(ref).proxy;
+		Object proxy = proxyCreator.createServiceProxy(ref);
 
 		assertEquals("proxy should consistent hashcode", proxy.hashCode(), proxy.hashCode());
 	}
@@ -136,37 +133,9 @@ public class OsgiServiceCollectionProxiesTest extends TestCase {
 		ServiceReference ref = new MockServiceReference(classInterfaces);
 		services.put(ref, date);
 
-		Object proxy = proxyCreator.createServiceProxy(ref).proxy;
+		Object proxy = proxyCreator.createServiceProxy(ref);
 		assertEquals("proxy should be equal to itself", proxy, proxy);
+
 	}
 
-	public void testServiceReferenceProxy() throws Exception {
-		Date date = new Date(123);
-		ServiceReference ref = new MockServiceReference(classInterfaces);
-		services.put(ref, date);
-
-		Object proxy = proxyCreator.createServiceProxy(ref).proxy;
-		assertTrue(proxy instanceof ImportedOsgiServiceProxy);
-		ServiceReferenceProxy referenceProxy = ((ImportedOsgiServiceProxy) proxy).getServiceReference();
-		assertNotNull(referenceProxy);
-		assertSame(ref, referenceProxy.getTargetServiceReference());
-	}
-
-	public void testServiceReferenceProxyEquality() throws Exception {
-
-		Date date = new Date(123);
-
-		ServiceReference ref = new MockServiceReference(classInterfaces);
-		services.put(ref, date);
-
-		Object proxy = proxyCreator.createServiceProxy(ref).proxy;
-		Object proxy2 = proxyCreator.createServiceProxy(ref).proxy;
-
-		ServiceReferenceProxy referenceProxy = ((ImportedOsgiServiceProxy) proxy).getServiceReference();
-		assertSame(ref, referenceProxy.getTargetServiceReference());
-		ServiceReferenceProxy referenceProxy2 = ((ImportedOsgiServiceProxy) proxy2).getServiceReference();
-		assertSame(ref, referenceProxy2.getTargetServiceReference());
-		assertEquals(referenceProxy, referenceProxy2);
-		assertFalse(referenceProxy == referenceProxy2);
-	}
 }

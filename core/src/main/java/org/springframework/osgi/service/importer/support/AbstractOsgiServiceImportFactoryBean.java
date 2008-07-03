@@ -21,10 +21,10 @@ import org.apache.commons.logging.LogFactory;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Filter;
 import org.springframework.beans.factory.BeanClassLoaderAware;
-import org.springframework.beans.factory.BeanNameAware;
 import org.springframework.beans.factory.DisposableBean;
-import org.springframework.beans.factory.FactoryBean;
+import org.springframework.beans.factory.FactoryBeanNotInitializedException;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.SmartFactoryBean;
 import org.springframework.osgi.context.BundleContextAware;
 import org.springframework.osgi.service.exporter.OsgiServicePropertiesResolver;
 import org.springframework.osgi.service.importer.OsgiServiceLifecycleListener;
@@ -34,19 +34,20 @@ import org.springframework.util.Assert;
 import org.springframework.util.ObjectUtils;
 
 /**
- * Base class for importing OSGi services. Provides the common properties and
- * contracts between importers.
+ * Base class for importing OSGi services. Provides most of the constructs
+ * required for assembling the service proxies, leaving subclasses to decide on
+ * the service cardinality (one service or multiple).
  * 
  * @author Costin Leau
  * @author Adrian Colyer
  * @author Hal Hildebrand
+ * 
  */
-public abstract class AbstractOsgiServiceImportFactoryBean implements FactoryBean, InitializingBean, DisposableBean,
-		BundleContextAware, BeanClassLoaderAware, BeanNameAware {
+public abstract class AbstractOsgiServiceImportFactoryBean extends AbstractDependableServiceImporter implements
+		SmartFactoryBean, InitializingBean, DisposableBean, BundleContextAware, BeanClassLoaderAware {
 
 	private static final Log log = LogFactory.getLog(AbstractOsgiServiceImportFactoryBean.class);
 
-	/** context classloader */
 	private ClassLoader classLoader;
 
 	private BundleContext bundleContext;
@@ -69,25 +70,58 @@ public abstract class AbstractOsgiServiceImportFactoryBean implements FactoryBea
 	/** Service Bean property of the OSGi service * */
 	private String serviceBeanName;
 
-	private Cardinality cardinality;
+	private boolean initialized = false;
 
-	/** bean name */
-	private String beanName = "";
+	private Object proxy;
 
+	/**
+	 * Returns a managed hook to access OSGi service(s).
+	 * Subclasses can decide to create either a proxy managing only
+	 * one OSGi service type or a collection of services matching a certain
+	 * criteri
+	 * 
+	 * @return managed OSGi service(s)
+	 */
+	public Object getObject() {
+		if (!initialized)
+			throw new FactoryBeanNotInitializedException();
+
+		if (proxy == null) {
+			proxy = createProxy();
+		}
+
+		return proxy;
+	}
+
+	abstract Object createProxy();
+
+	public boolean isSingleton() {
+		return true;
+	}
+
+	public boolean isEagerInit() {
+		return true;
+	}
+
+	public boolean isPrototype() {
+		return false;
+	}
 
 	public void afterPropertiesSet() {
-		Assert.notNull(this.bundleContext, "Required 'bundleContext' property was not set.");
-		Assert.notNull(classLoader, "Required 'classLoader' property was not set.");
-		Assert.notNull(interfaces, "Required 'interfaces' property was not set.");
+		Assert.notNull(this.bundleContext, "Required 'bundleContext' property was not set");
+		Assert.notNull(classLoader, "Required 'classLoader' property was not set");
+		Assert.notNull(interfaces, "Required 'interfaces' property was not set");
 		// validate specified classes
 		Assert.isTrue(!ClassUtils.containsUnrelatedClasses(interfaces),
-			"more then one concrete class specified; cannot create proxy.");
+			"more then one concrete class specified; cannot create proxy");
 
 		this.listeners = (listeners == null ? new OsgiServiceLifecycleListener[0] : listeners);
 
 		getUnifiedFilter(); // eager initialization of the cache to catch filter
 		// errors
-		Assert.notNull(interfaces, "Required serviceTypes property not specified.");
+		Assert.notNull(interfaces, "Required serviceTypes property not specified");
+
+		initialized = true;
 	}
 
 	/**
@@ -104,17 +138,16 @@ public abstract class AbstractOsgiServiceImportFactoryBean implements FactoryBea
 
 		String filterWithClasses = OsgiFilterUtils.unifyFilter(interfaces, filter);
 
-		boolean trace = log.isTraceEnabled();
-		if (trace)
-			log.trace("Unified classes=" + ObjectUtils.nullSafeToString(interfaces) + " and filter=[" + filter
+		if (log.isTraceEnabled())
+			log.trace("unified classes=" + ObjectUtils.nullSafeToString(interfaces) + " and filter=[" + filter
 					+ "]  in=[" + filterWithClasses + "]");
 
 		// add the serviceBeanName constraint
 		String filterWithServiceBeanName = OsgiFilterUtils.unifyFilter(
 			OsgiServicePropertiesResolver.BEAN_NAME_PROPERTY_KEY, new String[] { serviceBeanName }, filterWithClasses);
 
-		if (trace)
-			log.trace("Unified serviceBeanName [" + ObjectUtils.nullSafeToString(serviceBeanName) + "] and filter=["
+		if (log.isTraceEnabled())
+			log.trace("unified serviceBeanName [" + ObjectUtils.nullSafeToString(serviceBeanName) + "] and filter=["
 					+ filterWithClasses + "]  in=[" + filterWithServiceBeanName + "]");
 
 		// create (which implies validation) the actual filter
@@ -122,6 +155,22 @@ public abstract class AbstractOsgiServiceImportFactoryBean implements FactoryBea
 
 		return unifiedFilter;
 	}
+
+	public void destroy() throws Exception {
+		DisposableBean bean = getDisposable();
+		if (bean != null) {
+			bean.destroy();
+		}
+		proxy = null;
+	}
+
+	/**
+	 * Hook for getting a disposable instance backing the proxy returned to the
+	 * user.
+	 * 
+	 * @return disposable bean for cleaning the proxy
+	 */
+	abstract DisposableBean getDisposable();
 
 	/**
 	 * Sets the classes that the imported service advertises.
@@ -182,11 +231,6 @@ public abstract class AbstractOsgiServiceImportFactoryBean implements FactoryBea
 		this.serviceBeanName = serviceBeanName;
 	}
 
-	/**
-	 * {@inheritDoc}
-	 * 
-	 * This method is called automatically by the container.
-	 */
 	public void setBeanClassLoader(ClassLoader classLoader) {
 		this.classLoader = classLoader;
 	}
@@ -245,37 +289,4 @@ public abstract class AbstractOsgiServiceImportFactoryBean implements FactoryBea
 		return contextClassLoader;
 	}
 
-	/**
-	 * Returns the cardinality used by this importer.
-	 * 
-	 * @return importer cardinality
-	 */
-	public Cardinality getCardinality() {
-		return cardinality;
-	}
-
-	/**
-	 * Sets the importer cardinality (0..1, 1..1, 0..N, or 1..N). Default is
-	 * 1..X.
-	 * 
-	 * @param cardinality importer cardinality.
-	 */
-	public void setCardinality(Cardinality cardinality) {
-		Assert.notNull(cardinality);
-		this.cardinality = cardinality;
-	}
-
-	/**
-	 * Returns the bean name associated with the instance of this class (when
-	 * running inside the Spring container).
-	 * 
-	 * @return component bean name
-	 */
-	public String getBeanName() {
-		return beanName;
-	}
-
-	public void setBeanName(String name) {
-		beanName = name;
-	}
 }

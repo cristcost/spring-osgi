@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.springframework.osgi.iandt.serviceProxyFactoryBean;
 
 import java.util.Dictionary;
@@ -28,7 +27,7 @@ import org.springframework.osgi.iandt.BaseIntegrationTest;
 public abstract class ServiceBaseTest extends BaseIntegrationTest {
 
 	protected String[] getTestBundlesNames() {
-		return new String[] { "net.sourceforge.cglib, com.springsource.net.sf.cglib, 2.1.3" };
+		return new String[] { "org.springframework.osgi, cglib-nodep.osgi, 2.1.3-SNAPSHOT" };
 	}
 
 	protected ServiceRegistration publishService(Object obj, String name) throws Exception {

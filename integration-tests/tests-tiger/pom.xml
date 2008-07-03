@@ -3,7 +3,7 @@
     <parent>
         <artifactId>spring-osgi</artifactId>
         <groupId>org.springframework.osgi</groupId>
-        <version>1.1.0-SNAPSHOT</version>
+        <version>1.0.3</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.springframework.osgi</groupId>
@@ -45,36 +45,36 @@
         <dependency>
             <groupId>org.springframework.osgi</groupId>
             <artifactId>spring-osgi-annotation</artifactId>
-            <scope>compile</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.osgi.iandt</groupId>
-            <artifactId>simple.service</artifactId>
-            <version>${project.parent.version}</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.osgi.iandt</groupId>
-            <artifactId>simple.service2</artifactId>
             <version>${project.parent.version}</version>
             <scope>compile</scope>
         </dependency>
 
         <dependency>
-            <groupId>org.springframework.osgi.iandt</groupId>
-            <artifactId>annotation.proxy</artifactId>
+            <groupId>org.springframework.osgi</groupId>
+            <artifactId>org.springframework.osgi.iandt.simple.service</artifactId>
             <version>${project.parent.version}</version>
             <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.osgi</groupId>
+            <artifactId>org.springframework.osgi.iandt.simple.service2</artifactId>
+            <version>${project.parent.version}</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.osgi</groupId>
+            <artifactId>spring-osgi-annotation</artifactId>
+            <version>${project.parent.version}</version>
+            <scope>provided</scope>
         </dependency>
         
         <dependency>
-            <groupId>org.springframework.osgi.iandt</groupId>
-            <artifactId>component.scan.bundle</artifactId>
+            <groupId>org.springframework.osgi</groupId>
+            <artifactId>org.springframework.osgi.iandt.annotation.proxy</artifactId>
             <version>${project.parent.version}</version>
             <scope>compile</scope>
         </dependency>
-
     </dependencies>
 
     <build>

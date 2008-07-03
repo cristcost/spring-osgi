@@ -23,7 +23,6 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.aopalliance.aop.Advice;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.osgi.framework.Bundle;
@@ -37,19 +36,14 @@ import org.springframework.beans.factory.BeanClassLoaderAware;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.BeanNameAware;
+import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.FactoryBean;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.core.Ordered;
 import org.springframework.osgi.context.BundleContextAware;
-import org.springframework.osgi.context.internal.classloader.ChainedClassLoader;
 import org.springframework.osgi.context.support.internal.OsgiBundleScope;
 import org.springframework.osgi.service.exporter.OsgiServicePropertiesResolver;
-import org.springframework.osgi.service.exporter.support.internal.controller.ExporterController;
-import org.springframework.osgi.service.exporter.support.internal.controller.ExporterInternalActions;
-import org.springframework.osgi.service.util.internal.aop.ProxyUtils;
-import org.springframework.osgi.service.util.internal.aop.ServiceTCCLInterceptor;
+import org.springframework.osgi.service.importer.internal.aop.ServiceTCCLInterceptor;
 import org.springframework.osgi.util.DebugUtils;
 import org.springframework.osgi.util.OsgiServiceUtils;
 import org.springframework.osgi.util.internal.ClassUtils;
@@ -74,8 +68,9 @@ import org.springframework.util.StringUtils;
  * <li>org.springframework.osgi.bean.name="&lt;bean name&gt;</li>
  * </ul>
  * 
- * <p/> <strong>Note:</strong>If thread context class loader management is used ({@link #setContextClassLoader(ExportContextClassLoader)},
- * since proxying is required, the target class has to meet certain criterion
+ * <p/> <strong>Note:</strong>If thread context class loader management is
+ * used ({@link #setContextClassLoader(ExportContextClassLoader)}, since
+ * proxying is required, the target class has to meet certain criterias
  * described in the Spring AOP documentation. In short, final classes are not
  * supported when class enhancement is used.
  * 
@@ -85,15 +80,14 @@ import org.springframework.util.StringUtils;
  * @author Andy Piper
  * 
  */
-public class OsgiServiceFactoryBean extends AbstractOsgiServiceExporter implements BeanClassLoaderAware,
-		BeanFactoryAware, BeanNameAware, BundleContextAware, FactoryBean, InitializingBean, Ordered {
+public class OsgiServiceFactoryBean extends AbstractOsgiServiceExporter implements BeanFactoryAware, DisposableBean,
+		BundleContextAware, FactoryBean, Ordered, BeanClassLoaderAware, BeanNameAware {
 
 	/**
 	 * ServiceFactory used for publishing the service beans. Acts as a a wrapper
 	 * around special beans (such as ServiceFactory) and delegates to the
 	 * container each time a bundle requests the service for the first time.
 	 * 
-	 * @author Costin Leau
 	 */
 	private class PublishingServiceFactory implements ServiceFactory {
 
@@ -135,29 +129,6 @@ public class OsgiServiceFactoryBean extends AbstractOsgiServiceExporter implemen
 		}
 	}
 
-	/**
-	 * Wrapper around internal commands.
-	 * 
-	 * @author Costin Leau
-	 * 
-	 */
-	private class Executor implements ExporterInternalActions {
-
-		public void registerService() {
-			OsgiServiceFactoryBean.this.registerService();
-		}
-
-		public void registerServiceAtStartup(boolean register) {
-			synchronized (lock) {
-				registerAtStartup = register;
-			}
-		}
-
-		public void unregisterService() {
-			OsgiServiceFactoryBean.this.unregisterService();
-		}
-	};
-
 
 	private static final Log log = LogFactory.getLog(OsgiServiceFactoryBean.class);
 
@@ -192,46 +163,19 @@ public class OsgiServiceFactoryBean extends AbstractOsgiServiceExporter implemen
 
 	private ClassLoader classLoader;
 
-	/** class loader used by the aop infrastructure */
-	private ClassLoader aopClassLoader;
-
 	/** exporter bean name */
 	private String beanName;
 
-	/** registration sanity flag */
-	private boolean serviceRegistered = false;
-
-	/** register at startup by default */
-	private boolean registerAtStartup = true;
-
-	/** synchronization lock */
-	private final Object lock = new Object();
-
-	/** internal behaviour controller */
-	private final ExporterController controller;
-
-
-	public OsgiServiceFactoryBean() {
-		controller = new ExporterController(new Executor());
-	}
 
 	public void afterPropertiesSet() throws Exception {
+		Assert.notNull(beanFactory, "required property 'beanFactory' has not been set");
 		Assert.notNull(bundleContext, "required property 'bundleContext' has not been set");
 
 		hasNamedBean = StringUtils.hasText(targetBeanName);
 
-		Assert.isTrue(hasNamedBean || target != null, "Either 'targetBeanName' or 'target' properties have to be set.");
-
-		// if we have a name, we need a bean factory
-		if (hasNamedBean) {
-			Assert.notNull(beanFactory, "Required property 'beanFactory' has not been set.");
-		}
-
+		Assert.isTrue(hasNamedBean || target != null, "either 'targetBeanName' or 'target' properties have to be set");
 		// initialize bean only when dealing with singletons and named beans
 		if (hasNamedBean) {
-			Assert.isTrue(beanFactory.containsBean(targetBeanName), "Cannot locate bean named '" + targetBeanName
-					+ "' inside the running bean factory.");
-
 			if (beanFactory.isSingleton(targetBeanName)) {
 				target = beanFactory.getBean(targetBeanName);
 				targetClass = target.getClass();
@@ -240,8 +184,6 @@ public class OsgiServiceFactoryBean extends AbstractOsgiServiceExporter implemen
 				targetClass = beanFactory.getType(targetBeanName);
 			}
 
-			// when running inside a container, add the dependency between this bean and the target one
-			addBeanFactoryDependency();
 		}
 		else
 			targetClass = target.getClass();
@@ -252,41 +194,10 @@ public class OsgiServiceFactoryBean extends AbstractOsgiServiceExporter implemen
 		}
 
 		// sanity check
-		if (interfaces == null) {
-			if (AutoExport.DISABLED.equals(autoExport))
-				throw new IllegalArgumentException(
-					"No service interface(s) specified and auto-export discovery disabled; change at least one of these properties.");
+		if (interfaces == null)
 			interfaces = new Class[0];
-		}
-		// check visibility type
-		else {
-			for (int interfaceIndex = 0; interfaceIndex < interfaces.length; interfaceIndex++) {
-				Class intf = interfaces[interfaceIndex];
-				Assert.isAssignable(intf, targetClass, "Exported service object does not implement the given interface: ");
-			}
-		}
 
-		boolean shouldRegisterAtStartup;
-		synchronized (lock) {
-			shouldRegisterAtStartup = registerAtStartup;
-		}
-
-		if (shouldRegisterAtStartup)
-			registerService();
-	}
-
-	private void addBeanFactoryDependency() {
-		if (beanFactory instanceof ConfigurableBeanFactory) {
-			ConfigurableBeanFactory cbf = (ConfigurableBeanFactory) beanFactory;
-			if (StringUtils.hasText(beanName) && cbf.containsBean(beanName)) {
-				// no need to validate targetBeanName (already did)
-				cbf.registerDependentBean(targetBeanName, BeanFactory.FACTORY_BEAN_PREFIX + beanName);
-				cbf.registerDependentBean(targetBeanName, beanName);
-			}
-		}
-		else {
-			log.warn("The running bean factory cannot support dependencies between beans - importer/exporter dependency cannot be enforced");
-		}
+		super.afterPropertiesSet();
 	}
 
 	/**
@@ -297,13 +208,22 @@ public class OsgiServiceFactoryBean extends AbstractOsgiServiceExporter implemen
 	 * @return
 	 */
 	private Object wrapWithClassLoaderManagingProxy(final Object target, Class[] interfaces) {
-		try {
+		ProxyFactory factory = new ProxyFactory();
 
-			return ProxyUtils.createProxy(interfaces, target, aopClassLoader, bundleContext,
-				new Advice[] { new ServiceTCCLInterceptor(classLoader) });
+		// mold the proxy
+		ClassUtils.configureFactoryForClass(factory, interfaces);
+
+		factory.addAdvice(new ServiceTCCLInterceptor(classLoader));
+		factory.setTarget(target);
+
+		factory.setFrozen(true);
+		try {
+			return factory.getProxy(classLoader);
 		}
 		catch (Throwable th) {
-			log.error("Cannot create TCCL managed proxy; falling back to the naked object", th);
+
+			log.error("cannot create TCCL managed proxy; falling back to the naked object", th);
+
 			if (th instanceof NoClassDefFoundError) {
 				NoClassDefFoundError ncdfe = (NoClassDefFoundError) th;
 				if (log.isWarnEnabled()) {
@@ -335,14 +255,7 @@ public class OsgiServiceFactoryBean extends AbstractOsgiServiceExporter implemen
 	 * classes required for publishing and then delegates the actual
 	 * registration to a dedicated method.
 	 */
-	void registerService() {
-
-		synchronized (lock) {
-			if (serviceRegistered)
-				return;
-			else
-				serviceRegistered = true;
-		}
+	public void registerService() {
 
 		// if we have a nested bean / non-Spring managed object
 		String beanName = (!hasNamedBean ? ObjectUtils.getIdentityHexString(target) : targetBeanName);
@@ -350,14 +263,10 @@ public class OsgiServiceFactoryBean extends AbstractOsgiServiceExporter implemen
 		Dictionary serviceProperties = mergeServiceProperties(beanName);
 
 		Class[] intfs = interfaces;
-
-		// filter classes based on visibility
-		ClassLoader beanClassLoader = ClassUtils.getClassLoader(targetClass);
-		Class[] autoDetectedClasses = ClassUtils.getVisibleClasses(autoExport.getExportedClasses(targetClass),
-			beanClassLoader);
+		Class[] autoDetectedClasses = autoExport.getExportedClasses(targetClass);
 
 		if (log.isTraceEnabled())
-			log.trace("Autoexport mode [" + autoExport + "] discovered on class [" + targetClass + "] classes "
+			log.trace("autoexport mode [" + autoExport + "] discovered on class [" + targetClass + "] classes "
 					+ ObjectUtils.nullSafeToString(autoDetectedClasses));
 
 		// filter duplicates
@@ -385,15 +294,20 @@ public class OsgiServiceFactoryBean extends AbstractOsgiServiceExporter implemen
 			classes,
 			"at least one class has to be specified for exporting (if autoExport is enabled then maybe the object doesn't implement any interface)");
 
+		// filter classes based on visibility
+		ClassLoader beanClassLoader = ClassUtils.getClassLoader(targetClass);
+
+		Class[] visibleClasses = ClassUtils.getVisibleClasses(classes, beanClassLoader);
+
 		// create an array of classnames (used for registering the service)
-		String[] names = ClassUtils.toStringArray(classes);
+		String[] names = ClassUtils.toStringArray(visibleClasses);
 
 		// sort the names in alphabetical order (eases debugging)
 		Arrays.sort(names);
 
 		log.info("Publishing service under classes [" + ObjectUtils.nullSafeToString(names) + "]");
 
-		ServiceFactory serviceFactory = new PublishingServiceFactory(classes);
+		ServiceFactory serviceFactory = new PublishingServiceFactory(visibleClasses);
 
 		if (isBeanBundleScoped())
 			serviceFactory = new OsgiBundleScope.BundleScopeServiceFactory(serviceFactory);
@@ -401,7 +315,7 @@ public class OsgiServiceFactoryBean extends AbstractOsgiServiceExporter implemen
 		return bundleContext.registerService(names, serviceFactory, serviceProperties);
 	}
 
-	private boolean isBeanBundleScoped() {
+	boolean isBeanBundleScoped() {
 		boolean bundleScoped = false;
 		// if we do have a bundle scope, use ServiceFactory decoration
 		if (targetBeanName != null) {
@@ -421,8 +335,6 @@ public class OsgiServiceFactoryBean extends AbstractOsgiServiceExporter implemen
 
 	public void setBeanClassLoader(ClassLoader classLoader) {
 		this.classLoader = classLoader;
-		this.aopClassLoader = new ChainedClassLoader(new ClassLoader[] { classLoader,
-			ProxyFactory.class.getClassLoader() });
 	}
 
 	/**
@@ -443,14 +355,12 @@ public class OsgiServiceFactoryBean extends AbstractOsgiServiceExporter implemen
 		return false;
 	}
 
-	void unregisterService() {
-		synchronized (lock) {
-			if (!serviceRegistered)
-				return;
-			else
-				serviceRegistered = false;
-		}
+	public void destroy() {
+		// stop published service
+		stop();
+	}
 
+	public void unregisterService() {
 		unregisterService(serviceRegistration);
 		serviceRegistration = null;
 	}
@@ -472,9 +382,9 @@ public class OsgiServiceFactoryBean extends AbstractOsgiServiceExporter implemen
 	 * {@link ExportContextClassLoader#UNMANAGED} is used.
 	 * 
 	 * <p/> <strong>Note:</strong> Since proxying is required for context class
-	 * loader manager, the target class has to meet certain criterias described
-	 * in the Spring AOP documentation. In short, final classes are not
-	 * supported when class enhancement is used.
+	 * loader manager, the target class has to meet certain criterias
+	 * described in the Spring AOP documentation. In short, final classes are
+	 * not supported when class enhancement is used.
 	 * 
 	 * @param ccl context class loader strategy to use
 	 * @see ExportContextClassLoader

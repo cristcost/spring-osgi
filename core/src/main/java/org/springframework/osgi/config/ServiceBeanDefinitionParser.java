@@ -16,11 +16,11 @@
 
 package org.springframework.osgi.config;
 
-import java.util.Locale;
 import java.util.Set;
 
 import org.springframework.beans.MutablePropertyValues;
 import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.beans.factory.config.ConstructorArgumentValues;
 import org.springframework.beans.factory.config.RuntimeBeanReference;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.ManagedList;
@@ -31,6 +31,7 @@ import org.springframework.beans.factory.xml.ParserContext;
 import org.springframework.core.Conventions;
 import org.springframework.osgi.config.ParserUtils.AttributeCallback;
 import org.springframework.osgi.service.exporter.support.OsgiServiceFactoryBean;
+import org.springframework.util.StringUtils;
 import org.springframework.util.xml.DomUtils;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Element;
@@ -98,7 +99,7 @@ class ServiceBeanDefinitionParser extends AbstractSingleBeanDefinitionParser {
 				else if (AUTOEXPORT.equals(name)) {
 					// convert constant to upper case to let Spring do the
 					// conversion
-					String label = attribute.getValue().toUpperCase(Locale.ENGLISH).replace('-', '_');
+					String label = attribute.getValue().toUpperCase().replace('-', '_');
 					bldr.addPropertyValue(AUTOEXPORT_PROP, label);
 					return false;
 				}
@@ -107,7 +108,7 @@ class ServiceBeanDefinitionParser extends AbstractSingleBeanDefinitionParser {
 					// convert constant to upper case to let Spring do the
 					// conversion
 
-					String value = attribute.getValue().toUpperCase(Locale.ENGLISH).replace('-', '_');
+					String value = attribute.getValue().toUpperCase().replace('-', '_');
 					bldr.addPropertyValue(CCL_PROP, value);
 					return false;
 				}
@@ -153,7 +154,7 @@ class ServiceBeanDefinitionParser extends AbstractSingleBeanDefinitionParser {
 			}
 		}
 
-		// if we have a named bean use target_bean_name (so we postpone the service creation)
+		// if we have a named bean use target_bean_name
 		if (target instanceof RuntimeBeanReference) {
 			builder.addPropertyValue(TARGET_BEAN_NAME_PROP, ((RuntimeBeanReference) target).getBeanName());
 		}

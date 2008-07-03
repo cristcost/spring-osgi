@@ -13,12 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.springframework.osgi.extender.internal.support;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -33,17 +31,12 @@ import org.springframework.beans.factory.xml.NamespaceHandlerResolver;
 import org.springframework.core.CollectionFactory;
 import org.springframework.osgi.util.BundleDelegatingClassLoader;
 import org.springframework.osgi.util.OsgiStringUtils;
-import org.springframework.util.ReflectionUtils;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 /**
  * Spring schema handler/resolver for OSGi environments.
- * 
- * Besides delegation this class also does type filtering to avoid wiring the
- * wrong bundle if multiple versions of the same library (which support the same
- * schema) are available.
  * 
  * @author Hal Hildebrand
  * @author Costin Leau
@@ -59,17 +52,14 @@ public class NamespacePlugins implements NamespaceHandlerResolver, EntityResolve
 	 * bundle.
 	 */
 	private static class Plugin implements NamespaceHandlerResolver, EntityResolver {
-
 		private final NamespaceHandlerResolver namespace;
 
 		private final EntityResolver entity;
 
 		private final Bundle bundle;
 
-
 		private Plugin(Bundle bundle) {
 			this.bundle = bundle;
-
 			ClassLoader loader = BundleDelegatingClassLoader.createBundleClassLoaderFor(bundle);
 
 			entity = new DelegatingEntityResolver(loader);
@@ -89,19 +79,13 @@ public class NamespacePlugins implements NamespaceHandlerResolver, EntityResolve
 		}
 	}
 
-
 	private static final Log log = LogFactory.getLog(NamespacePlugins.class);
-
-	private static final String CACHE_CLASS = "org.springframework.osgi.context.support.TrackingUtil";
-
-	private static final String FIELD_NAME = "invokingBundle";
 
 	private final Map plugins = CollectionFactory.createConcurrentMap(5);
 
-
 	public void addHandler(Bundle bundle) {
 		if (log.isDebugEnabled())
-			log.debug("Adding as handler " + OsgiStringUtils.nullSafeNameAndSymName(bundle));
+			log.debug("adding as handler " + OsgiStringUtils.nullSafeNameAndSymName(bundle));
 
 		plugins.put(bundle, new Plugin(bundle));
 	}
@@ -114,7 +98,7 @@ public class NamespacePlugins implements NamespaceHandlerResolver, EntityResolve
 	 */
 	public boolean removeHandler(Bundle bundle) {
 		if (log.isDebugEnabled())
-			log.debug("Removing handler " + OsgiStringUtils.nullSafeNameAndSymName(bundle));
+			log.debug("removing handler " + OsgiStringUtils.nullSafeNameAndSymName(bundle));
 
 		return (plugins.remove(bundle) != null);
 	}
@@ -123,7 +107,7 @@ public class NamespacePlugins implements NamespaceHandlerResolver, EntityResolve
 		boolean debug = log.isDebugEnabled();
 
 		if (debug)
-			log.debug("Trying to resolving namespace handler for " + namespaceUri);
+			log.debug("trying to resolving namespace handler for " + namespaceUri);
 
 		for (Iterator i = plugins.values().iterator(); i.hasNext();) {
 			Plugin plugin = (Plugin) i.next();
@@ -131,15 +115,14 @@ public class NamespacePlugins implements NamespaceHandlerResolver, EntityResolve
 				NamespaceHandler handler = plugin.resolve(namespaceUri);
 				if (handler != null) {
 					if (debug)
-						log.debug("Namespace handler for " + namespaceUri + " found inside "
+						log.debug("namespace handler for " + namespaceUri + " found inside "
 								+ OsgiStringUtils.nullSafeNameAndSymName(plugin.getBundle()));
-
 					return handler;
 				}
 			}
 			catch (IllegalArgumentException ex) {
 				if (debug)
-					log.debug("Namespace handler for " + namespaceUri + " not found inside "
+					log.debug("namespace handler for " + namespaceUri + " not found inside "
 							+ OsgiStringUtils.nullSafeNameAndSymName(plugin.getBundle()));
 
 			}
@@ -151,19 +134,19 @@ public class NamespacePlugins implements NamespaceHandlerResolver, EntityResolve
 		boolean debug = log.isDebugEnabled();
 
 		if (debug)
-			log.debug("Trying to resolving entity for " + publicId + "|" + systemId);
+			log.debug("trying to resolving entity for " + publicId + "|" + systemId);
 
 		if (systemId != null) {
 			for (Iterator i = plugins.values().iterator(); i.hasNext();) {
-				InputSource inputSource;
+				InputSource is;
 				Plugin plugin = (Plugin) i.next();
 				try {
-					inputSource = plugin.resolveEntity(publicId, systemId);
-					if (inputSource != null) {
+					is = plugin.resolveEntity(publicId, systemId);
+					if (is != null) {
 						if (debug)
 							log.debug("XML schema for " + publicId + "|" + systemId + " found inside "
 									+ OsgiStringUtils.nullSafeNameAndSymName(plugin.getBundle()));
-						return inputSource;
+						return is;
 					}
 
 				}
@@ -174,7 +157,6 @@ public class NamespacePlugins implements NamespaceHandlerResolver, EntityResolve
 				}
 			}
 		}
-
 		return null;
 	}
 
@@ -182,24 +164,4 @@ public class NamespacePlugins implements NamespaceHandlerResolver, EntityResolve
 		plugins.clear();
 	}
 
-	/**
-	 * Returns the namespace/resolver invoker plugin. To do that, the Spring-DM
-	 * core classes will be used assuming that its infrastructure is being used.
-	 * 
-	 * @return the invoking bundle
-	 */
-	private Bundle getInvokingBundle() {
-		// get the spring-dm core class loader
-		ClassLoader coreClassLoader = OsgiStringUtils.class.getClassLoader();
-		try {
-			Class cacheClass = coreClassLoader.loadClass(CACHE_CLASS);
-			Field field = cacheClass.getField(FIELD_NAME);
-			ReflectionUtils.makeAccessible(field);
-			return (Bundle) ((ThreadLocal) field.get(null)).get();
-		}
-		catch (Exception ex) {
-			log.trace("Could not determine invoking bundle", ex);
-			return null;
-		}
-	}
 }

@@ -90,16 +90,6 @@ exact list of Spring-DM project dependencies see the respective Maven2 pom.xml f
 - Dependencies: asm, junit, slf4j, spring-osgi-core, spring-osgi-extender
                 [Equinox, Felix, Knopflerfish, Log4J]
 
-* spring-osgi-web-${version}.jar
-- Contents: The Spring Dynamic Modules Web Support
-- Dependencies: slf4j, spring-osgi-core
-                [Apache Tomcat, Jetty, Log4J]
-
-* spring-osgi-web-extender-${version}.jar
-- Contents: The Spring Dynamic Modules Web Extender
-- Dependencies: slf4j, spring-osgi-core, spring-osgi-web
-                [Apache Tomcat, Jetty, Log4J]
-
 * extensions / spring-osgi-annotation-${version}.jar
 - Contents: The Spring Dynamic Modules Annotation Extension
 - Dependencies: slf4j, spring-beans, spring-core, spring-osgi-core
@@ -122,4 +112,4 @@ The Spring Dynamic Modules homepage is located at:
 
 The Spring Framework portal is located at:
 
-	http://www.springframework.org
+	http://www.springframework.org	

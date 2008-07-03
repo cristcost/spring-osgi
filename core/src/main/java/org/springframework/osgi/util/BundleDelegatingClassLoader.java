@@ -87,7 +87,7 @@ public class BundleDelegatingClassLoader extends ClassLoader {
 	 * @param bundle
 	 * @param bridgeLoader
 	 */
-	protected BundleDelegatingClassLoader(Bundle bundle, ClassLoader bridgeLoader) {
+	private BundleDelegatingClassLoader(Bundle bundle, ClassLoader bridgeLoader) {
 		super(null);
 		Assert.notNull(bundle, "bundle should be non-null");
 		this.backingBundle = bundle;
@@ -120,11 +120,11 @@ public class BundleDelegatingClassLoader extends ClassLoader {
 		boolean trace = log.isTraceEnabled();
 
 		if (trace)
-			log.trace("Looking for resource " + name);
+			log.trace("looking for resource " + name);
 		URL url = this.backingBundle.getResource(name);
 
 		if (trace && url != null)
-			log.trace("Found resource " + name + " at " + url);
+			log.trace("found resource " + name + " at " + url);
 		return url;
 	}
 
@@ -132,12 +132,12 @@ public class BundleDelegatingClassLoader extends ClassLoader {
 		boolean trace = log.isTraceEnabled();
 
 		if (trace)
-			log.trace("Looking for resources " + name);
+			log.trace("looking for resources " + name);
 
 		Enumeration enm = this.backingBundle.getResources(name);
 
 		if (trace && enm != null && enm.hasMoreElements())
-			log.trace("Found resource " + name + " at " + this.backingBundle.getLocation());
+			log.trace("found resource " + name + " at " + this.backingBundle.getLocation());
 
 		return enm;
 	}
@@ -170,14 +170,4 @@ public class BundleDelegatingClassLoader extends ClassLoader {
 	public String toString() {
 		return "BundleDelegatingClassLoader for [" + OsgiStringUtils.nullSafeNameAndSymName(backingBundle) + "]";
 	}
-
-	/**
-	 * Returns the bundle to which this class loader delegates calls to.
-	 * 
-	 * @return the backing bundle
-	 */
-	public Bundle getBundle() {
-		return backingBundle;
-	}
-
 }

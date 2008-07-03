@@ -13,14 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.springframework.osgi.iandt.context;
 
 import org.osgi.framework.BundleContext;
 import org.springframework.context.ApplicationContext;
 import org.springframework.osgi.context.ConfigurableOsgiBundleApplicationContext;
 import org.springframework.osgi.iandt.BaseIntegrationTest;
-
 /**
  * Integration test on the functionality offered by OSGi app context.
  * 
@@ -30,7 +28,6 @@ import org.springframework.osgi.iandt.BaseIntegrationTest;
 public class OsgiAppContextTest extends BaseIntegrationTest {
 
 	private BundleContext bundleContext;
-
 
 	public void testBundleContextAvailableAsBean() {
 		ApplicationContext ctx = applicationContext;

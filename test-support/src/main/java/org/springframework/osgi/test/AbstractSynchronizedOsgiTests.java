@@ -16,18 +16,15 @@
 
 package org.springframework.osgi.test;
 
-import java.util.Enumeration;
-
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceEvent;
 import org.osgi.framework.ServiceListener;
+import org.springframework.osgi.extender.internal.util.ConfigUtils;
 import org.springframework.osgi.extender.internal.util.concurrent.Counter;
-import org.springframework.osgi.extender.support.internal.ConfigUtils;
 import org.springframework.osgi.util.OsgiBundleUtils;
 import org.springframework.osgi.util.OsgiListenerUtils;
 import org.springframework.osgi.util.OsgiStringUtils;
-import org.springframework.util.ObjectUtils;
 
 /**
  * JUnit superclass which offers synchronization for application context
@@ -129,14 +126,14 @@ public abstract class AbstractSynchronizedOsgiTests extends AbstractConfigurable
 		OsgiListenerUtils.addServiceListener(context, listener, filter);
 
 		if (logger.isDebugEnabled())
-			logger.debug("Start waiting for Spring/OSGi bundle=" + forBundleWithSymbolicName);
+			logger.debug("start waiting for Spring/OSGi bundle=" + forBundleWithSymbolicName);
 
 		try {
 			if (counter.waitForZero(time)) {
 				waitingFailed(forBundleWithSymbolicName);
 			}
 			else if (logger.isDebugEnabled()) {
-				logger.debug("Found applicationContext for bundle=" + forBundleWithSymbolicName);
+				logger.debug("found applicationContext for bundle=" + forBundleWithSymbolicName);
 			}
 		}
 		finally {
@@ -165,7 +162,7 @@ public abstract class AbstractSynchronizedOsgiTests extends AbstractConfigurable
 	}
 
 	private void waitingFailed(String bundleName) {
-		logger.warn("Waiting for applicationContext for bundle=" + bundleName + " timed out");
+		logger.warn("waiting for applicationContext for bundle=" + bundleName + " timed out");
 
 		throw new RuntimeException("Gave up waiting for application context for '" + bundleName + "' to be created");
 	}
@@ -205,7 +202,7 @@ public abstract class AbstractSynchronizedOsgiTests extends AbstractConfigurable
 			boolean debug = logger.isDebugEnabled();
 			boolean trace = logger.isTraceEnabled();
 			if (debug)
-				logger.debug("Looking for Spring/OSGi powered bundles to wait for...");
+				logger.debug("looking for Spring/OSGi powered bundles to wait for...");
 
 			// determine Spring/OSGi bundles
 			Bundle[] bundles = platformBundleContext.getBundles();
@@ -213,7 +210,8 @@ public abstract class AbstractSynchronizedOsgiTests extends AbstractConfigurable
 				Bundle bundle = bundles[i];
 				String bundleName = OsgiStringUtils.nullSafeSymbolicName(bundle);
 				if (OsgiBundleUtils.isBundleActive(bundle)) {
-					if (isSpringBundle(bundle) && ConfigUtils.getPublishContext(bundle.getHeaders())) {
+					if (ConfigUtils.isSpringOsgiPoweredBundle(bundle)
+							&& ConfigUtils.getPublishContext(bundle.getHeaders())) {
 						if (debug)
 							logger.debug("Bundle [" + bundleName + "] triggers a context creation; waiting for it");
 						// use platformBundleContext
@@ -228,12 +226,5 @@ public abstract class AbstractSynchronizedOsgiTests extends AbstractConfigurable
 				}
 			}
 		}
-	}
-
-	private boolean isSpringBundle(Bundle bundle) {
-		if (!ObjectUtils.isEmpty(ConfigUtils.getHeaderLocations(bundle.getHeaders())))
-			return true;
-		Enumeration enm = bundle.findEntries("META-INF/spring", "*.xml", false);
-		return (enm != null && enm.hasMoreElements());
 	}
 }

@@ -34,14 +34,11 @@ import org.springframework.beans.factory.BeanClassLoaderAware;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.FactoryBean;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.beans.factory.config.InstantiationAwareBeanPostProcessorAdapter;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.osgi.context.BundleContextAware;
-import org.springframework.osgi.service.importer.support.Cardinality;
+import org.springframework.osgi.service.importer.support.AbstractOsgiServiceImportFactoryBean;
 import org.springframework.osgi.service.importer.support.CollectionType;
-import org.springframework.osgi.service.importer.support.ImportContextClassLoader;
 import org.springframework.osgi.service.importer.support.OsgiServiceCollectionProxyFactoryBean;
 import org.springframework.osgi.service.importer.support.OsgiServiceProxyFactoryBean;
 import org.springframework.util.ReflectionUtils;
@@ -62,63 +59,6 @@ public class ServiceReferenceInjectionBeanPostProcessor extends InstantiationAwa
 	private BeanFactory beanFactory;
 
 	private ClassLoader classLoader;
-
-
-	private abstract static class ImporterCallAdapter {
-
-		static void setInterfaces(Object importer, Class[] classes) {
-			if (importer instanceof OsgiServiceProxyFactoryBean)
-				((OsgiServiceProxyFactoryBean) importer).setInterfaces(classes);
-			else
-				((OsgiServiceCollectionProxyFactoryBean) importer).setInterfaces(classes);
-		}
-
-		static void setBundleContext(Object importer, BundleContext context) {
-			((BundleContextAware) importer).setBundleContext(context);
-		}
-
-		static void setBeanClassLoader(Object importer, ClassLoader cl) {
-			((BeanClassLoaderAware) importer).setBeanClassLoader(cl);
-		}
-
-		static void setCardinality(Object importer, Cardinality cardinality) {
-			if (importer instanceof OsgiServiceProxyFactoryBean)
-				((OsgiServiceProxyFactoryBean) importer).setCardinality(cardinality);
-			else
-				((OsgiServiceCollectionProxyFactoryBean) importer).setCardinality(cardinality);
-		}
-
-        static void setGreedyProxying(Object importer, boolean greedy) {
-            if (importer instanceof OsgiServiceCollectionProxyFactoryBean) {
-                ((OsgiServiceCollectionProxyFactoryBean) importer).setGreedyProxying(greedy);
-            }
-        }
-
-		static void afterPropertiesSet(Object importer) throws Exception {
-			((InitializingBean) importer).afterPropertiesSet();
-		}
-
-		static void setFilter(Object importer, String filter) throws Exception {
-			if (importer instanceof OsgiServiceProxyFactoryBean)
-				((OsgiServiceProxyFactoryBean) importer).setFilter(filter);
-			else
-				((OsgiServiceCollectionProxyFactoryBean) importer).setFilter(filter);
-		}
-
-		static void setContextClassLoader(Object importer, ImportContextClassLoader ccl) {
-			if (importer instanceof OsgiServiceProxyFactoryBean)
-				((OsgiServiceProxyFactoryBean) importer).setContextClassLoader(ccl);
-			else
-				((OsgiServiceCollectionProxyFactoryBean) importer).setContextClassLoader(ccl);
-		}
-
-		static void setServiceBean(Object importer, String name) {
-			if (importer instanceof OsgiServiceProxyFactoryBean)
-				((OsgiServiceProxyFactoryBean) importer).setServiceBeanName(name);
-			else
-				((OsgiServiceCollectionProxyFactoryBean) importer).setServiceBeanName(name);
-		}
-	}
 
 
 	public void setBeanClassLoader(ClassLoader classLoader) {
@@ -153,7 +93,7 @@ public class ServiceReferenceInjectionBeanPostProcessor extends InstantiationAwa
 						if (logger.isDebugEnabled())
 							logger.debug("Processing annotation [" + s + "] for [" + bean.getClass().getName() + "."
 									+ method.getName() + "()] on bean [" + beanName + "]");
-						method.invoke(bean, getServiceImporter(s, method, beanName).getObject());
+						method.invoke(bean, getServiceProperty(s, method, beanName));
 					}
 					catch (Exception e) {
 						throw new IllegalArgumentException("Error processing service annotation", e);
@@ -173,15 +113,7 @@ public class ServiceReferenceInjectionBeanPostProcessor extends InstantiationAwa
 				try {
 					if (logger.isDebugEnabled())
 						logger.debug("Processing annotation [" + s + "] for [" + beanName + "." + pd.getName() + "]");
-					FactoryBean importer = getServiceImporter(s, pd.getWriteMethod(), beanName);
-					// BPPs are created in stageOne(), even though they are run in stageTwo(). This check means that
-					// the call to getObject() will not fail with ServiceUnavailable. This is safe to do because
-					// ServiceReferenceDependencyBeanFactoryPostProcessor will ensure that mandatory services are
-					// satisfied before stageTwo() is run.
-					if (bean instanceof BeanPostProcessor) {
-						ImporterCallAdapter.setCardinality(importer, Cardinality.C_0__1);
-					}
-					newprops.addPropertyValue(pd.getName(), importer.getObject());
+					newprops.addPropertyValue(pd.getName(), getServiceProperty(s, pd.getWriteMethod(), beanName));
 				}
 				catch (Exception e) {
 					throw new FatalBeanException("Could not create service reference", e);
@@ -191,7 +123,7 @@ public class ServiceReferenceInjectionBeanPostProcessor extends InstantiationAwa
 		return newprops;
 	}
 
-	private FactoryBean getServiceImporter(ServiceReference s, Method writeMethod, String beanName) throws Exception {
+	private Object getServiceProperty(ServiceReference s, Method writeMethod, String beanName) throws Exception {
 		// Invocations will block here, so although the ApplicationContext is
 		// created nothing will
 		// proceed until all the dependencies are satisfied.
@@ -200,59 +132,49 @@ public class ServiceReferenceInjectionBeanPostProcessor extends InstantiationAwa
 			throw new IllegalArgumentException("Setter for [" + beanName + "] must have only one argument");
 		}
 		if (Collection.class.isAssignableFrom(params[0])) {
-			return getServiceProperty(new OsgiServiceCollectionProxyFactoryBean(), s, writeMethod, beanName);
+			return getServiceProperty(new OsgiServiceCollectionProxyFactoryBean(), s, writeMethod, beanName).getObject();
 		}
 		else {
-			return getServiceProperty(new OsgiServiceProxyFactoryBean(), s, writeMethod, beanName);
+			return getServiceProperty(new OsgiServiceProxyFactoryBean(), s, writeMethod, beanName).getObject();
 		}
-	}
-
-	private boolean impliedServiceType(ServiceReference s) {
-		return (s.serviceTypes() == null || s.serviceTypes().length == 0 || (s.serviceTypes().length == 1 && s.serviceTypes()[0].equals(ServiceReference.class)));
 	}
 
 	// Package protected for testing
-	private FactoryBean getServicePropertyInternal(FactoryBean pfb, ServiceReference s, Method writeMethod,
-			String beanName) throws Exception {
+	private AbstractOsgiServiceImportFactoryBean getServicePropertyInternal(AbstractOsgiServiceImportFactoryBean pfb,
+			ServiceReference s, Method writeMethod, String beanName) throws Exception {
 		if (s.filter().length() > 0) {
-			ImporterCallAdapter.setFilter(pfb, s.filter());
+			pfb.setFilter(s.filter());
 		}
-		if (impliedServiceType(s)) {
+		if (s.serviceTypes() == null || s.serviceTypes().length == 0
+				|| (s.serviceTypes().length == 1 && s.serviceTypes()[0].equals(ServiceReference.class))) {
 			Class<?>[] params = writeMethod.getParameterTypes();
 			if (params.length != 1) {
 				throw new IllegalArgumentException("Setter for [" + beanName + "] must have only one argument");
 			}
-			if (Collection.class.isAssignableFrom(params[0])) {
-				throw new IllegalArgumentException("Cannot infer type for collection-based reference [" + beanName
-						+ "]");
-			}
-			else {
-				ImporterCallAdapter.setInterfaces(pfb, new Class<?>[] { params[0] });
-			}
+			pfb.setInterfaces(new Class<?>[] { params[0] });
 		}
 		else {
-			ImporterCallAdapter.setInterfaces(pfb, s.serviceTypes());
+			pfb.setInterfaces(s.serviceTypes());
 		}
-		ImporterCallAdapter.setCardinality(pfb, s.cardinality().toCardinality());
-		ImporterCallAdapter.setContextClassLoader(pfb, s.contextClassLoader().toImportContextClassLoader());
-		ImporterCallAdapter.setBundleContext(pfb, bundleContext);
-
+		pfb.setCardinality(s.cardinality().toCardinality());
+		pfb.setContextClassLoader(s.contextClassLoader().toImportContextClassLoader());
+		pfb.setBundleContext(bundleContext);
 		if (s.serviceBeanName().length() > 0) {
-			ImporterCallAdapter.setServiceBean(pfb, s.serviceBeanName());
+			pfb.setServiceBeanName(s.serviceBeanName());
 		}
-		ImporterCallAdapter.setBeanClassLoader(pfb, classLoader);
-		ImporterCallAdapter.afterPropertiesSet(pfb);
+		pfb.setBeanClassLoader(classLoader);
+		pfb.afterPropertiesSet();
 		return pfb;
 	}
 
-	/* package */FactoryBean getServiceProperty(OsgiServiceProxyFactoryBean pfb, ServiceReference s,
-			Method writeMethod, String beanName) throws Exception {
+	/* package */AbstractOsgiServiceImportFactoryBean getServiceProperty(OsgiServiceProxyFactoryBean pfb,
+			ServiceReference s, Method writeMethod, String beanName) throws Exception {
 		pfb.setTimeout(s.timeout());
 		return getServicePropertyInternal(pfb, s, writeMethod, beanName);
 	}
 
-	/* package */FactoryBean getServiceProperty(OsgiServiceCollectionProxyFactoryBean pfb, ServiceReference s,
-			Method writeMethod, String beanName) throws Exception {
+	/* package */AbstractOsgiServiceImportFactoryBean getServiceProperty(OsgiServiceCollectionProxyFactoryBean pfb,
+			ServiceReference s, Method writeMethod, String beanName) throws Exception {
 		Class<?>[] params = writeMethod.getParameterTypes();
 		if (SortedSet.class.isAssignableFrom(params[0])) {
 			pfb.setCollectionType(CollectionType.SORTED_SET);

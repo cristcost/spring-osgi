@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.springframework.osgi.test.internal;
 
 import java.io.InputStream;
@@ -25,10 +24,10 @@ import java.util.jar.Manifest;
 
 import junit.framework.TestCase;
 
+import org.springframework.osgi.test.internal.storage.MemoryStorage;
+import org.springframework.osgi.test.internal.storage.Storage;
 import org.springframework.osgi.test.internal.util.IOUtils;
-import org.springframework.osgi.test.internal.util.jar.JarCreator;
-import org.springframework.osgi.test.internal.util.jar.storage.MemoryStorage;
-import org.springframework.osgi.test.internal.util.jar.storage.Storage;
+import org.springframework.osgi.test.internal.util.JarCreator;
 
 /**
  * @author Costin Leau
@@ -40,13 +39,20 @@ public class JarCreatorTests extends TestCase {
 
 	private Storage storage;
 
-
+	/*
+	 * (non-Javadoc)
+	 * @see junit.framework.TestCase#setUp()
+	 */
 	protected void setUp() throws Exception {
 		creator = new JarCreator();
 		storage = new MemoryStorage();
 		creator.setStorage(storage);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see junit.framework.TestCase#tearDown()
+	 */
 	protected void tearDown() throws Exception {
 		storage.dispose();
 	}
@@ -63,13 +69,14 @@ public class JarCreatorTests extends TestCase {
 
 		String location = JarCreatorTests.class.getName().replace('.', '/') + ".class";
 		// get absolute file location
-		// file:/...s/org/springframework/osgi/test/JarCreatorTests.class
+		// file:/D:/work/i21/spring-osgi-sf/...s/org/springframework/osgi/test/JarCreatorTests.class
 		final URL clazzURL = getClass().getClassLoader().getResource(location);
 
 		// go two folders above
-		// ...s/org/springframework/
+		// file:/D:/work/i21/spring-osgi-sf/...s/org/springframework/
 		String rootPath = new URL(clazzURL, "../../").toExternalForm();
-
+		
+		
 		String firstLevel = new URL(clazzURL, "../").toExternalForm().substring(rootPath.length());
 		// get file folder
 		String secondLevel = new URL(clazzURL, ".").toExternalForm().substring(rootPath.length());
@@ -82,8 +89,6 @@ public class JarCreatorTests extends TestCase {
 		creator.setRootPath(rootPath);
 		creator.setAddFolders(true);
 
-		System.out.println("creating jar with just one file " + file + " from root " + rootPath);
-
 		// create the jar
 		creator.createJar(mf);
 
@@ -93,16 +98,13 @@ public class JarCreatorTests extends TestCase {
 		try {
 			jarStream = new JarInputStream(storage.getInputStream());
 			// get manifest
-			assertEquals("original manifest not found", mf, jarStream.getManifest());
+			assertEquals(mf, jarStream.getManifest());
 
-			// move the jar stream to the first entry (which should be META-INF/ folder)
+			// move the jar stream to the first entry (which should be org/
+			// folder)
 			String entryName = jarStream.getNextEntry().getName();
-
-			assertEquals("META-INF/ not found", "META-INF/", entryName);
-
-			entryName = jarStream.getNextEntry().getName();
 			assertEquals("folders above the file not included", firstLevel, entryName);
-
+			
 			entryName = jarStream.getNextEntry().getName();
 			assertEquals("file folder not included", secondLevel, entryName);
 

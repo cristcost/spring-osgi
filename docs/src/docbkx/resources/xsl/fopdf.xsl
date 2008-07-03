@@ -14,7 +14,6 @@
 
 
     <xsl:import href="urn:docbkx:stylesheet"/>
-    <xsl:import href="highlight-fo.xsl"/>
 
     <!--###################################################
                   Custom Title Page
@@ -152,10 +151,14 @@
    ################################################### -->
 
     <!-- These extensions are required for table printing and other stuff -->
+    <xsl:param name="use.extensions">1</xsl:param>
+	<xsl:param name="highlight.source">1</xsl:param>
+	<!-- xml css looks weird -->
+	<xsl:param name="highlight.default.language"></xsl:param>
     <xsl:param name="tablecolumns.extension">0</xsl:param>
+    <xsl:param name="callout.extensions">1</xsl:param>
     <!-- FOP provide only PDF Bookmarks at the moment -->
     <xsl:param name="fop.extensions">1</xsl:param>
-    <xsl:param name="ignore.image.scaling">0</xsl:param>
 
     <!--###################################################
                      Table Of Contents
@@ -375,7 +378,7 @@
 
     <!-- Use nice graphics for admonitions -->
     <xsl:param name="admon.graphics">'1'</xsl:param>
-    <xsl:param name="admon.graphics.path">src/docbkx/resources/images/admons/</xsl:param>
+    <!--  <xsl:param name="admon.graphics.path">&admon_gfx_path;</xsl:param> -->
 
     <!--###################################################
                          Misc
@@ -437,16 +440,22 @@
             </xsl:choose>
         </fo:basic-link>
     </xsl:template>
-    <!--
     
     <xsl:template match="xref">
         <fo:basic-link internal-destination="{@linkend}"
                 xsl:use-attribute-sets="xref.properties"
                 text-decoration="underline"
                 color="blue">
-				<xsl:apply-templates/>
+            <xsl:choose>
+                <xsl:when test="count(child::node())=0">
+                    <xsl:value-of select="@linkend"/>
+                </xsl:when>
+                <xsl:otherwise>
+                    <xsl:apply-templates/>
+                </xsl:otherwise>
+            </xsl:choose>
         </fo:basic-link>
     </xsl:template>    
-    -->
+        
 
 </xsl:stylesheet>

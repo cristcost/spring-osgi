@@ -2,7 +2,7 @@
   <parent>
     <artifactId>spring-osgi</artifactId>
     <groupId>org.springframework.osgi</groupId>
-    <version>1.1.0-SNAPSHOT</version>
+    <version>1.0.3</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.springframework.osgi</groupId>
@@ -16,35 +16,34 @@
   
   
   <properties>
-    <javadoc.loc>${basedir}/../docs/src/javadoc</javadoc.loc>
+    <javadoc.loc>${basedir}/../../docs/src/javadoc</javadoc.loc>
   
     <spring.osgi.export>
       !org.springframework.osgi.test.*internal*,
       org.springframework.osgi.test*;version=${spring.osgi.export.version}
     </spring.osgi.export>
-    <spring.osgi.private.pkg>
-		org.springframework.osgi.test.*internal*,
-		org.springframework.osgi.extender.internal.util*,
-		org.springframework.osgi.extender.support.internal*
-	</spring.osgi.private.pkg>
+    <spring.osgi.private.pkg>org.springframework.osgi.test.*internal*, org.springframework.osgi.extender.internal.util*</spring.osgi.private.pkg>
 	<spring.osgi.import.pkg>
+	  org.apache.commons.logging*,
 	  org.objectweb.asm*;version="[2,3)";resolution:=optional,
 	  javax.swing.*;resolution:=optional,
 	  org.eclipse.*;resolution:=optional,
 	  org.knopflerfish*;resolution:=optional,
-	  org.apache.felix.*;resolution:=optional
+	  org.apache.felix.*;resolution:=optional,
+	  org.springframework.osgi*;version=${spring.osgi.import.version},
+	  org.springframework*;version=${spring.base.version},
+	  *
 	</spring.osgi.import.pkg>
 	<spring.osgi.symbolic.name>${symName.prefix}.test</spring.osgi.symbolic.name>
   </properties>
   
   <dependencies>
-  
-    <!-- make junit a mandatory dependency -->
     <dependency>
-      <groupId>org.junit</groupId>
-      <artifactId>com.springsource.junit</artifactId>
-      <version>3.8.2</version>
+      <groupId>org.springframework.osgi</groupId>
+      <artifactId>junit.osgi</artifactId>
+      <version>3.8.2-SNAPSHOT</version>
     </dependency>
+      
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-test</artifactId>
@@ -63,9 +62,9 @@
     </dependency>
 
     <dependency>
-      <groupId>org.objectweb.asm</groupId>
-      <artifactId>com.springsource.org.objectweb.asm</artifactId>
-      <version>2.2.3</version>
+      <groupId>org.springframework.osgi</groupId>
+      <artifactId>asm.osgi</artifactId>
+      <version>2.2.3-SNAPSHOT</version>
     </dependency>
         
     <dependency>
@@ -79,7 +78,6 @@
       <groupId>org.springframework.osgi</groupId>
       <artifactId>spring-osgi-extender</artifactId>
       <version>${project.parent.version}</version>
-	  <optional>true</optional>
     </dependency>
 
     <dependency>
@@ -88,7 +86,6 @@
       <version>${equinox.ver}</version>
       <type>jar</type>
       <scope>provided</scope>
-	  <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>knopflerfish</groupId>
@@ -96,7 +93,6 @@
       <version>${kf.ver}</version>
       <type>jar</type>
       <scope>provided</scope>
-	  <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>org.apache.felix</groupId>
@@ -104,26 +100,28 @@
       <version>${felix.ver}</version>
       <type>jar</type>
       <scope>provided</scope>
-	  <optional>true</optional>
-	  <exclusions>
-        <exclusion>
-          <groupId>org.apache.felix</groupId>
-          <artifactId>org.apache.felix.framework</artifactId>
-        </exclusion>          
-        <exclusion>
-          <groupId>org.apache.felix</groupId>
-          <artifactId>org.apache.felix.shell</artifactId>
-        </exclusion>          
-        <exclusion>
-          <groupId>org.apache.felix</groupId>
-          <artifactId>org.apache.felix.shell.tui</artifactId>
-        </exclusion>          
-        <exclusion>
-          <groupId>org.apache.felix</groupId>
-          <artifactId>org.apache.felix.bundlerepository</artifactId>
-        </exclusion>          
-      </exclusions>            
+		  <exclusions>
+            <exclusion>
+              <groupId>org.apache.felix</groupId>
+              <artifactId>org.apache.felix.framework</artifactId>
+            </exclusion>          
+            <exclusion>
+              <groupId>org.apache.felix</groupId>
+              <artifactId>org.apache.felix.shell</artifactId>
+            </exclusion>          
+            <exclusion>
+              <groupId>org.apache.felix</groupId>
+              <artifactId>org.apache.felix.shell.tui</artifactId>
+            </exclusion>          
+            <exclusion>
+              <groupId>org.apache.felix</groupId>
+              <artifactId>org.apache.felix.bundlerepository</artifactId>
+            </exclusion>          
+          </exclusions>            
+      
     </dependency>
+    
+     
      
     <!-- for testing -->
     <dependency>
@@ -150,7 +148,12 @@
               <name>org.springframework.osgi.test.framework</name>
               <value>${osgi.test.platform}</value>
             </property>
+            <property>
+				<name>net.sourceforge.cobertura.datafile</name>
+				<value>${basedir}/target/cobertura/cobertura.ser</value>
+			</property>
           </systemProperties>
+          
           </configuration>
         </plugin>    
     </plugins>

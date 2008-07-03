@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.springframework.osgi.util.internal;
 
 import java.util.Iterator;
@@ -33,8 +32,8 @@ import org.springframework.util.Assert;
 public abstract class BeanFactoryUtils {
 
 	/**
-	 * Return all beans depending directly or indirectly (transitively), on the
-	 * bean identified by the beanName. When dealing with a FactoryBean, the
+	 * Return all beans depending directly or indirectly (transitively), on
+	 * the bean identified by the beanName. When dealing with a FactoryBean, the
 	 * factory itself can be returned or its product. Additional filtering can
 	 * be executed through the type parameter. If no filtering is required, then
 	 * null can be passed.
@@ -49,8 +48,8 @@ public abstract class BeanFactoryUtils {
 	 * @param type type of the beans returned (null to return all beans)
 	 * @return bean names
 	 */
-	public static String[] getTransitiveDependenciesForBean(ConfigurableListableBeanFactory beanFactory,
-			String beanName, boolean rawFactoryBeans, Class type) {
+	public static String[] getTransitiveDependenciesForBean(ConfigurableListableBeanFactory beanFactory, String beanName,
+			boolean rawFactoryBeans, Class type) {
 		Assert.notNull(beanFactory);
 		Assert.hasText(beanName);
 
@@ -75,22 +74,19 @@ public abstract class BeanFactoryUtils {
 
 	private static void getTransitiveBeans(ConfigurableListableBeanFactory beanFactory, String beanName,
 			boolean rawFactoryBeans, Set beanNames) {
-		String transformedBeanName = org.springframework.beans.factory.BeanFactoryUtils.transformedBeanName(beanName);
-		// strip out '&' just in case
-		String[] beans = beanFactory.getDependenciesForBean(transformedBeanName);
+		// new String[0];
+		// strip out & just in case
+		String[] beans = beanFactory.getDependenciesForBean(org.springframework.beans.factory.BeanFactoryUtils.transformedBeanName(beanName));
 
 		for (int i = 0; i < beans.length; i++) {
 			String bean = beans[i];
-			// named nested beans are considered as well, filter them out
-			if (beanFactory.containsBean(bean)) {
-				// & if needed
-				if (rawFactoryBeans && beanFactory.isFactoryBean(bean))
-					bean = BeanFactory.FACTORY_BEAN_PREFIX + beans[i];
+			// & if needed
+			if (rawFactoryBeans && beanFactory.isFactoryBean(bean))
+				bean = BeanFactory.FACTORY_BEAN_PREFIX + beans[i];
 
-				if (!beanNames.contains(bean)) {
-					beanNames.add(bean);
-					getTransitiveBeans(beanFactory, bean, rawFactoryBeans, beanNames);
-				}
+			if (!beanNames.contains(bean)) {
+				beanNames.add(bean);
+				getTransitiveBeans(beanFactory, bean, rawFactoryBeans, beanNames);
 			}
 		}
 	}

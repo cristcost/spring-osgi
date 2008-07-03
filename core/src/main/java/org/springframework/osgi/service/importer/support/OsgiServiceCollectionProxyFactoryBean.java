@@ -16,7 +16,6 @@
 
 package org.springframework.osgi.service.importer.support;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -28,19 +27,14 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Filter;
-import org.springframework.beans.factory.FactoryBeanNotInitializedException;
-import org.springframework.beans.factory.SmartFactoryBean;
-import org.springframework.osgi.context.internal.classloader.AopClassLoaderFactory;
-import org.springframework.osgi.service.importer.support.internal.aop.ServiceProxyCreator;
-import org.springframework.osgi.service.importer.support.internal.collection.CollectionProxy;
-import org.springframework.osgi.service.importer.support.internal.collection.OsgiServiceCollection;
-import org.springframework.osgi.service.importer.support.internal.collection.OsgiServiceList;
-import org.springframework.osgi.service.importer.support.internal.collection.OsgiServiceSet;
-import org.springframework.osgi.service.importer.support.internal.collection.OsgiServiceSortedList;
-import org.springframework.osgi.service.importer.support.internal.collection.OsgiServiceSortedSet;
-import org.springframework.osgi.service.importer.support.internal.controller.ImporterController;
-import org.springframework.osgi.service.importer.support.internal.controller.ImporterInternalActions;
-import org.springframework.osgi.service.importer.support.internal.dependency.ImporterStateListener;
+import org.springframework.beans.factory.DisposableBean;
+import org.springframework.osgi.service.importer.internal.aop.ServiceProxyCreator;
+import org.springframework.osgi.service.importer.internal.collection.CollectionProxy;
+import org.springframework.osgi.service.importer.internal.collection.OsgiServiceCollection;
+import org.springframework.osgi.service.importer.internal.collection.OsgiServiceList;
+import org.springframework.osgi.service.importer.internal.collection.OsgiServiceSet;
+import org.springframework.osgi.service.importer.internal.collection.OsgiServiceSortedList;
+import org.springframework.osgi.service.importer.internal.collection.OsgiServiceSortedSet;
 import org.springframework.util.Assert;
 
 /**
@@ -63,7 +57,8 @@ import org.springframework.util.Assert;
  * the <code>next()</code> method always obey the result of the previous
  * <code>hasNext()</code> invocation:
  * 
- * <p/> <table border="1">
+ * <p/>
+ * <table border="1">
  * <tr>
  * <th><code>hasNext()</code> returned value</th>
  * <th><code>next()</code> behaviour</th>
@@ -82,9 +77,10 @@ import org.springframework.util.Assert;
  * </tr>
  * </table>
  * 
- * <p/> Due to the dynamic nature of OSGi, <code>hasNext()</code> invocation
- * made on the same <code>Iterator</code> can return different values based on
- * the services availability. However, as explained above, <code>next()</code>
+ * <p/>
+ * Due to the dynamic nature of OSGi, <code>hasNext()</code> invocation made
+ * on the same <code>Iterator</code> can return different values based on the
+ * services availability. However, as explained above, <code>next()</code>
  * will always obey the result of the last <code>hasNext()</code> method.
  * 
  * <p/><strong>Note:</strong> Even though the collection and its iterators
@@ -93,38 +89,14 @@ import org.springframework.util.Assert;
  * synchronized. Due to the light nature of the iterators, consider creating a
  * new one rather then reusing or sharing.
  * 
- * 
+ * @author Costin Leau
  * @see java.util.Iterator
  * @see java.util.Collection
  * @see java.util.List
  * @see java.util.Set
  * @see java.util.SortedSet
- * 
- * @author Costin Leau
  */
-public final class OsgiServiceCollectionProxyFactoryBean extends AbstractServiceImporterProxyFactoryBean {
-
-	/**
-	 * Wrapper around internal commands.
-	 * 
-	 * @author Costin Leau
-	 * 
-	 */
-	private class Executor implements ImporterInternalActions {
-
-		public void addStateListener(ImporterStateListener stateListener) {
-			stateListeners.add(stateListener);
-		}
-
-		public void removeStateListener(ImporterStateListener stateListener) {
-			stateListeners.remove(stateListener);
-		}
-
-		public boolean isSatisfied() {
-			return (exposedProxy == null ? true : exposedProxy.isSatisfied());
-		}
-	};
-
+public class OsgiServiceCollectionProxyFactoryBean extends AbstractOsgiServiceImportFactoryBean {
 
 	private static final Log log = LogFactory.getLog(OsgiServiceCollectionProxyFactoryBean.class);
 
@@ -138,7 +110,7 @@ public final class OsgiServiceCollectionProxyFactoryBean extends AbstractService
 	private CollectionProxy exposedProxy;
 
 	/** proxy infrastructure hook exposed to allow clean up */
-	private Runnable proxyDestructionCallback;
+	private DisposableBean disposable;
 
 	/** proxy creator */
 	private ServiceProxyCreator proxyCreator;
@@ -146,49 +118,23 @@ public final class OsgiServiceCollectionProxyFactoryBean extends AbstractService
 	private Comparator comparator;
 
 	private CollectionType collectionType = CollectionType.LIST;
-	/** greedy-proxying */
-	private boolean greedyProxying = false;
 
-	/** internal listeners */
-	private final List stateListeners = Collections.synchronizedList(new ArrayList(4));
-
-	private final ImporterInternalActions controller;
-
-
-	public OsgiServiceCollectionProxyFactoryBean() {
-		controller = new ImporterController(new Executor());
-	}
 
 	public void afterPropertiesSet() {
 		super.afterPropertiesSet();
 
-		// add default cardinality
-		if (getCardinality() == null)
-			setCardinality(Cardinality.C_1__N);
-
 		// create shared proxy creator ( reused for each new service
 		// joining the collection)
-		proxyCreator = new StaticServiceProxyCreator(getInterfaces(), getAopClassLoader(), getBundleContext(),
-			getContextClassLoader(), greedyProxying);
+		proxyCreator = new StaticServiceProxyCreator(getInterfaces(), getBeanClassLoader(), getBundleContext(),
+			getContextClassLoader());
 	}
 
-	/**
-	 * {@inheritDoc}
-	 * 
-	 * Returns the managed collection type.
-	 */
 	public Class getObjectType() {
 		return (proxy != null ? proxy.getClass() : collectionType.getCollectionClass());
 	}
 
-	/**
-	 * {@inheritDoc}
-	 * 
-	 * Returns a managed collection that automatically handles the dynamics of
-	 * matching OSGi services.
-	 */
-	public Object getObject() {
-		return super.getObject();
+	public boolean isSatisfied() {
+		return (exposedProxy == null ? true : exposedProxy.isSatisfied());
 	}
 
 	/**
@@ -200,13 +146,13 @@ public final class OsgiServiceCollectionProxyFactoryBean extends AbstractService
 	 */
 	Object createProxy() {
 		if (log.isDebugEnabled())
-			log.debug("Creating a multi-value/collection proxy");
+			log.debug("creating a multi-value/collection proxy");
 
 		OsgiServiceCollection collection;
 		Collection delegate;
 
 		BundleContext bundleContext = getBundleContext();
-		ClassLoader classLoader = getAopClassLoader();
+		ClassLoader classLoader = getBeanClassLoader();
 		Filter filter = getUnifiedFilter();
 
 		if (CollectionType.LIST.equals(collectionType)) {
@@ -232,25 +178,22 @@ public final class OsgiServiceCollectionProxyFactoryBean extends AbstractService
 		}
 
 		else {
-			throw new IllegalArgumentException("Unknown collection type:" + collectionType);
+			throw new IllegalArgumentException("unknown collection type:" + collectionType);
 		}
 
-		collection.setRequiredAtStartup(getCardinality().isMandatory());
+		collection.setRequiredAtStartup(isMandatory());
 		collection.setListeners(getListeners());
-		collection.setStateListeners(stateListeners);
-		collection.setServiceImporter(this);
-		collection.setServiceImporterName(getBeanName());
 		collection.afterPropertiesSet();
 
 		proxy = delegate;
 		exposedProxy = collection;
-		proxyDestructionCallback = new DisposableBeanRunnableAdapter(collection);
+		disposable = collection;
 
 		return delegate;
 	}
 
-	Runnable getProxyDestructionCallback() {
-		return proxyDestructionCallback;
+	DisposableBean getDisposable() {
+		return disposable;
 	}
 
 	/**
@@ -300,33 +243,8 @@ public final class OsgiServiceCollectionProxyFactoryBean extends AbstractService
 	 */
 	public void setCardinality(Cardinality cardinality) {
 		Assert.notNull(cardinality);
-		Assert.isTrue(cardinality.isMultiple(), "Only multiple cardinality ('X..N') accepted");
+		Assert.isTrue(cardinality.isMultiple(), "only multiple cardinality ('X..N') accepted");
 		super.setCardinality(cardinality);
 	}
 
-	/**
-	 * Dictates whether <em>greedy</em> proxies are created or not (default).
-	 * 
-	 * <p>
-	 * Greedy proxies will proxy <b>all</b> the (visible) classes published by
-	 * the imported OSGi services. This means that the individual service proxy,
-	 * might implement/extend additional classes.
-	 * </p>
-	 * By default, greedy proxies are disabled (false) meaning that only the
-	 * specified classes are used for generating the the imported OSGi service
-	 * proxies.
-	 * 
-	 * <p/><b>Note:</b>Greedy proxying will use the proxy mechanism dictated
-	 * by this factory configuration. This means that if JDK proxies are used,
-	 * greedy proxing will consider only additional interfaces exposed by the
-	 * OSGi service and none of the extra classes. When CGLIB is used, all extra
-	 * published classes (whether interfaces or <em>non-final</em> concrete
-	 * classes) will be considered.
-	 * 
-	 * @param greedyProxying true if greedy proxying should be enabled, false
-	 * otherwise.
-	 */
-	public void setGreedyProxying(boolean greedyProxying) {
-		this.greedyProxying = greedyProxying;
-	}
 }

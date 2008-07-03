@@ -13,22 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.springframework.osgi.service.importer.support;
 
 import java.io.Serializable;
 import java.sql.Time;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.LinkedHashMap;
 import java.util.List;
-
-import javax.print.attribute.SupportedValuesAttribute;
 
 import junit.framework.TestCase;
 
 import org.osgi.framework.BundleContext;
-import org.springframework.core.enums.LabeledEnum;
 import org.springframework.osgi.mock.MockBundleContext;
 import org.springframework.osgi.mock.MockServiceReference;
 import org.springframework.util.CollectionUtils;
@@ -39,22 +34,17 @@ import org.springframework.util.CollectionUtils;
  * @author Costin Leau
  */
 public class GreedyProxyTest extends TestCase {
-
 	private StaticServiceProxyCreator proxyCreator;
 
 	private String[] classesAsStrings = new String[] { Serializable.class.getName(), Comparable.class.getName() };
 
-
 	protected void setUp() throws Exception {
-		Class[] classes = new Class[] { Serializable.class, Comparable.class };
 
-		proxyCreator = createProxyCreator(classes);
-	}
-
-	private StaticServiceProxyCreator createProxyCreator(Class[] classes) {
 		ClassLoader cl = getClass().getClassLoader();
 		BundleContext ctx = new MockBundleContext();
-		return new StaticServiceProxyCreator(classes, cl, ctx, ImportContextClassLoader.UNMANAGED, true);
+		Class[] classes = new Class[] { Serializable.class, Comparable.class };
+
+		proxyCreator = new StaticServiceProxyCreator(classes, cl, ctx, ImportContextClassLoader.UNMANAGED);
 	}
 
 	protected void tearDown() throws Exception {
@@ -72,6 +62,7 @@ public class GreedyProxyTest extends TestCase {
 		for (int i = 0; i < classes.length; i++) {
 			if (clazz.equals(classes[i]))
 				return true;
+
 		}
 		return false;
 	}
@@ -99,14 +90,15 @@ public class GreedyProxyTest extends TestCase {
 	}
 
 	public void testParentInterfaces() throws Exception {
-		String[] extraClasses = new String[] { SupportedValuesAttribute.class.getName(), LabeledEnum.class.getName() };
+		String[] extraClasses = new String[] { Object.class.getName(), Cloneable.class.getName(), Date.class.getName(),
+				Time.class.getName() };
 
 		MockServiceReference ref = new MockServiceReference(addExtraIntfs(extraClasses));
 		Class[] clazzes = proxyCreator.discoverProxyClasses(ref);
-		assertEquals(2, clazzes.length);
-		assertTrue(containsClass(clazzes, LabeledEnum.class));
-		assertFalse(containsClass(clazzes, Comparable.class));
-		assertTrue(containsClass(clazzes, SupportedValuesAttribute.class));
+		assertEquals(1, clazzes.length);
+		assertFalse(containsClass(clazzes, Date.class));
+		assertFalse(containsClass(clazzes, Cloneable.class));
+		assertTrue(containsClass(clazzes, Time.class));
 	}
 
 	public void testExcludeFinalClass() throws Exception {
@@ -119,36 +111,4 @@ public class GreedyProxyTest extends TestCase {
 		assertTrue(containsClass(clazzes, Serializable.class));
 	}
 
-	public void testInterfacesOnlyAllowed() throws Exception {
-		String[] extraClasses = new String[] { Object.class.getName() };
-
-		MockServiceReference ref = new MockServiceReference(addExtraIntfs(extraClasses));
-		Class[] clazzes = proxyCreator.discoverProxyClasses(ref);
-		assertEquals(2, clazzes.length);
-		assertFalse(containsClass(clazzes, Object.class));
-	}
-
-	public void testAllowConcreteClasses() throws Exception {
-		Class[] classes = new Class[] { Serializable.class, Comparable.class, Date.class };
-		proxyCreator = createProxyCreator(classes);
-
-		String[] extraClasses = new String[] { LinkedHashMap.class.getName(), Date.class.getName() };
-
-		MockServiceReference ref = new MockServiceReference(addExtraIntfs(extraClasses));
-		Class[] clazzes = proxyCreator.discoverProxyClasses(ref);
-		assertEquals(2, clazzes.length);
-		assertTrue(containsClass(clazzes, LinkedHashMap.class));
-		assertTrue(containsClass(clazzes, Date.class));
-	}
-
-	public void testRemoveParentsWithClassesAndInterfaces() throws Exception {
-		Class[] classes = new Class[] { Serializable.class, Comparable.class, Date.class };
-		proxyCreator = createProxyCreator(classes);
-		String[] extraClasses = new String[] { Time.class.getName(), Cloneable.class.getName() };
-		MockServiceReference ref = new MockServiceReference(addExtraIntfs(extraClasses));
-
-		Class[] clazzes = proxyCreator.discoverProxyClasses(ref);
-		assertEquals(1, clazzes.length);
-		assertTrue(containsClass(clazzes, Time.class));
-	}
 }

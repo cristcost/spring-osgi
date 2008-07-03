@@ -16,30 +16,17 @@
 
 package org.springframework.osgi.service.importer.support;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 import org.aopalliance.aop.Advice;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.osgi.framework.ServiceReference;
-import org.springframework.beans.factory.FactoryBeanNotInitializedException;
-import org.springframework.beans.factory.SmartFactoryBean;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.ApplicationEventPublisherAware;
-import org.springframework.osgi.context.internal.classloader.AopClassLoaderFactory;
+import org.springframework.beans.factory.DisposableBean;
 import org.springframework.osgi.service.importer.ImportedOsgiServiceProxy;
 import org.springframework.osgi.service.importer.OsgiServiceLifecycleListener;
-import org.springframework.osgi.service.importer.support.internal.aop.ProxyPlusCallback;
-import org.springframework.osgi.service.importer.support.internal.aop.ServiceDynamicInterceptor;
-import org.springframework.osgi.service.importer.support.internal.aop.ServiceInvoker;
-import org.springframework.osgi.service.importer.support.internal.aop.ServiceProviderTCCLInterceptor;
-import org.springframework.osgi.service.importer.support.internal.aop.ServiceProxyCreator;
-import org.springframework.osgi.service.importer.support.internal.controller.ImporterController;
-import org.springframework.osgi.service.importer.support.internal.controller.ImporterInternalActions;
-import org.springframework.osgi.service.importer.support.internal.dependency.ImporterStateListener;
-import org.springframework.osgi.service.importer.support.internal.support.RetryTemplate;
+import org.springframework.osgi.service.importer.internal.aop.ServiceDynamicInterceptor;
+import org.springframework.osgi.service.importer.internal.aop.ServiceProviderTCCLInterceptor;
+import org.springframework.osgi.service.importer.internal.aop.ServiceProxyCreator;
+import org.springframework.osgi.service.importer.internal.support.RetryTemplate;
 import org.springframework.util.Assert;
 import org.springframework.util.ObjectUtils;
 
@@ -50,7 +37,7 @@ import org.springframework.util.ObjectUtils;
  * the select service goes away (at any point in time), the proxy will
  * automatically search for a replacement without the user intervention.
  * 
- * <p/> Note that the proxy instance remains the same and only the backing OSGi
+ * Note that the proxy instance remains the same and only the backing OSGi
  * service changes. Due to the dynamic nature of OSGi, the backing object can
  * change during method invocations.
  * 
@@ -59,33 +46,7 @@ import org.springframework.util.ObjectUtils;
  * @author Hal Hildebrand
  * 
  */
-public final class OsgiServiceProxyFactoryBean extends AbstractServiceImporterProxyFactoryBean implements
-		ApplicationEventPublisherAware {
-
-	/**
-	 * Wrapper around internal commands.
-	 * 
-	 * @author Costin Leau
-	 * 
-	 */
-	private class Executor implements ImporterInternalActions {
-
-		public void addStateListener(ImporterStateListener stateListener) {
-			stateListeners.add(stateListener);
-		}
-
-		public void removeStateListener(ImporterStateListener stateListener) {
-			stateListeners.remove(stateListener);
-		}
-
-		public boolean isSatisfied() {
-			if (!mandatory)
-				return true;
-			else
-				return (proxy == null ? true : proxy.getServiceReference().getBundle() != null);
-		}
-	};
-
+public class OsgiServiceProxyFactoryBean extends AbstractOsgiServiceImportFactoryBean {
 
 	private static final Log log = LogFactory.getLog(OsgiServiceProxyFactoryBean.class);
 
@@ -95,54 +56,24 @@ public final class OsgiServiceProxyFactoryBean extends AbstractServiceImporterPr
 	private ImportedOsgiServiceProxy proxy;
 
 	/** proxy infrastructure hook exposed to allow clean up */
-	private Runnable destructionCallback;
-
-	/** application publisher */
-	private ApplicationEventPublisher applicationEventPublisher;
-
-	/** internal listeners */
-	private final List stateListeners = Collections.synchronizedList(new ArrayList(4));
-
-	private final ImporterInternalActions controller;
-	/** convenience field * */
-	private boolean mandatory;
+	private DisposableBean disposable;
 
 
-	public OsgiServiceProxyFactoryBean() {
-		controller = new ImporterController(new Executor());
-	}
-
-	public void afterPropertiesSet() {
-		super.afterPropertiesSet();
-
-		// add default cardinality
-		if (getCardinality() == null)
-			setCardinality(Cardinality.C_1__1);
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * 
-	 * Returns the managed proxy type. If the proxy is not created when this
-	 * method is invoked, only the first interface/class will be returned.
-	 */
 	public Class getObjectType() {
 		return (proxy != null ? proxy.getClass() : (ObjectUtils.isEmpty(getInterfaces()) ? Object.class
 				: getInterfaces()[0]));
 	}
 
-	/**
-	 * {@inheritDoc}
-	 * 
-	 * Returns a managed proxy to the best matching OSGi service.
-	 */
-	public Object getObject() {
-		return super.getObject();
+	public boolean isSatisfied() {
+		if (!isMandatory())
+			return true;
+		else
+			return (proxy == null ? true : proxy.getServiceReference().getBundle() != null);
 	}
 
 	Object createProxy() {
 		if (log.isDebugEnabled())
-			log.debug("Creating a single service proxy ...");
+			log.debug("creating a single service proxy ...");
 
 		// first create the TCCL interceptor to register its listener with the
 		// dynamic interceptor
@@ -150,26 +81,25 @@ public final class OsgiServiceProxyFactoryBean extends AbstractServiceImporterPr
 		final OsgiServiceLifecycleListener tcclListener = tcclAdvice.new ServiceProviderTCCLListener();
 
 		final ServiceDynamicInterceptor lookupAdvice = new ServiceDynamicInterceptor(getBundleContext(),
-			getUnifiedFilter(), getAopClassLoader());
+			getUnifiedFilter(), getBeanClassLoader());
 
-		lookupAdvice.setRequiredAtStartup(getCardinality().isMandatory());
+		lookupAdvice.setRequiredAtStartup(isMandatory());
 
 		OsgiServiceLifecycleListener[] listeners = addListener(getListeners(), tcclListener);
 
 		lookupAdvice.setListeners(listeners);
 		lookupAdvice.setRetryTemplate(new RetryTemplate(retryTemplate));
-		lookupAdvice.setApplicationEventPublisher(applicationEventPublisher);
 
 		// add the listeners as a list since it might be updated after the proxy
 		// has been created
-		lookupAdvice.setStateListeners(stateListeners);
+		lookupAdvice.setDependencyListeners(getDepedencyListeners());
 		lookupAdvice.setServiceImporter(this);
 
 		// create a proxy creator using the existing context
-		ServiceProxyCreator creator = new AbstractServiceProxyCreator(getInterfaces(), getAopClassLoader(),
+		ServiceProxyCreator creator = new AbstractServiceProxyCreator(getInterfaces(), getBeanClassLoader(),
 			getBundleContext(), getContextClassLoader()) {
 
-			ServiceInvoker createDispatcherInterceptor(ServiceReference reference) {
+			Advice createDispatcherInterceptor(ServiceReference reference) {
 				return lookupAdvice;
 			}
 
@@ -178,20 +108,15 @@ public final class OsgiServiceProxyFactoryBean extends AbstractServiceImporterPr
 			}
 		};
 
-		ProxyPlusCallback proxyPlusCallback = creator.createServiceProxy(lookupAdvice.getServiceReference());
+		disposable = lookupAdvice;
 
-		proxy = proxyPlusCallback.proxy;
-		destructionCallback = new DisposableBeanRunnableAdapter(proxyPlusCallback.destructionCallback);
+		proxy = (ImportedOsgiServiceProxy) creator.createServiceProxy(lookupAdvice.getServiceReference());
 
 		lookupAdvice.setProxy(proxy);
 		// start the lookup only after the proxy has been assembled
 		lookupAdvice.afterPropertiesSet();
 
 		return proxy;
-	}
-
-	Runnable getProxyDestructionCallback() {
-		return destructionCallback;
 	}
 
 	/**
@@ -210,6 +135,10 @@ public final class OsgiServiceProxyFactoryBean extends AbstractServiceImporterPr
 		if (listeners != null)
 			System.arraycopy(listeners, 0, list, 1, listeners.length);
 		return list;
+	}
+
+	DisposableBean getDisposable() {
+		return disposable;
 	}
 
 	/**
@@ -265,10 +194,5 @@ public final class OsgiServiceProxyFactoryBean extends AbstractServiceImporterPr
 		Assert.notNull(cardinality);
 		Assert.isTrue(cardinality.isSingle(), "only singular cardinality ('X..1') accepted");
 		super.setCardinality(cardinality);
-		this.mandatory = cardinality.isMandatory();
-	}
-
-	public void setApplicationEventPublisher(ApplicationEventPublisher applicationEventPublisher) {
-		this.applicationEventPublisher = applicationEventPublisher;
 	}
 }

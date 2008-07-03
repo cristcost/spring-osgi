@@ -87,6 +87,7 @@ public class OsgiTestInfoHolder {
 	 * @param testProblem The testResult to set.
 	 */
 	public void addTestFailure(Throwable testProblem) {
+		// TODO: unpack exception to prevent classloader leaks
 		testFailures.add(testProblem);
 	}
 

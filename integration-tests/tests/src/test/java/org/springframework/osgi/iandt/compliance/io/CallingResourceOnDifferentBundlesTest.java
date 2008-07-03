@@ -24,7 +24,6 @@ import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleEvent;
 import org.osgi.framework.SynchronousBundleListener;
 import org.springframework.osgi.iandt.BaseIntegrationTest;
-import org.springframework.osgi.test.platform.Platforms;
 import org.springframework.osgi.util.OsgiBundleUtils;
 import org.springframework.osgi.util.OsgiStringUtils;
 
@@ -51,8 +50,7 @@ public class CallingResourceOnDifferentBundlesTest extends BaseIntegrationTest {
 			logger.debug("calling #getResource on bundle " + OsgiStringUtils.nullSafeNameAndSymName(bundle));
 			URL url = bundle.getResource(LOCATION);
 			if (!OsgiBundleUtils.isFragment(bundle))
-				assertNotNull("bundle " + OsgiStringUtils.nullSafeNameAndSymName(bundle) + " contains no META-INF/",
-					url);
+				assertNotNull(url);
 		}
 	}
 
@@ -64,9 +62,9 @@ public class CallingResourceOnDifferentBundlesTest extends BaseIntegrationTest {
 			logger.debug("calling #getResources on bundle " + OsgiStringUtils.nullSafeNameAndSymName(bundle));
 			Enumeration enm = bundle.getResources(LOCATION);
 			if (!OsgiBundleUtils.isFragment(bundle))
-				assertNotNull("bundle " + OsgiStringUtils.nullSafeNameAndSymName(bundle) + " contains no META-INF/",
-					enm);
+				assertNotNull(enm);
 		}
+
 	}
 
 	public void testCallGetResourceOnADifferentBundleRetrievedThroughBundleEvent() throws Exception {
@@ -108,18 +106,4 @@ public class CallingResourceOnDifferentBundlesTest extends BaseIntegrationTest {
 
 		assertTrue("bundle listener hasn't been called", listenerCalled[0]);
 	}
-
-	protected boolean isDisabledInThisEnvironment(String testMethodName) {
-
-		return ("testCallGetResourceOnADifferentBundle".equals(testMethodName) && isFelix()) || isKF();
-	}
-
-	private boolean isFelix() {
-		return (getPlatformName().indexOf("Felix") > -1);
-	}
-
-	private boolean isKF() {
-		return (getPlatformName().indexOf("Knopflerfish") > -1);
-	}
-
 }

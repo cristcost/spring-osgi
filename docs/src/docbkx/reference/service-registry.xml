@@ -28,7 +28,7 @@
           <area id="service-registry.xml.ns.default.beans.beans.25" coords="6"/>
           <area id="service-registry.xml.ns.default.beans.osgi.service" coords="10"/>
        </areaspec>
-       <programlisting language="xml"><![CDATA[<?xml version="1.0" encoding="UTF-8"?>
+       <programlisting><![CDATA[<?xml version="1.0" encoding="UTF-8"?>;
 <beans xmlns="http://www.springframework.org/schema/beans"
    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
    xmlns:osgi="http://www.springframework.org/schema/osgi"
@@ -74,7 +74,7 @@
           <area id="service-registry.xml.ns.default.osgi.beans.25" coords="9"/>
           <area id="service-registry.xml.ns.default.osgi.service" coords="11"/>
        </areaspec>
-    <programlisting language="xml"><![CDATA[<?xml version="1.0" encoding="UTF-8"?>
+    <programlisting><![CDATA[<?xml version="1.0" encoding="UTF-8"?>
 <beans:beans 
    xmlns="http://www.springframework.org/schema/osgi"
    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -130,7 +130,7 @@
 
       <para>For example, the declaration</para>
 
-      <programlisting language="xml"><![CDATA[<service ref="beanToPublish" interface="com.xyz.MessageService"/>]]></programlisting>
+      <programlisting><![CDATA[<service ref="beanToPublish" interface="com.xyz.MessageService"/>]]></programlisting>
 
       <para>exports the bean with name <literal>beanToPublish</literal> with
       interface <literal>com.xyz.MessageService</literal>. The published
@@ -148,7 +148,7 @@
       <interfacename>ServiceRegistration</interfacename> object into other beans if
       needed. For example:</para>
 
-      <programlisting language="xml"><![CDATA[<service id="myServiceRegistration" ref="beanToPublish"
+      <programlisting><![CDATA[<service id="myServiceRegistration" ref="beanToPublish"
     interface="com.xyz.MessageService"/>]]></programlisting>
 
       <para>As an alternative to exporting a named bean, the bean to be
@@ -156,7 +156,7 @@
       bean of the service element. Typically the top-level namespace would be
       the <literal>beans</literal> namespace when using this style:</para>
 
-      <programlisting language="xml"><![CDATA[<osgi:service interface="com.xyz.MessageService">
+      <programlisting><![CDATA[<osgi:service interface="com.xyz.MessageService">
   <bean class="SomeClass">
      ...
   </bean>
@@ -176,7 +176,7 @@
       simply use the <literal>scope</literal> attribute of the
       <literal>bean</literal> element:</para>
 
-      <programlisting language="xml"><![CDATA[<osgi:service ref="beanToBeExported" interface="com.xyz.MessageService"/>
+      <programlisting><![CDATA[<osgi:service ref="beanToBeExported" interface="com.xyz.MessageService"/>
 
 <bean id="beanToBeExported" scope="bundle" class="com.xyz.MessageServiceImpl"/>]]></programlisting>
 
@@ -200,7 +200,7 @@
         nested <literal>interfaces</literal> element can be used in place of
         the <literal>interface</literal> attribute.</para>
 
-        <programlisting language="xml"><![CDATA[<osgi:service ref="beanToBeExported">
+        <programlisting><![CDATA[<osgi:service ref="beanToBeExported">
   <osgi:interfaces>
      <value>com.xyz.MessageService</value>
      <value>com.xyz.MarkerInterface</value>
@@ -273,7 +273,7 @@
         <para>For example, to automatically register a bean under all of the
         interfaces that it supports you would declare:</para>
 
-        <programlisting language="xml"><![CDATA[<service ref="beanToBeExported" auto-export="interfaces"/>]]></programlisting>
+        <programlisting><![CDATA[<service ref="beanToBeExported" auto-export="interfaces"/>]]></programlisting>
 
         <para>Given the interface hierarchy:</para>
 
@@ -314,7 +314,7 @@ public interface SubInterface extends SuperInterface {}]]></programlisting>
         at least one nested <literal>entry</literal> element from the Spring
         beans namespace. For example:</para>
 
-        <programlisting language="xml"><![CDATA[<service ref="beanToBeExported" interface="com.xyz.MyServiceInterface">
+        <programlisting><![CDATA[<service ref="beanToBeExported" interface="com.xyz.MyServiceInterface">
   <service-properties>
     <beans:entry key="myOtherKey" value="aStringValue"/>
     <beans:entry key="aThirdKey" value-ref="beanToExposeAsProperty"/>
@@ -339,7 +339,7 @@ public interface SubInterface extends SuperInterface {}]]></programlisting>
         exported, then the optional <literal>depends-on</literal> attribute
         can be used to express these dependencies.</para>
 
-        <programlisting language="xml"><![CDATA[<service ref="beanToBeExported" interface="com.xyz.MyServiceInterface"
+        <programlisting><![CDATA[<service ref="beanToBeExported" interface="com.xyz.MyServiceInterface"
      depends-on="myOtherComponent"/>]]></programlisting>
       </section>
       
@@ -380,7 +380,7 @@ public interface SubInterface extends SuperInterface {}]]></programlisting>
         is zero. To explicitly specify a ranking value for the registered
         service, use the optional <literal>ranking</literal> attribute.</para>
 
-        <programlisting language="xml"><![CDATA[<service ref="beanToBeExported" interface="com.xyz.MyServiceInterface"
+        <programlisting><![CDATA[<service ref="beanToBeExported" interface="com.xyz.MyServiceInterface"
   ranking="9"/>]]></programlisting>
       </section>
 
@@ -391,38 +391,31 @@ public interface SubInterface extends SuperInterface {}]]></programlisting>
        As a summary, the following table lists the attributes names, possible values and
        a short description for each of them.
        </para>
-       <table id="service-export-options" pgwide="1" align="center">
-          <title>OSGi <![CDATA[<service>]]> attributes</title>
-          <tgroup cols="6">
-          	<colspec colname="c1"/>
-          	<colspec colname="c2"/>
-          	<colspec colname="c3"/>
-          	<colspec colname="c4"/>
-          	<colspec colname="c5"/>
-          	<colspec colname="c6" align="justify"/>
-            <spanspec spanname="values" namest="c2" nameend="c5" align="center"/>
+       <table id="service-export-options" pgwide="1">
+          <title>OSGi &lt;service&gt; attributes</title>
+          <tgroup cols="3">
+            <colspec align="center" />
             <thead>
               <row>
                 <entry>Name</entry>
-                <entry spanname="values">Values</entry>
+                <entry>Values</entry>
                 <entry>Description</entry>
               </row>
             </thead>
             <tbody>
               <row>
                 <entry>interface</entry>
-                <entry spanname="values">fully qualified class name (such as <classname>java.lang.Thread</classname>)</entry>
+                <entry>fully qualified class name (such as <literal>java.lang.Thread</literal>)</entry>
                 <entry>the fully qualified name of the class under which the object will be exported</entry>
               </row>
               <row>
                 <entry>ref</entry>
-                <entry spanname="values">any bean name</entry>
+                <entry>any bean name</entry>
                 <entry>Reference to the named bean to be exported as a service in the service registry.</entry>
               </row>
               <row>
                 <entry>context-class-loader</entry>
-                <entry namest="c2" nameend="c3">unmanaged</entry>
-                <entry namest="c4" nameend="c5">service-provider</entry>
+                <entry>unmanaged | service-provider</entry>
                 <entry>Defines how the context class loader will be managed when an operation is invoked on the 
                 exported service. The default value is <literal>unmanaged</literal> which means that no management of 
                 the context class loader is attempted. A value of <literal>service-provider</literal> guarantees that
@@ -431,10 +424,7 @@ public interface SubInterface extends SuperInterface {}]]></programlisting>
               </row>
               <row>
                 <entry>auto-export</entry>
-                <entry>disabled</entry>
-                <entry>interfaces</entry>
-                <entry>class-hierarchy</entry>
-                <entry>all-classes</entry>
+                <entry>disabled | interfaces | class-hierarchy | all-classes</entry>
                 <entry>Enables Spring to automatically manage the set of service interfaces advertised for the
 				service. By default this facility is <literal>disabled</literal>. A value of <literal>interfaces</literal> advertises all 
                 of the Java interfaces supported by the exported service. A value of <literal>class-hierarchy</literal> 
@@ -443,7 +433,7 @@ public interface SubInterface extends SuperInterface {}]]></programlisting>
               </row>
               <row>
                 <entry>ranking</entry>
-                <entry spanname="values">any integer value</entry>
+                <entry>any integer value</entry>
                 <entry>Specify the service ranking to be used when advertising the service. Default value is 0.</entry>
               </row>
               
@@ -484,7 +474,7 @@ public interface SubInterface extends SuperInterface {}]]></programlisting>
           <area id="service-registry.exporter.listener.nested.decl" coords="7"/>
        </areaspec>
        
-        <programlisting language="xml"><![CDATA[<service ref="beanToBeExported" interface="SomeInterface">
+        <programlisting><![CDATA[<service ref="beanToBeExported" interface="SomeInterface">
   <registration-listener ref="myListener"
     registration-method="serviceRegistered"
     unregistration-method="serviceUnregistered"/>
@@ -602,14 +592,14 @@ public interface SubInterface extends SuperInterface {}]]></programlisting>
 	        returned from the service registry when querying it for a service
 	        offering the <interfacename>MessageService</interfacename> interface.</para>
 	
-	        <programlisting language="xml"><![CDATA[<reference id="messageService" interface="com.xyz.MessageService"/>]]></programlisting>
+	        <programlisting><![CDATA[<reference id="messageService" interface="com.xyz.MessageService"/>]]></programlisting>
 	        
 	        <para>Just like the <literal>service</literal> declaration, when specifying
 	        multiple interfaces, use the nested <literal>interfaces</literal> element instead
 	        of <literal>interface</literal> attribute:
 	        </para>
 	        
-	        <programlisting language="xml"><![CDATA[<osgi:reference id="importedOsgiService">
+	        <programlisting><![CDATA[<osgi:reference id="importedOsgiService">
   <osgi:interfaces>
      <value>com.xyz.MessageService</value>
      <value>com.xyz.MarkerInterface</value>
@@ -643,7 +633,7 @@ public interface SubInterface extends SuperInterface {}]]></programlisting>
 
           <para>For example:</para>
 
-          <programlisting language="xml"><![CDATA[<reference id="asyncMessageService" interface="com.xyz.MessageService"
+          <programlisting><![CDATA[<reference id="asyncMessageService" interface="com.xyz.MessageService"
   filter="(asynchronous-delivery=true)"/>]]></programlisting>
   
   		  <para>will match only OSGi services that advertise <interfacename>MessageService</interfacename>
@@ -659,34 +649,11 @@ public interface SubInterface extends SuperInterface {}]]></programlisting>
           <literal>bean-name</literal> property automatically set when exporting a bean using the
           <literal>service</literal> element (see <xref linkend="service-registry:export"/>).</para>
 
-          <para>Consider the following exporter/importer declarations:</para>
-          
-         <programlistingco>
-		   <areaspec>
-		   	  <areaset id="service-registry:refs:bean-name" coords="">
-		   	  	<area id="service-registry:refs:bean-name.1" coords="1 11"/>
-		   	  	<area id="service-registry:refs:bean-name.2" coords="3 48"/>
-		   	  </areaset>
-		   </areaspec>
-           <programlisting language="xml"><![CDATA[<bean id="messageServiceBean" scope="bundle" class="com.xyz.MessageServiceImpl"/>
-<!-- service exporter -->
-<osgi:service id="messageServiceExporter" ref="beanToBeExported" interface="com.xyz.MessageService"/>]]>
-</programlisting>
-          </programlistingco>
-		  <programlistingco>
-		   <areaspec>
-		   	  <area id="service-registry:refs:bean-name" coords="2 15"/>
-		   </areaspec>
-           <programlisting language="xml"><![CDATA[<osgi:reference id="messageService" interface="com.xyz.MessageService"
-   bean-name="messageServiceBean"/>
-]]></programlisting>
-   		  </programlistingco>
-   		  <calloutlist>
-   		  	<callout arearefs="service-registry:refs:bean-name">
-   		  		<para>the name used with <literal>bean-name</literal> attribute</para>
-   		  	</callout>
-   		  </calloutlist>
-   		  
+          <para>For example:</para>
+
+          <programlisting><![CDATA[<reference id="messageService" interface="com.xyz.MessageService"
+   bean-name="defaultMessageService"/>]]></programlisting>
+   
    		  <para>will match only OSGi services that advertise <interfacename>MessageService</interfacename>
    		  interface and have the property named <literal>org.springframework.osgi.bean.name</literal> set
    		  to value <literal>defaultMessageService</literal>. In short, this means finding all Spring-DM exported
@@ -794,45 +761,36 @@ public interface SubInterface extends SuperInterface {}]]></programlisting>
         </para>
        	<table id="reference-import-options" pgwide="1">
           <title><![CDATA[OSGi <reference> attributes]]></title>
-          <tgroup cols="5">
-           	<colspec colname="c1"/>
-          	<colspec colname="c2" align="center"/>
-          	<colspec colname="c3" align="center"/>
-          	<colspec colname="c4" align="center"/>
-          	<colspec colname="c5" align="center"/>
-          	<colspec colname="c6" align="justify"/>
-          	<spanspec namest="c2" nameend="c5" spanname="values" align="center"/>
-          
+          <tgroup cols="3">
+            <colspec align="center" />
             <thead>
               <row>
                 <entry>Name</entry>
-                <entry spanname="values">Values</entry>
+                <entry>Values</entry>
                 <entry>Description</entry>
               </row>
             </thead>
             <tbody>
               <row>
                 <entry>interface</entry>
-                <entry spanname="values">fully qualified class name (such as <classname>java.lang.Thread</classname>)</entry>
+                <entry>fully qualified class name (such as <classname>java.lang.Thread</classname>)</entry>
                 <entry>The fully qualified name of the class under which the object will be exported.</entry>
               </row>
               <row>
                 <entry>filter</entry>
-                <entry spanname="values">OSGi filter expression (such as <literal>((asynchronous-delivery=true)</literal>)</entry>
+                <entry>OSGi filter expression (such as <literal>((asynchronous-delivery=true)</literal>)</entry>
                 <entry>OSGi filter expression that is used to constrain the set of matching services
                 in the service registry.</entry>
               </row>
               <row>
                 <entry>bean-name</entry>
-                <entry spanname="values">any string value</entry>
+                <entry>any string value</entry>
                 <entry>Convenient shortcut for specifying a filter expression that matches on the bean-name property 
                 that is automatically advertised for beans published using the &lt;service&gt; element.</entry>
               </row>
               <row>
                 <entry>context-class-loader</entry>
-                <entry>client</entry>
-                <entry namest="c3" nameend="c4" align="center">service-provider</entry>
-                <entry>unmanaged</entry>
+                <entry>client |  service-provider | unmanaged</entry>
                 <entry>Defines how the context class loader is managed when invoking operations on a service
                 backing this service reference. The default value is <literal>client</literal> which means that the context
                 class loader has visibility of the resources on this bundle's classpath. Alternate
@@ -842,8 +800,7 @@ public interface SubInterface extends SuperInterface {}]]></programlisting>
               </row>
               <row>
                 <entry>cardinality</entry>
-                <entry namest="c2" nameend="c3" align="center">0..1</entry>
-                <entry namest="c4" nameend="c5" align="center">1..1</entry>
+                <entry>0..1 | 1..1</entry>
                 <entry>Defines the required cardinality of the relationship to the backing service. If not specified, 
                 the <literal>default-cardinality</literal> attribute will apply. A value is '1..1' means that a backing service 
                 must exist (this is a mandatory service reference). A value of '0..1' indicates that it is 
@@ -851,7 +808,7 @@ public interface SubInterface extends SuperInterface {}]]></programlisting>
               </row>
               <row>
                 <entry>timeout</entry>
-                <entry spanname="values">any positive long</entry>
+                <entry>any positive long</entry>
                 <entry>The amount of time (in milliseconds) to wait for a backing service to be 
 				available when an operation is invoked. If not specified, the <literal>default-timeout</literal> attribute will apply.
                 </entry>
@@ -897,7 +854,6 @@ public interface SubInterface extends SuperInterface {}]]></programlisting>
 	      no matching service becomes available within the timeout period, an
 	      unchecked <classname>ServiceUnavailableException</classname> is
 	      thrown.</para>
-	      
         </section>        
 
 		<section id="service-registry:refs:singular:property-editor">
@@ -911,7 +867,8 @@ public interface SubInterface extends SuperInterface {}]]></programlisting>
         in place of the service itself:</para>
 
 
-		<programlisting language="java"><![CDATA[public class BeanWithServiceReference {
+		<programlisting language="java"><![CDATA[
+public class BeanWithServiceReference {
 	private ServiceReference serviceReference;
 	private SomeService service;
 			
@@ -924,7 +881,7 @@ public interface SubInterface extends SuperInterface {}]]></programlisting>
           <area id="service-registry.importer.single.ref.normal.injection" coords="5"/>
        </areaspec>
        	
-		<programlisting language="xml"><![CDATA[<reference id="service" interface="com.xyz.SomeService"/>
+		<programlisting><![CDATA[<reference id="service" interface="com.xyz.SomeService"/>
 		
 <bean id="someBean" class="BeanWithServiceReference">
   <property name="serviceReference" ref="service"/> 
@@ -1020,7 +977,8 @@ public interface SubInterface extends SuperInterface {}]]></programlisting>
         will contain all registered services supporting the
         <literal>EventListener</literal> interface:</para>
 
-        <programlisting language="xml"><![CDATA[<list id="myEventListeners" interface="com.xyz.EventListener"/>]]></programlisting>
+        <programlisting><![CDATA[<list id="myEventListeners" 
+  interface="com.xyz.EventListener"/>]]></programlisting>
 
         <para>The members of the collection defined by the bean are managed
         dynamically by Spring. As matching services are registered and
@@ -1038,7 +996,7 @@ public interface SubInterface extends SuperInterface {}]]></programlisting>
         <literal>comparator</literal> element can be used to define an inline
         bean. For example:</para>
 
-        <programlisting language="xml"><![CDATA[<set id="myServices" interface="com.xyz.MyService"
+        <programlisting><![CDATA[<set id="myServices" interface="com.xyz.MyService"
   comparator-ref="someComparator"/>
 
 <list id="myOtherServices" 
@@ -1058,7 +1016,7 @@ public interface SubInterface extends SuperInterface {}]]></programlisting>
         the services themselves (in which case the services must be
         <interfacename>Comparable</interfacename>).</para>
 
-        <programlisting language="xml"><![CDATA[<list id="myServices" interface"com.xyz.MyService">
+        <programlisting><![CDATA[<list id="myServices" interface"com.xyz.MyService">
   <comparator><natural-ordering basis="services"/></comparator>
 </list>
 
@@ -1066,45 +1024,9 @@ public interface SubInterface extends SuperInterface {}]]></programlisting>
   <comparator><natural-ordering basis="service-references"/></comparator>
 </set>]]></programlisting>
 
-		<note>For a sorted set, a <interfacename>SortedSet</interfacename> implementation will be created.
-		However, since the JDK API does not provide a dedicated <interfacename>SortedList</interfacename>interface, 
-		the sorted list will implement only the <interfacename>List</interfacename> interface.</note>
-
-
-		<section id="service-registry:refs:collection:greedy-proxying">
-			<title>Greedy Proxying</title>
-			
-			<para>All OSGi services imported by a Spring-DM service collection publish and are type-compatible with the classes
-			declared by the <literal>interfaces</literal> property. However, some services might expose additional (optional) 
-			classes that could be relevant to your application.</para>
-			
-			<para>For these cases, Spring-DM collections offer a dedicated attribute called <literal>greedy-proxying</literal> which
-			will cause the creates proxies to use <emphasis>all</emphasis> the classes advertised by the imported services, visible to the consuming
-			importing bundle. Thus, it is possible to cast the imported proxies to classes different then those specified in the
-			<literal>interfaces</literal>. For example, with the following list definition:
-			</para>
-
-        	<programlisting language="xml"><![CDATA[<list id="services" interface="com.xyz.SomeService" greedy-proxying="true"/>]]></programlisting>
-			
-			<para>one can do the following iteration (assuming <classname>MessageDispatcher</classname> type is imported by the bundle):</para>	
-        <programlisting language="java"><![CDATA[for (Iterator iterator = services.iterator(); iterator.hasNext();) {
-	SomeService service = (SomeService) iterator.next();
-	service.executeOperation();
-	// if the service implements an additional type
-	// do something extra
-	if (service instanceof MessageDispatcher) {
-		((MessageDispatcher)service).sendAckMessage();
-	}
-}]]></programlisting>
-
-			
-			<note>Before using greedy proxies and <literal>instanceof</literal> statements, consider using a different
-			interface/class for your services which provides better 
-			<ulink url="http://en.wikipedia.org/wiki/Polymorphism_in_object-oriented_programming">polymorphism</ulink> 
-			and is more 
-			<ulink url="http://en.wikipedia.org/wiki/Object_oriented">object-oriented</ulink>.</note>
-			
-		</section>		
+		<remark>For a sorted set, a <interfacename>SortedSet</interfacename> implementation will be created.
+		However, since JDK API do not provide a dedicated <interfacename>SortedList</interfacename>interface, 
+		the sorted list will implement only the <interfacename>List</interfacename> interface.</remark>
 		
 		<section id="service-registry:refs:collection:attributes">
 			<title>Collection (<literal>list</literal> and <literal>set</literal>) element attributes</title>
@@ -1117,47 +1039,36 @@ public interface SubInterface extends SuperInterface {}]]></programlisting>
         </para>
        	<table id="collection-import-options" pgwide="1">
           <title><![CDATA[<list>/<set> attributes]]></title>
-          <tgroup cols="6">
-			<colspec colname="c1"/>
-        	<colspec colname="c2" align="center"/>
-        	<colspec colname="c3" align="center"/>
-        	<colspec colname="c4" align="center"/>
-        	<colspec colname="c5" align="center"/>
-        	<colspec colname="c6" align="justify"/>
-        	<spanspec spanname="values" namest="c2" nameend="c5" align="justify"/>
-
+          <tgroup cols="3">
+            <colspec align="center" />
             <thead>
               <row>
                 <entry>Name</entry>
-                <entry spanname="values">Values</entry>
+                <entry>Values</entry>
                 <entry>Description</entry>
               </row>
             </thead>
             <tbody>
               <row>
                 <entry>interface</entry>
-                <entry spanname="values">fully qualified class name (such as <classname>java.lang.Thread</classname>)</entry>
+                <entry>fully qualified class name (such as <classname>java.lang.Thread</classname>)</entry>
                 <entry>The fully qualified name of the class under which the object will be exported.</entry>
               </row>
               <row>
                 <entry>filter</entry>
-                <entry spanname="values">OSGi filter expression (such as <literal>((asynchronous-delivery=true)</literal>)</entry>
+                <entry>OSGi filter expression (such as <literal>((asynchronous-delivery=true)</literal>)</entry>
                 <entry>OSGi filter expression that is used to constrain the set of matching services
                 in the service registry.</entry>
               </row>
               <row>
                 <entry>bean-name</entry>
-                <entry spanname="values">any string value</entry>
+                <entry>any string value</entry>
                 <entry>Convenient shortcut for specifying a filter expression that matches on the bean-name property 
                 that is automatically advertised for beans published using the &lt;service&gt; element.</entry>
               </row>
               <row>
                 <entry>context-class-loader</entry>
-                
-                <entry>client</entry>
-                <entry namest="c3" nameend="c4" align="center">service-provider</entry>
-                <entry>unmanaged</entry>
-                
+                <entry>client |  service-provider | unmanaged</entry>
                 <entry>Defines how the context class loader is managed when invoking operations on a service
                 backing this service reference. The default value is <literal>client</literal> which means that the context
                 class loader has visibility of the resources on this bundle's classpath. Alternate
@@ -1167,8 +1078,7 @@ public interface SubInterface extends SuperInterface {}]]></programlisting>
               </row>
               <row>
                 <entry>cardinality</entry>
-                <entry namest="c2" nameend="c3" align="center">0..N</entry>
-                <entry namest="c4" nameend="c5" align="center">1..N</entry>
+                <entry>0..N | 1..N</entry>
                 <entry>Defines the required cardinality of the relationship to the backing service. If not specified, 
                 the <literal>default-cardinality</literal> attribute will apply. A value is '1..N' means that a backing service 
                 must exist (this is a mandatory service reference). A value of '0..N' indicates that it is 
@@ -1176,17 +1086,9 @@ public interface SubInterface extends SuperInterface {}]]></programlisting>
               </row>
               <row>
                 <entry>comparator-ref</entry>
-                <entry spanname="values">any string value</entry>
+                <entry>any string value</entry>
                 <entry>Named reference to a bean acting as comparator for the declaring collection. Declaring a comparator automatically
                 makes the declaring collection sorted.</entry>
-              </row>
-              <row>
-                <entry>greedy-proxying</entry>
-                <entry namest="c2" nameend="c3" align="center">true</entry>
-                <entry namest="c4" nameend="c5" align="center">false</entry>
-                <entry>Indicates whether the proxies created for the imported OSGi services will be generated using 
-                just the classes specified (<literal>false</literal>) or all the classes exported by the service and visible to
-                the importing bundle (<literal>true</literal>). The default value is <literal>false</literal>.</entry>
               </row>              
             </tbody>
           </tgroup>
@@ -1197,24 +1099,18 @@ public interface SubInterface extends SuperInterface {}]]></programlisting>
        	 <table id="collection-import-comparator-options" pgwide="1">
           <title><![CDATA[collection <comparator> attributes]]></title>
           <tgroup cols="3">
-            <colspec colname="c1"/>
-        	<colspec colname="c2"/>
-        	<colspec colname="c3"/>
-        	<colspec colname="c4"/>
-        	<spanspec spanname="values" namest="c2" nameend="c3"/>
-        	
+            <colspec align="center" />
             <thead>
               <row>
                 <entry>Name</entry>
-                <entry spanname="values">Values</entry>
+                <entry>Values</entry>
                 <entry>Description</entry>
               </row>
             </thead>
             <tbody>
               <row>
                 <entry>basis</entry>
-                <entry>service</entry>
-                <entry>service-reference</entry>
+                <entry>service | service-reference</entry>
                 <entry>Indicate the element on which <emphasis>natural ordering</emphasis> should apply - <literal>service</literal> for considering
                 the service instance and <literal>service-reference</literal> for considering the service reference instead of the service.</entry>
               </row>
@@ -1291,6 +1187,7 @@ public interface SubInterface extends SuperInterface {}]]></programlisting>
 		  <table id="collection-iterator-contract" pgwide="1">
            <title>Dynamic service collection <interfacename>Iterator</interfacename> contract</title>
            <tgroup cols="2">
+            <colspec align="center" />
             <thead>
               <row>
                 <entry>hasNext() returned value</entry>
@@ -1360,14 +1257,14 @@ public interface SubInterface extends SuperInterface {}]]></programlisting>
       <para>An example of declaring a listener that implements
       <interfacename>OsgiServiceLifecycleListener</interfacename>:</para>
 
-      <programlisting language="xml"><![CDATA[<reference id="someService" interface="com.xyz.MessageService">
+      <programlisting><![CDATA[<reference id="someService" interface="com.xyz.MessageService">
   <listener ref="aListenerBean"/>
 </reference>]]></programlisting>
 
       <para>An example of declaring an inline listener bean with custom
       bind and unbind methods:</para>
 
-      <programlisting language="xml"><![CDATA[<reference id="someService" interface="com.xyz.MessageService">
+      <programlisting><![CDATA[<reference id="someService" interface="com.xyz.MessageService">
   <listener bind-method="onBind" unbind-method="onUnbind">
      <beans:bean class="MyCustomListener"/>
   </listener>
@@ -1449,6 +1346,7 @@ public void anyMethodName(ServiceReference ref);]]></programlisting>
        	 <table id="reference-import-listener-options" pgwide="1">
           <title><![CDATA[OSGi <listener> attributes]]></title>
           <tgroup cols="3">
+            <colspec align="center" />
             <thead>
               <row>
                 <entry>Name</entry>
@@ -1537,45 +1435,6 @@ public void anyMethodName(ServiceReference ref);]]></programlisting>
       	class. The first is an interface while the latter is a deprecated, abstract class. To preserve compatibility, Spring-DM
       	will pass to the listeners a <interfacename>Map</interfacename> implementation that can be casted, if needed, to a 
       	<classname>Dictionary</classname>.</listitem>
-      	
-      	<listitem>Be careful when using overloaded methods: all methods matching a certain service type will be called which is not
-      	always expected. Consider the following listener:
-      	<programlistingco>
-      		<programlisting language="java"><![CDATA[public class MyListener {
-    void register(Object service, Map properties);
-    void register(Collection dataService, Map properties);
-    void register(SortedSet orderedDataService , Map properties);
-}]]></programlisting>
-		
-		<areaspec>
-			<area id="service-registry:refs:listener:type.1" coords="2 19" />
-			<area id="service-registry:refs:listener:type.2" coords="3 19" />
-			<area id="service-registry:refs:listener:type.3" coords="4 19" />
-		</areaspec>
-				
-		<calloutlist>
-			<callout arearefs="service-registry:refs:listener:type.1">
-				<anchor id="service-registry:refs:listener:type.1"/>
-				<para><classname>Object</classname> type - will match all services for which the listener is triggered. This method will be always called.</para>
-			</callout>
-			<callout arearefs="service-registry:refs:listener:type.2">
-				<anchor id="service-registry:refs:listener:type.2"/>
-				<para><classname>Collection</classname> type - if this method is called, the <link linkend="service-registry:refs:listener:type.1">
-				<classname>Object</classname> method</link> is also called.
-				</para>
-			</callout>
-			<callout arearefs="service-registry:refs:listener:type.3">
-				<anchor id="service-registry:refs:listener:type.3"/>
-				<para><classname>SortedSet</classname> type - if this method is called, then both the <link linkend="service-registry:refs:listener:type.1">
-				<classname>Object</classname></link> and <link linkend="service-registry:refs:listener:type.2"><classname>Collection</classname></link> 
-				methods are called.</para>
-			</callout>
-		</calloutlist>
-		
-      	</programlistingco>
-      	
-      	</listitem>
-      	
       </itemizedlist>
       
       <section id="service-registry:refs:listener-best-practices:cycles">
@@ -1591,7 +1450,7 @@ public void anyMethodName(ServiceReference ref);]]></programlisting>
           	<area id="service-registry.listener.cycles.bean" coords="5"/>
           	<area id="service-registry.listener.cycles.bean.cycle" coords="6"/>
        	  </areaspec>
-          <programlisting language="xml"><![CDATA[<bean id="listener" class="cycle.Listener">
+          <programlisting><![CDATA[<bean id="listener" class="cycle.Listener">
     <property name="target" ref="importer" />
 </bean>
 	
@@ -1631,7 +1490,7 @@ public void anyMethodName(ServiceReference ref);]]></programlisting>
           	<area id="service-registry.listener.bad.cycles.listener.cycle" coords="4"/>
        	  </areaspec>
        	  
-          <programlisting language="xml"><![CDATA[<osgi:reference id="importer" interface="SomeService">
+          <programlisting><![CDATA[<osgi:reference id="importer" interface="SomeService">
     <osgi:listener bind-method="bind">
         <bean class="cycle.Listener">
             <property name="target" ref="importer" />
@@ -1696,7 +1555,7 @@ public void anyMethodName(ServiceReference ref);]]></programlisting>
     <section id="service-registry:refs:global-defaults">
       <title>Service importer global defaults</title>
 
-  	  <para>The <literal>osgi</literal> namespace offers two
+  	  <para>The <literal>osgi</literal> namespace allows offers two
   	  global attributes for specifying default behaviours for all
   	  importers declared in that file.</para>
   	        
@@ -1719,15 +1578,15 @@ public void anyMethodName(ServiceReference ref);]]></programlisting>
           <area id="service-registry.global.ns.default.serv.w.timeout" coords="9"/>
        </areaspec>
        
-      <programlisting language="xml"><![CDATA[<beans xmlns="http://www.springframework.org/schema/beans"
+      <programlisting><![CDATA[<beans xmlns="http://www.springframework.org/schema/beans"
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xmlns:osgi="http://www.springframework.org/schema/osgi"
           osgi:default-timeout="5000">
 
-  <reference id="someService" interface="com.xyz.AService"/>
+  <reference id="someService" interface="com.xyz.AService" .../>
 
   <reference id="someOtherService" interface="com.xyz.BService"
-       timeout="1000"/>
+       timeout="1000" .../>
 
 </beans:beans>]]></programlisting>
 
@@ -1783,7 +1642,7 @@ public void anyMethodName(ServiceReference ref);]]></programlisting>
          
           <area id="service-registry.global.ns.defaults.osgi.collection.w.cardinality" coords="13"/>
        </areaspec>      	
-      <programlisting language="xml"><![CDATA[<beans:beans
+      <programlisting><![CDATA[<beans:beans
       xmlns="http://www.springframework.org/schema/osgi"
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xmlns:beans="http://www.springframework.org/schema/beans"
@@ -1812,7 +1671,7 @@ public void anyMethodName(ServiceReference ref);]]></programlisting>
 
 		<callout arearefs="service-registry.global.ns.defaults.osgi.ns.again">
 		    <para>Import Spring Dynamic Modules schema and associate a prefix with its namespace 
-		    (<literal>osgi</literal> in this example). This is required since the global attributes
+		    (<literal>osgi</literal> in this example). This is requires since the global attributes
 		    have to be declared to an element (<literal>beans</literal>) belonging to another schema.
 		    To avoid ambiguity, the Spring-DM schema is imported under a specified prefix as well.</para>  
 		</callout>
@@ -1887,7 +1746,7 @@ public void anyMethodName(ServiceReference ref);]]></programlisting>
         <literal>M</literal> becomes satisfied again, <literal>S</literal>
         will be re-registered.</para>
 
-        <programlisting language="xml"><![CDATA[<osgi:service id="S" ref="A" interface="SomeInterface"/>
+        <programlisting><![CDATA[<osgi:service id="S" ref="A" interface="SomeInterface"/>
 
 <bean id="A" class="SomeImplementation">
    <property name="helperService" ref="M"/>

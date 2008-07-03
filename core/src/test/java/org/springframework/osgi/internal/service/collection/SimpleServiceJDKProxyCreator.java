@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.springframework.osgi.internal.service.collection;
 
 import java.lang.reflect.InvocationHandler;
@@ -22,12 +21,8 @@ import java.lang.reflect.Proxy;
 
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
-import org.springframework.aop.SpringProxy;
 import org.springframework.aop.support.AopUtils;
-import org.springframework.osgi.service.importer.ImportedOsgiServiceProxy;
-import org.springframework.osgi.service.importer.support.internal.aop.ProxyPlusCallback;
-import org.springframework.osgi.service.importer.support.internal.aop.ServiceProxyCreator;
-import org.springframework.util.ObjectUtils;
+import org.springframework.osgi.service.importer.internal.aop.ServiceProxyCreator;
 import org.springframework.util.ReflectionUtils;
 
 /**
@@ -43,11 +38,9 @@ public class SimpleServiceJDKProxyCreator implements ServiceProxyCreator {
 
 	private BundleContext context;
 
-
 	private class JDKHandler implements InvocationHandler {
 
 		private final ServiceReference reference;
-
 
 		public JDKHandler(ServiceReference reference) {
 			this.reference = reference;
@@ -81,13 +74,8 @@ public class SimpleServiceJDKProxyCreator implements ServiceProxyCreator {
 		}
 	}
 
-
 	public SimpleServiceJDKProxyCreator(BundleContext context, Class[] classes, ClassLoader loader) {
-		// add Spring-DM proxies
-		Object[] obj = ObjectUtils.addObjectToArray(classes, ImportedOsgiServiceProxy.class);
-		this.classes = (Class[]) ObjectUtils.addObjectToArray(obj, SpringProxy.class);
-		System.out.println("given classes " + ObjectUtils.nullSafeToString(classes) + " | resulting classes "
-				+ ObjectUtils.nullSafeToString(this.classes));
+		this.classes = classes;
 		this.loader = loader;
 		this.context = context;
 	}
@@ -96,7 +84,7 @@ public class SimpleServiceJDKProxyCreator implements ServiceProxyCreator {
 		this(context, classes, SimpleServiceJDKProxyCreator.class.getClassLoader());
 	}
 
-	public ProxyPlusCallback createServiceProxy(final ServiceReference reference) {
-		return new ProxyPlusCallback(Proxy.newProxyInstance(loader, classes, new JDKHandler(reference)), null);
+	public Object createServiceProxy(final ServiceReference reference) {
+		return Proxy.newProxyInstance(loader, classes, new JDKHandler(reference));
 	}
 }

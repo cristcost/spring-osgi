@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.StringTokenizer;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
-import java.util.regex.Pattern;
 
 import org.apache.commons.logging.Log;
 import org.osgi.framework.Bundle;
@@ -55,12 +54,9 @@ public abstract class DebugUtils {
 	private static final String DOUBLE_QUOTE = "\"";
 	private static final String SEMI_COLON = ";";
 	private static final String COMMA = ",";
+
 	/** use degradable logger */
 	private static final Log log = LogUtils.createLogger(DebugUtils.class);
-
-	// currently not used but might be in the future
-	private static final String PACKAGE_REGEX = "([^;,]+(?:;?\\w+:?=((\"[^\"]+\")|([^,]+)))*)+";
-	private static final Pattern PACKAGE_PATTERN = Pattern.compile(PACKAGE_REGEX);
 
 
 	/**
@@ -88,16 +84,11 @@ public abstract class DebugUtils {
 		String className = null;
 		// NoClassDefFoundError
 		if (loadingThrowable instanceof NoClassDefFoundError) {
-			className = loadingThrowable.getMessage();
-			if (className != null)
-				className = className.replace('/', '.');
+			className = loadingThrowable.getMessage().replace('/', '.');
 		}
 		// ClassNotFound
 		else if (loadingThrowable instanceof ClassNotFoundException) {
-			className = loadingThrowable.getMessage();
-
-			if (className != null)
-				className = className.replace('/', '.');
+			className = loadingThrowable.getMessage().replace('/', '.');
 		}
 
 		if (className != null) {
@@ -314,15 +305,15 @@ public abstract class DebugUtils {
 		// Check for dynamic imports
 		String dynimports = (String) dict.get(Constants.DYNAMICIMPORT_PACKAGE);
 		if (dynimports != null) {
-			for (StringTokenizer strok = new StringTokenizer(dynimports, COMMA); strok.hasMoreTokens();) {
-				StringTokenizer parts = new StringTokenizer(strok.nextToken(), SEMI_COLON);
+			for (StringTokenizer strok = new StringTokenizer(dynimports, ","); strok.hasMoreTokens();) {
+				StringTokenizer parts = new StringTokenizer(strok.nextToken(), ";");
 				String pkg = parts.nextToken().trim();
 				if (pkg.endsWith(".*") && packageName.startsWith(pkg.substring(0, pkg.length() - 2)) || pkg.equals("*")) {
 					Version version = Version.emptyVersion;
 					for (; parts.hasMoreTokens();) {
 						String modifier = parts.nextToken().trim();
 						if (modifier.startsWith("version")) {
-							version = Version.parseVersion(modifier.substring(modifier.indexOf(EQUALS) + 1).trim());
+							version = Version.parseVersion(modifier.substring(modifier.indexOf("=") + 1).trim());
 						}
 					}
 					return version;
@@ -388,12 +379,7 @@ public abstract class DebugUtils {
 
 									return left;
 								}
-
-								// check quotes
-								if (value.startsWith("\"")) {
-									return Version.parseVersion(value.substring(1, value.length() - 1));
-								}
-								return Version.parseVersion(value);
+								version = Version.parseVersion(value);
 							}
 						}
 						if (version == null) {

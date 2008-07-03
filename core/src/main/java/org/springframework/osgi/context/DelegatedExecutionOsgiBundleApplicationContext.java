@@ -16,8 +16,6 @@
 
 package org.springframework.osgi.context;
 
-import org.springframework.osgi.context.event.OsgiBundleApplicationContextEventMulticaster;
-
 /**
  * Interface that redirect the application context crucial methods to a third
  * party executor to allow the initialization to be executed in stages.
@@ -81,26 +79,4 @@ public interface DelegatedExecutionOsgiBundleApplicationContext extends Configur
 	 */
 	Object getMonitor();
 
-	/**
-	 * Allows a delegated {@link OsgiBundleApplicationContextEventMulticaster},
-	 * external to the application context, to be used for sending OSGi
-	 * application context events regarding the application context life cycle.
-	 * This method is mainly intended for monitoring the context lifecycle by
-	 * third parties (such as the OSGi extender). It's up to the implementation
-	 * to decide whether this setter method is required or not.
-	 * 
-	 * @param multicaster the application multicaster used for sending events
-	 * triggered by the delegated execution.
-	 * 
-	 * @see org.springframework.osgi.context.event.OsgiBundleApplicationContextEvent
-	 */
-	void setDelegatedEventMulticaster(OsgiBundleApplicationContextEventMulticaster multicaster);
-
-	/**
-	 * Returns the OSGi event multicaster (if any) associated with this
-	 * application context.
-	 * 
-	 * @return the OSGi event multicaster associated with this context
-	 */
-	OsgiBundleApplicationContextEventMulticaster getDelegatedEventMulticaster();
 }

@@ -3,7 +3,7 @@
   <parent>
     <artifactId>petclinic</artifactId>
     <groupId>org.springframework.osgi.samples</groupId>
-    <version>1.1.0-SNAPSHOT</version>
+    <version>1.0.3</version>
   </parent>
   
   <modelVersion>4.0.0</modelVersion>
@@ -11,28 +11,32 @@
   <artifactId>contract</artifactId>
   <packaging>jar</packaging>
   <name>Spring OSGi Samples: Simple Petclinic Contract</name>
-  <version>1.1.0-SNAPSHOT</version>
+  <version>1.0.3</version>
   <url>http://www.springframework.org/osgi</url>
   
   <dependencies>
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-test</artifactId>
+      <version>${spring.maven.artifact.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-core</artifactId>
+      <version>${spring.maven.artifact.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-context</artifactId>
+      <version>${spring.maven.artifact.version}</version>
 	  <scope>provided</scope>      
     </dependency>
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-beans</artifactId>
+      <version>${spring.maven.artifact.version}</version>
       <scope>provided</scope>      
     </dependency>
     
@@ -49,18 +53,11 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>org.springframework</groupId>
-      <artifactId>spring-orm</artifactId>
-      <version>${spring.maven.artifact.version}</version>
+      <groupId>org.springframework.osgi</groupId>
+      <artifactId>commons-lang.osgi</artifactId>
+      <version>2.3-SNAPSHOT</version>
       <scope>provided</scope>
     </dependency>
-    
-	<dependency>  
-	  <groupId>org.apache.commons</groupId>
-	  <artifactId>com.springsource.org.apache.commons.lang</artifactId>
-	  <version>2.4.0</version>
-      <scope>provided</scope>
-	</dependency>    
     
   </dependencies>
 
@@ -69,7 +66,7 @@
     <repository>
     <id>i21-s3-maven-repo</id>
       <name>i21 S3 milestone repo</name>
-      <url>http://maven.springframework.org/milestone</url>
+      <url>http://s3.amazonaws.com/maven.springframework.org/milestone</url>
     </repository>	
  </repositories>  
  	

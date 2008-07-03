@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.springframework.osgi.service.dependency.internal;
 
 /**
@@ -29,8 +28,5 @@ package org.springframework.osgi.service.dependency.internal;
  */
 public interface MandatoryServiceDependencyManager {
 
-	void addServiceExporter(Object bean, String exporterBeanName);
-
-	void removeServiceExporter(Object bean, String beanName);
-
+	void addServiceExporter(String exporterBeanName);
 }

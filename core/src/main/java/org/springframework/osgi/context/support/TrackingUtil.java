@@ -16,21 +16,23 @@
 
 package org.springframework.osgi.context.support;
 
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 
+import org.aopalliance.intercept.MethodInterceptor;
+import org.aopalliance.intercept.MethodInvocation;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.osgi.framework.BundleContext;
-import org.osgi.framework.ServiceReference;
+import org.springframework.aop.framework.ProxyFactory;
+import org.springframework.osgi.util.DebugUtils;
 import org.springframework.osgi.util.OsgiFilterUtils;
 import org.springframework.osgi.util.OsgiServiceReferenceUtils;
+import org.springframework.osgi.util.internal.ClassUtils;
 
 /**
- * Utility class for easy, but reliable, tracking of OSGi services. It does
- * service tracking internally but wraps the logic into a proxy. Note that this
- * class uses raw JDK proxies and thus is usable only with interfaces. This
- * allows to create simple proxies with minimal class dependencies.
+ * Utility class for easy, but reliable, tracking of OSGi services. It relies on
+ * the service tracker internally but wraps the logic into a proxy or cglib-like
+ * class to ease usage.
  * 
  * <p/> This class can be seen as a much shorter, less featured version of
  * {@link org.springframework.osgi.service.importer.support.OsgiServiceProxyFactoryBean}.
@@ -43,90 +45,63 @@ import org.springframework.osgi.util.OsgiServiceReferenceUtils;
 abstract class TrackingUtil {
 
 	/**
-	 * JDK Proxy invocation handler that delegates all calls to services found
-	 * in the OSGi space at the time of the call, falling back to a given
-	 * object.
+	 * Advice which fetches the target using the ServiceTracker service provided
+	 * by the OSGi space.
 	 * 
 	 * @author Costin Leau
+	 * 
 	 */
-	private static class OsgiServiceHandler implements InvocationHandler {
+	private static class MethodInvocationServiceAdvice implements MethodInterceptor {
 
 		private final Object fallbackObject;
 
 		private final BundleContext context;
 
 		private final String filter;
-		/** flag used to bypass the OSGi space if the context becomes unavailable */
-		private boolean bundleContextInvalidated = false;
 
 
-		public OsgiServiceHandler(Object fallbackObject, BundleContext bundleContext, String filter) {
+		public MethodInvocationServiceAdvice(Object fallbackObject, BundleContext bundleContext, String filter) {
 			this.fallbackObject = fallbackObject;
 			this.context = bundleContext;
 			this.filter = filter;
 		}
 
-		public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-			// fast dispatch
-			if (method.getName().equals("equals")) {
-				// Only consider equal when proxies are identical.
-				return (proxy == args[0] ? Boolean.TRUE : Boolean.FALSE);
-			}
-			else if (method.getName().equals("hashCode")) {
-				// Use hashCode of Session proxy.
-				return new Integer(System.identityHashCode(proxy));
-			}
+		public Object invoke(MethodInvocation invocation) throws Throwable {
+			Method m = invocation.getMethod();
 
-			Object target = null;
-			if (!bundleContextInvalidated) {
-				try {
-					ServiceReference ref = OsgiServiceReferenceUtils.getServiceReference(context, filter);
-					target = (ref != null ? context.getService(ref) : null);
-				}
-				catch (IllegalStateException ise) {
-					// context has been invalidated
-					bundleContextInvalidated = true;
-				}
-			}
+			Object target = context.getService(OsgiServiceReferenceUtils.getServiceReference(context, filter));
 
-			if (target == null) {
+			if (target == null)
 				target = fallbackObject;
-			}
 
 			// re-route call to the target
-			try {
-				Object result = method.invoke(target, args);
-				return result;
-			}
-			catch (InvocationTargetException ex) {
-				throw ex.getTargetException();
-			}
+			return m.invoke(target, invocation.getArguments());
 		}
 	}
 
 
-	/**
-	 * Returns a proxy that on each call seeks the relevant OSGi service and
-	 * delegates the method invocation to it. In case no service is found, the
-	 * fallback object is used.
-	 * 
-	 * <p/> Since JDK proxies are used to create services only interfaces are
-	 * used.
-	 * 
-	 * @param classes array of classes used during proxy weaving
-	 * @param filter OSGi filter (can be null)
-	 * @param classLoader class loader to use - normally
-	 * classes.getClassLoader()
-	 * @param context bundle context used for searching the services
-	 * @param fallbackObject object to fall back onto if no OSGi service is
-	 * found.
-	 * @return the proxy doing the lookup on each method invocation
-	 */
-	static Object getService(Class[] classes, String filter, ClassLoader classLoader, BundleContext context,
-			Object fallbackObject) {
-		// mold the proxy
-		String flt = OsgiFilterUtils.unifyFilter(classes, filter);
+	private static final Log log = LogFactory.getLog(TrackingUtil.class);
 
-		return Proxy.newProxyInstance(classLoader, classes, new OsgiServiceHandler(fallbackObject, context, flt));
+
+	public static Object getService(Class[] classes, String filter, ClassLoader classLoader, BundleContext context,
+			Object fallbackObject) {
+		ProxyFactory factory = new ProxyFactory();
+
+		// mold the proxy
+		ClassUtils.configureFactoryForClass(factory, classes);
+
+		String flt = OsgiFilterUtils.unifyFilter(classes, filter);
+		factory.addAdvice(new MethodInvocationServiceAdvice(fallbackObject, context, flt));
+
+		try {
+			return factory.getProxy(classLoader);
+		}
+		catch (NoClassDefFoundError ncdfe) {
+			if (log.isWarnEnabled()) {
+				DebugUtils.debugClassLoadingThrowable(ncdfe, context.getBundle(), classes);
+			}
+			throw ncdfe;
+		}
 	}
+
 }

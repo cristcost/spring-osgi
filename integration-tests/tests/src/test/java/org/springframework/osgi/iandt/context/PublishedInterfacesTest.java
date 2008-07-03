@@ -18,7 +18,6 @@ package org.springframework.osgi.iandt.context;
 
 import org.osgi.framework.Constants;
 import org.osgi.framework.ServiceReference;
-import org.osgi.framework.Version;
 import org.springframework.osgi.context.ConfigurableOsgiBundleApplicationContext;
 import org.springframework.osgi.context.support.OsgiBundleXmlApplicationContext;
 import org.springframework.osgi.iandt.BaseIntegrationTest;
@@ -32,7 +31,7 @@ import org.springframework.osgi.iandt.BaseIntegrationTest;
 public class PublishedInterfacesTest extends BaseIntegrationTest {
 
 	public void testEmptyApplicationContext() throws Exception {
-		checkedPublishedOSGiService(1);
+		checkPublishedInterfaces(1);
 	}
 
 	public void testXmlOsgiContext() throws Exception {
@@ -41,11 +40,11 @@ public class PublishedInterfacesTest extends BaseIntegrationTest {
 		context.setBundleContext(bundleContext);
 		context.refresh();
 
-		checkedPublishedOSGiService(2);
+		checkPublishedInterfaces(2);
 		context.close();
 	}
 
-	private void checkedPublishedOSGiService(int expectedContexts) throws Exception {
+	private void checkPublishedInterfaces(int expectedContexts) throws Exception {
 		ServiceReference[] refs = bundleContext.getServiceReferences(
 			ConfigurableOsgiBundleApplicationContext.class.getName(), null);
 		assertEquals("different number of published contexts encountered", expectedContexts, refs.length);
@@ -54,9 +53,6 @@ public class PublishedInterfacesTest extends BaseIntegrationTest {
 			ServiceReference serviceReference = refs[i];
 			String[] interfaces = (String[]) serviceReference.getProperty(Constants.OBJECTCLASS);
 			assertEquals("not enough interfaces published", 13, interfaces.length);
-			assertEquals(Version.emptyVersion, serviceReference.getProperty(Constants.BUNDLE_VERSION));
-			assertEquals(bundleContext.getBundle().getSymbolicName(),
-				serviceReference.getProperty(Constants.BUNDLE_SYMBOLICNAME));
 		}
 	}
 }

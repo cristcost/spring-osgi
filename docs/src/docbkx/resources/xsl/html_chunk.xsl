@@ -7,17 +7,20 @@
                 version="1.0">
 
     <xsl:import href="urn:docbkx:stylesheet"/>
-    <xsl:import href="highlight.xsl"/>
-    
-
     <!--###################################################
                      HTML Settings
     ################################################### -->
     <xsl:param name="chunk.section.depth">'5'</xsl:param>
     <xsl:param name="use.id.as.filename">'1'</xsl:param>
+    <xsl:param name="html.stylesheet">html.css</xsl:param>
+    <!-- These extensions are required for table printing and other stuff -->
+    <xsl:param name="use.extensions">1</xsl:param>
+    <xsl:param name="highlight.source">1</xsl:param>
+    <!-- xml css looks weird -->
+    <xsl:param name="highlight.default.language"></xsl:param>
 	<xsl:param name="tablecolumns.extension">0</xsl:param>
+    <xsl:param name="callout.extensions">1</xsl:param>
     <xsl:param name="graphicsize.extension">0</xsl:param>
-    <xsl:param name="ignore.image.scaling">1</xsl:param>
     <!--###################################################
                       Table Of Contents
     ################################################### -->
@@ -41,14 +44,6 @@
     <!-- Place callout marks at this column in annotated areas -->
     <xsl:param name="callout.graphics">1</xsl:param>
     <xsl:param name="callout.defaultcolumn">90</xsl:param>
-    
-    <!--###################################################
-                      Admonitions
-   ################################################### -->
-
-    <!-- Use nice graphics for admonitions -->
-    <xsl:param name="admon.graphics">1</xsl:param>
-	<xsl:param name="admon.graphics.path">images/admons/</xsl:param>    
     <!--###################################################
                           Misc
     ################################################### -->

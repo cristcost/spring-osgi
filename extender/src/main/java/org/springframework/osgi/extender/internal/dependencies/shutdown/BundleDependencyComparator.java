@@ -9,7 +9,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.ServiceReference;
-import org.springframework.osgi.context.ConfigurableOsgiBundleApplicationContext;
 import org.springframework.osgi.service.exporter.OsgiServicePropertiesResolver;
 import org.springframework.osgi.util.OsgiServiceReferenceUtils;
 import org.springframework.osgi.util.OsgiStringUtils;
@@ -18,7 +17,7 @@ import org.springframework.util.ObjectUtils;
 /**
  * Null safe service-based dependency sorter for bundles. Sorts bundles based on
  * their services using the following algorithm:
- * <p/>
+ * 
  * <ol>
  * <li> if two bundles are connected (transitively) then the bundle that exports
  * the service with lowest ranking id, will be considered lower. </li>
@@ -27,7 +26,7 @@ import org.springframework.util.ObjectUtils;
  * <li> if the bundles are not related then they will be sorted based on their
  * symbolic name. </li>
  * </ol>
- *
+ * 
  * @author Hal Hildebrand
  * @author Andy Piper
  * @author Costin Leau
@@ -46,7 +45,7 @@ public class BundleDependencyComparator implements Comparator, Serializable {
 
 		if (trace)
 			log.trace("comparing bundle1 [" + OsgiStringUtils.nullSafeNameAndSymName(bundle1) + "] w/ bundle2 ["
-				+ OsgiStringUtils.nullSafeNameAndSymName(bundle2) + "]..");
+					+ OsgiStringUtils.nullSafeNameAndSymName(bundle2) + "]..");
 
 		if (bundle1 == null) {
 			if (bundle2 == null) {
@@ -81,12 +80,6 @@ public class BundleDependencyComparator implements Comparator, Serializable {
 			// b1->b2
 			return -1;
 		}
-		// Do a decent job of informing the user about a circularity
-		else if (b1Lower && b2Lower && log.isInfoEnabled()) {
-			log.info("circular service dependency detected between ["
-				+ OsgiStringUtils.nullSafeNameAndSymName(bundle1) + ", "
-				+ OsgiStringUtils.nullSafeNameAndSymName(bundle2) + "]");
-		}
 		// Deal with circular references and unrelated bundles.
 		// both bundles refer to themselves
 		// b2 -> b1
@@ -94,9 +87,7 @@ public class BundleDependencyComparator implements Comparator, Serializable {
 		int compare = compareUsingServiceRankingAndId(bundle1, bundle2);
 
 		if (trace)
-			log.trace("comparison of [" + OsgiStringUtils.nullSafeNameAndSymName(bundle1)
-				+ ", " + OsgiStringUtils.nullSafeNameAndSymName(bundle2) + "] based on service ranking/id was won by bundle "
-				+ (compare > 0 ? "1" : "2"));
+			log.trace("comparison based on service ranking/id was won by bundle " + (compare > 0 ? "1" : "2"));
 		return compare;
 	}
 
@@ -106,11 +97,7 @@ public class BundleDependencyComparator implements Comparator, Serializable {
 	 * by A).
 	 */
 	protected boolean references(Bundle a, Bundle b) {
-		boolean ref = references(a, b, new HashSet());
-		if (log.isTraceEnabled())
-			log.trace("[" + OsgiStringUtils.nullSafeNameAndSymName(a) + "] " + (ref ? "->" : "!->")
-				+ "[" + OsgiStringUtils.nullSafeNameAndSymName(b) + "]");
-		return ref;
+		return references(a, b, new HashSet());
 	}
 
 	/**
@@ -147,15 +134,14 @@ public class BundleDependencyComparator implements Comparator, Serializable {
 	/**
 	 * Simple method checking whether the given service reference points to a
 	 * spring managed service or not. Checks for
-	 *
+	 * 
 	 * @param reference reference to the OSGi service
 	 * @return true if the service is spring managed, false otherwise
 	 */
 	private boolean isSpringManagedService(ServiceReference reference) {
 		if (reference == null)
 			return false;
-		return (reference.getProperty(OsgiServicePropertiesResolver.BEAN_NAME_PROPERTY_KEY) != null
-			|| reference.getProperty(ConfigurableOsgiBundleApplicationContext.APPLICATION_CONTEXT_SERVICE_PROPERTY_NAME) != null);
+		return (reference.getProperty(OsgiServicePropertiesResolver.BEAN_NAME_PROPERTY_KEY) != null);
 	}
 
 	private ServiceReference[] excludeNonSpringManagedServices(ServiceReference[] references) {
@@ -225,7 +211,7 @@ public class BundleDependencyComparator implements Comparator, Serializable {
 			if (trace) {
 				int min = (compare > 0 ? (int) bRank : (int) aRank);
 				log.trace("sorting based on lowest-service-ranking won by bundle" + (compare > 0 ? "1" : "2")
-					+ " w/ service id " + min);
+						+ " w/ service id " + min);
 			}
 
 			return -(bRank - aRank);
@@ -240,7 +226,7 @@ public class BundleDependencyComparator implements Comparator, Serializable {
 			if (trace) {
 				int max = (compare > 0 ? (int) bMaxId : (int) aMaxId);
 				log.trace("sorting based on highest-service-id won by bundle " + (compare > 0 ? "1" : "2")
-					+ " w/ service id " + max);
+						+ " w/ service id " + max);
 			}
 
 			return compare;
@@ -254,8 +240,9 @@ public class BundleDependencyComparator implements Comparator, Serializable {
 	 * since a bundle can export multiple services, we have to find the minimum
 	 * between the maximum services in each bundle - i.e. the bundle with the
 	 * highest service ranking will win.
-	 *
+	 * 
 	 * @param refs
+	 * @return
 	 */
 	private int findHighestServiceRanking(ServiceReference[] refs) {
 		int maxRank = Integer.MIN_VALUE;

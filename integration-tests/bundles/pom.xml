@@ -3,11 +3,11 @@
   <parent>
     <artifactId>spring-osgi</artifactId>
     <groupId>org.springframework.osgi</groupId>
-    <version>1.1.0-SNAPSHOT</version>
+    <version>1.0.3</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
+  <groupId>org.springframework.osgi</groupId>
   <artifactId>spring-osgi-integration-test-bundles</artifactId>
-  <groupId>org.springframework.osgi.iandt</groupId>
   <packaging>pom</packaging>
   <name>Spring OSGi Integration Testing Bundles</name>
   <url>http://www.springframework.org/osgi</url>
@@ -24,6 +24,8 @@
         <dependency>
             <groupId>org.springframework.osgi</groupId>
             <artifactId>spring-osgi-core</artifactId>
+            <version>${project.parent.version}</version>
+            <type>jar</type>
             <scope>provided</scope>
         </dependency>
   </dependencies>
@@ -55,23 +57,20 @@
     <module>tccl.bundle</module>
     <module>config.file.with.dots.bundle</module>
     <module>proxy.creator.bundle</module>
-    <module>extender.fragment.bundle</module>
-    <module>jdk.proxy.bundle</module>
-    <module>extender.listener.bundle</module>
-    <module>web.bundles</module>
   </modules>
 
-  <profiles>
+<profiles>
     <profile>
       <id>jdk-1.5+</id>
       <activation>
         <jdk>!1.4</jdk>
       </activation>
       <modules>
-       <module>jdk5</module>
+       <module>annotation.test.bundle</module>
+       <module>annotation.dependency.test.bundle</module>
 	  </modules>
    </profile>
-  </profiles>
+</profiles>
 
  <build>
     <plugins>

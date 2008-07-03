@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.springframework.osgi.config;
 
 import java.io.Serializable;
@@ -58,7 +57,6 @@ public class OsgiServiceNamespaceHandlerTest extends TestCase {
 	private final List services = new ArrayList();
 
 	private ServiceRegistration registration;
-
 
 	protected void setUp() throws Exception {
 
@@ -116,7 +114,7 @@ public class OsgiServiceNamespaceHandlerTest extends TestCase {
 	public void testBiggerService() throws Exception {
 		OsgiServiceFactoryBean exporter = (OsgiServiceFactoryBean) appContext.getBean("&manyOptions");
 
-		assertTrue(Arrays.equals(new Class[] { Serializable.class, CharSequence.class }, getInterfaces(exporter)));
+		assertTrue(Arrays.equals(new Class[] { Serializable.class, Cloneable.class }, getInterfaces(exporter)));
 		Properties prop = new Properties();
 		prop.setProperty("foo", "bar");
 		prop.setProperty("white", "horse");

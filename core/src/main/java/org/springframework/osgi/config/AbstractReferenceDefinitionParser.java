@@ -18,7 +18,6 @@ package org.springframework.osgi.config;
 
 import java.util.Iterator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 
 import org.springframework.beans.MutablePropertyValues;
@@ -100,7 +99,7 @@ abstract class AbstractReferenceDefinitionParser extends AbstractBeanDefinitionP
 			else if (CONTEXT_CLASSLOADER.equals(name)) {
 				// convert constant to upper case to let Spring do the
 				// conversion
-				String val = value.toUpperCase(Locale.ENGLISH).replace('-', '_');
+				String val = value.toUpperCase().replace('-', '_');
 				builder.addPropertyValue(CCL_PROP, val);
 				return false;
 			}
@@ -128,11 +127,17 @@ abstract class AbstractReferenceDefinitionParser extends AbstractBeanDefinitionP
 	// XML attributes/elements
 	private static final String LISTENER = "listener";
 
+	private static final String BIND_METHOD = "bind-method";
+
+	private static final String UNBIND_METHOD = "unbind-method";
+
 	private static final String REF = "ref";
 
 	private static final String INTERFACE = "interface";
 
 	private static final String INTERFACES = "interfaces";
+
+	private static final String INTERFACEs = "interface";
 
 	private static final String CARDINALITY = "cardinality";
 
@@ -169,7 +174,7 @@ abstract class AbstractReferenceDefinitionParser extends AbstractBeanDefinitionP
 			builder.getRawBeanDefinition().setBeanClass(beanClass);
 		}
 
-		builder.getRawBeanDefinition().setSource(parserContext.extractSource(element));
+		builder.setSource(parserContext.extractSource(element));
 		if (parserContext.isNested()) {
 			// Inner bean definition must receive same scope as containing bean.
 			builder.setScope(parserContext.getContainingBeanDefinition().getScope());
@@ -206,7 +211,7 @@ abstract class AbstractReferenceDefinitionParser extends AbstractBeanDefinitionP
 		GenericBeanDefinition def = new GenericBeanDefinition();
 		def.setBeanClass(BeanReferenceFactoryBean.class);
 		MutablePropertyValues mpv = new MutablePropertyValues();
-		mpv.addPropertyValue(TARGET_BEAN_NAME_PROP, beanName);
+		mpv.addPropertyValue("targetBeanName", beanName);
 		def.setPropertyValues(mpv);
 		return def;
 	}
@@ -297,8 +302,7 @@ abstract class AbstractReferenceDefinitionParser extends AbstractBeanDefinitionP
 	 * @return
 	 */
 	private Cardinality processCardinalityString(String value) {
-		return (Cardinality) StaticLabeledEnumResolver.instance().getLabeledEnumByLabel(Cardinality.class,
-			value.toUpperCase(Locale.ENGLISH));
+		return (Cardinality) StaticLabeledEnumResolver.instance().getLabeledEnumByLabel(Cardinality.class, value);
 	}
 
 	/**

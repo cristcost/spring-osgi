@@ -17,7 +17,6 @@
 package org.springframework.osgi.extender.internal.dependencies.startup;
 
 import java.util.Iterator;
-import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -30,8 +29,6 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.osgi.context.DelegatedExecutionOsgiBundleApplicationContext;
 import org.springframework.osgi.context.OsgiBundleApplicationContextExecutor;
-import org.springframework.osgi.context.event.OsgiBundleApplicationContextEventMulticaster;
-import org.springframework.osgi.context.event.OsgiBundleContextFailedEvent;
 import org.springframework.osgi.extender.internal.util.concurrent.Counter;
 import org.springframework.osgi.util.OsgiStringUtils;
 import org.springframework.util.Assert;
@@ -41,9 +38,8 @@ import org.springframework.util.Assert;
  * {@link ConfigurableApplicationContext#refresh()} in two pieces so that beans
  * are not actually created unless the OSGi service imported are present.
  * 
- * <p/>
+ * Supports both asynch and synch behaviour. <p/>
  * 
- * Supports both asynch and synch behaviour.
  * 
  * @author Hal Hildebrand
  * @author Costin Leau
@@ -97,11 +93,6 @@ public class DependencyWaiterApplicationContextExecutor implements OsgiBundleApp
 	 */
 	private final Counter waitBarrier = new Counter("syncCounterWait");
 
-	/** delegated multicaster */
-	private OsgiBundleApplicationContextEventMulticaster delegatedMulticaster;
-
-	private List dependencyFactories;
-
 
 	/**
 	 * The task for the watch dog.
@@ -129,7 +120,7 @@ public class DependencyWaiterApplicationContextExecutor implements OsgiBundleApp
 		public void run() {
 			boolean debug = log.isDebugEnabled();
 			if (debug)
-				log.debug("Completing refresh for " + getDisplayName());
+				log.debug("completing refresh for " + getDisplayName());
 
 			synchronized (monitor) {
 				if (state != ContextState.DEPENDENCIES_RESOLVED) {
@@ -144,16 +135,16 @@ public class DependencyWaiterApplicationContextExecutor implements OsgiBundleApp
 			synchronized (delegateContext.getMonitor()) {
 				delegateContext.completeRefresh();
 			}
+
 		}
 	}
 
 
 	public DependencyWaiterApplicationContextExecutor(DelegatedExecutionOsgiBundleApplicationContext delegateContext,
-			boolean syncWait, List dependencyFactories) {
+			boolean syncWait) {
 		this.delegateContext = delegateContext;
 		this.delegateContext.setExecutor(this);
 		this.synchronousWait = syncWait;
-		this.dependencyFactories = dependencyFactories;
 	}
 
 	/**
@@ -163,7 +154,7 @@ public class DependencyWaiterApplicationContextExecutor implements OsgiBundleApp
 	 */
 	public void refresh() throws BeansException, IllegalStateException {
 		if (log.isDebugEnabled())
-			log.debug("Starting first stage of refresh for " + getDisplayName());
+			log.debug("starting first stage of refresh for " + getDisplayName());
 
 		// sanity check
 		init();
@@ -249,6 +240,7 @@ public class DependencyWaiterApplicationContextExecutor implements OsgiBundleApp
 
 			// all dependencies are met, just go with stageTwo
 			if (dl.isSatisfied()) {
+
 				log.info("No outstanding OSGi service dependencies, completing initialization for " + getDisplayName());
 				stageTwo();
 			}
@@ -298,6 +290,11 @@ public class DependencyWaiterApplicationContextExecutor implements OsgiBundleApp
 
 		synchronized (monitor) {
 
+			//			if (state == ContextState.DEPENDENCIES_RESOLVED) {
+			//				if (debug)
+			//					log.debug("context [" + getDisplayName() + "]  already in state (" + state + "); bailing out");
+			//				return;
+			//			}
 			if (state != ContextState.RESOLVING_DEPENDENCIES) {
 				logWrongState(ContextState.RESOLVING_DEPENDENCIES);
 				return;
@@ -349,10 +346,9 @@ public class DependencyWaiterApplicationContextExecutor implements OsgiBundleApp
 			}
 		}
 		try {
-			if (normalShutdown) {
-				synchronized (delegateContext.getMonitor()) {
+			synchronized (delegateContext.getMonitor()) {
+				if (normalShutdown)
 					delegateContext.normalClose();
-				}
 			}
 		}
 		catch (Exception ex) {
@@ -382,8 +378,8 @@ public class DependencyWaiterApplicationContextExecutor implements OsgiBundleApp
 			buf.append("none");
 		}
 		else {
-			for (Iterator dependencies = dependencyDetector.getUnsatisfiedDependencies().keySet().iterator(); dependencies.hasNext();) {
-				MandatoryServiceDependency dependency = (MandatoryServiceDependency) dependencies.next();
+			for (Iterator dependencies = dependencyDetector.getUnsatisfiedDependencies().iterator(); dependencies.hasNext();) {
+				ServiceDependency dependency = (ServiceDependency) dependencies.next();
 				buf.append(dependency.toString());
 				if (dependencies.hasNext()) {
 					buf.append(", ");
@@ -397,10 +393,6 @@ public class DependencyWaiterApplicationContextExecutor implements OsgiBundleApp
 		message.append(buf.toString());
 
 		log.error(message.toString(), t);
-
-		// send notification
-		delegatedMulticaster.multicastEvent(new OsgiBundleContextFailedEvent(delegateContext,
-			delegateContext.getBundle(), t));
 
 		// rethrow the exception wrapped to the caller (and prevent bundles
 		// started in sync mode to complete).
@@ -431,7 +423,7 @@ public class DependencyWaiterApplicationContextExecutor implements OsgiBundleApp
 	}
 
 	protected DependencyServiceManager createDependencyServiceListener(Runnable task) {
-		return new DependencyServiceManager(this, delegateContext, dependencyFactories, task, timeout);
+		return new DependencyServiceManager(this, delegateContext, task);
 	}
 
 	/**
@@ -440,7 +432,7 @@ public class DependencyWaiterApplicationContextExecutor implements OsgiBundleApp
 	protected void startWatchDog() {
 		synchronized (monitor) {
 			watchdogTask = new WatchDogTask();
-			watchdog.schedule(watchdogTask, timeout);
+			watchdog.schedule(watchdogTask, timeout * 1000);
 		}
 	}
 
@@ -454,7 +446,7 @@ public class DependencyWaiterApplicationContextExecutor implements OsgiBundleApp
 	}
 
 	/**
-	 * Sets the timeout (in ms) for waiting for service dependencies.
+	 * The timeout for waiting for service dependencies.
 	 * 
 	 * @param timeout
 	 */
@@ -467,6 +459,12 @@ public class DependencyWaiterApplicationContextExecutor implements OsgiBundleApp
 	public void setTaskExecutor(TaskExecutor taskExec) {
 		synchronized (monitor) {
 			this.taskExecutor = taskExec;
+		}
+	}
+
+	public ContextState getContextState() {
+		synchronized (monitor) {
+			return state;
 		}
 	}
 
@@ -513,26 +511,4 @@ public class DependencyWaiterApplicationContextExecutor implements OsgiBundleApp
 		this.monitorCounter = contextsStarted;
 	}
 
-	/**
-	 * Sets the multicaster for delegating failing events.
-	 * 
-	 * @param multicaster
-	 */
-	public void setDelegatedMulticaster(OsgiBundleApplicationContextEventMulticaster multicaster) {
-		this.delegatedMulticaster = multicaster;
-	}
-
-	//
-	// accessor interface implementations
-	//
-
-	public ContextState getContextState() {
-		synchronized (monitor) {
-			return state;
-		}
-	}
-
-	public OsgiBundleApplicationContextEventMulticaster getEventMulticaster() {
-		return this.delegatedMulticaster;
-	}
 }

@@ -20,7 +20,6 @@ import java.io.IOException;
 
 import org.osgi.framework.BundleContext;
 import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -95,7 +94,6 @@ public abstract class AbstractOptionalDependencyInjectionTests extends AbstractD
 	 * locations are specified.
 	 */
 	protected ConfigurableApplicationContext createApplicationContext(String[] locations) {
-
 		ConfigurableOsgiBundleApplicationContext context = null;
 
 		if (ObjectUtils.isEmpty(locations))

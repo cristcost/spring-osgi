@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.springframework.osgi.util;
 
 import java.net.URL;
@@ -23,6 +24,7 @@ import junit.framework.TestCase;
 import org.easymock.MockControl;
 import org.osgi.framework.Bundle;
 import org.springframework.aop.framework.ProxyFactory;
+import org.springframework.osgi.util.BundleDelegatingClassLoader;
 
 /**
  * @author Costin Leau
@@ -35,6 +37,7 @@ public class BundleDelegatingClassLoaderTest extends TestCase {
 	private MockControl bundleCtrl;
 
 	private Bundle bundle;
+
 
 	protected void setUp() throws Exception {
 		bundleCtrl = MockControl.createStrictControl(Bundle.class);
@@ -51,15 +54,14 @@ public class BundleDelegatingClassLoaderTest extends TestCase {
 		bundle = null;
 	}
 
-	public void tstEquals() {
+	public void testEquals() {
 		bundleCtrl.replay();
 
 		assertFalse(classLoader.equals(new Object()));
 		assertEquals(classLoader, classLoader);
-		assertTrue(classLoader.equals(BundleDelegatingClassLoader.createBundleClassLoaderFor(bundle,
+		assertFalse(classLoader.equals(BundleDelegatingClassLoader.createBundleClassLoaderFor(bundle,
 			ProxyFactory.class.getClassLoader())));
 
-		// assertEquals(bundle.hashCode(), clientClassLoader.hashCode());
 	}
 
 	public void testFindClass() throws Exception {

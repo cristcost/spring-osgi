@@ -26,7 +26,7 @@
 		id="manyOptions">
 		<osgi:interfaces>
 			<value>java.io.Serializable</value>
-			<value>java.lang.CharSequence</value>
+			<value>java.lang.Cloneable</value>
 		</osgi:interfaces>
 		<osgi:service-properties>
 			<entry key="foo" value="bar" />
@@ -85,7 +85,7 @@
 	</osgi:service>
 
 	<osgi:service id="exporterWithCustomListener"
-		interface="java.lang.Comparable" ref="string">
+		interface="java.io.Externalizable" ref="string">
 		<osgi:registration-listener registration-method="onRegistration"
 			unregistration-method="onUnregistration" ref="customListener">
 		</osgi:registration-listener>

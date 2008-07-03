@@ -53,9 +53,4 @@ public class BundleJarTest extends BaseIoTest {
 		assertEquals(0, res.length);
 	}
 
-	// check last modified
-	public void testLastModifiedWhileUsingJustTheOSGiAPI() throws Exception {
-		Resource resource = patternLoader.getResource("osgibundlejar:/org/springframework/osgi/iandt/io/duplicate.file");
-		assertTrue(resource.lastModified() > 0);
-	}
 }

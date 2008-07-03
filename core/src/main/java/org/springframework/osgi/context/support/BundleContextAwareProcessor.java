@@ -18,6 +18,8 @@
 
 package org.springframework.osgi.context.support;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.osgi.framework.BundleContext;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
@@ -34,6 +36,8 @@ public class BundleContextAwareProcessor implements BeanPostProcessor {
 
 	private final BundleContext bundleContext;
 
+	private static final Log logger = LogFactory.getLog(BundleContextAwareProcessor.class);
+
 
 	public BundleContextAwareProcessor(BundleContext aContext) {
 		this.bundleContext = aContext;
@@ -49,4 +53,5 @@ public class BundleContextAwareProcessor implements BeanPostProcessor {
 		}
 		return bean;
 	}
+
 }

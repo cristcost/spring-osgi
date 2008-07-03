@@ -23,7 +23,7 @@ import org.osgi.framework.ServiceReference;
 import org.osgi.framework.ServiceRegistration;
 import org.springframework.aop.framework.ProxyFactory;
 import org.springframework.osgi.service.ServiceUnavailableException;
-import org.springframework.osgi.service.importer.support.internal.aop.ServiceDynamicInterceptor;
+import org.springframework.osgi.service.importer.internal.aop.ServiceDynamicInterceptor;
 import org.springframework.osgi.test.AbstractConfigurableBundleCreatorTests;
 import org.springframework.osgi.util.BundleDelegatingClassLoader;
 import org.springframework.osgi.util.OsgiFilterUtils;
@@ -36,7 +36,7 @@ import org.springframework.util.ClassUtils;
 public abstract class ServiceProxyTst extends AbstractConfigurableBundleCreatorTests {
 
 	protected String[] getTestBundlesNames() {
-		return new String[] { "net.sourceforge.cglib, com.springsource.net.sf.cglib, 2.1.3" };
+		return new String[] { "org.springframework.osgi, cglib-nodep.osgi, 2.1.3-SNAPSHOT" };
 	}
 
 	protected String getManifestLocation() {

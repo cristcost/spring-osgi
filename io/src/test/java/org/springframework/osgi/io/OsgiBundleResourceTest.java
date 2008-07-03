@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.springframework.osgi.io;
 
 import java.io.InputStream;
@@ -40,7 +39,11 @@ public class OsgiBundleResourceTest extends TestCase {
 
 	private String path;
 
-
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see junit.framework.TestCase#setUp()
+	 */
 	protected void setUp() throws Exception {
 		path = OsgiBundleResourceTest.class.getName().replace('.', '/').concat(".class");
 		bundle = new MockBundle();
@@ -210,35 +213,4 @@ public class OsgiBundleResourceTest extends TestCase {
 		assertFalse(resource.equals(new OsgiBundleResource(new MockBundle(), path)));
 	}
 
-	public void testDefaultPathWithinContext() throws Exception {
-		assertEquals(path, resource.getPathWithinContext());
-	}
-
-	public void testPathWithinBundleSpace() throws Exception {
-		String contextPath = "folder/resource";
-		resource = new OsgiBundleResource(bundle, "osgibundle:" + contextPath);
-		assertEquals(contextPath, resource.getPathWithinContext());
-	}
-
-	public void testPathWithinClassSpace() throws Exception {
-		String contextPath = "folder/resource";
-		resource = new OsgiBundleResource(bundle, "classpath:" + contextPath);
-		assertEquals(contextPath, resource.getPathWithinContext());
-	}
-
-	public void testPathWithinJarSpace() throws Exception {
-		String contextPath = "folder/resource";
-		resource = new OsgiBundleResource(bundle, "osgibundlejar:" + contextPath);
-		assertEquals(contextPath, resource.getPathWithinContext());
-	}
-
-	public void testPathOutsideContext() throws Exception {
-		String contextPath = "folder/resource";
-		resource = new OsgiBundleResource(bundle, "file:" + contextPath);
-		assertNull(resource.getPathWithinContext());
-	}
-
-	public void testLastModified() throws Exception {
-		assertTrue("last modified should be non zero", resource.lastModified() > 0);
-	}
 }

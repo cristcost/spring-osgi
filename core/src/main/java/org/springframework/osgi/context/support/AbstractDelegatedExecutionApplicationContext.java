@@ -20,13 +20,8 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextException;
-import org.springframework.context.event.ApplicationEventMulticaster;
 import org.springframework.osgi.context.DelegatedExecutionOsgiBundleApplicationContext;
 import org.springframework.osgi.context.OsgiBundleApplicationContextExecutor;
-import org.springframework.osgi.context.event.OsgiBundleApplicationContextEventMulticaster;
-import org.springframework.osgi.context.event.OsgiBundleApplicationContextEventMulticasterAdapter;
-import org.springframework.osgi.context.event.OsgiBundleContextFailedEvent;
-import org.springframework.osgi.context.event.OsgiBundleContextRefreshedEvent;
 import org.springframework.osgi.util.OsgiBundleUtils;
 import org.springframework.osgi.util.OsgiStringUtils;
 import org.springframework.osgi.util.internal.ClassUtils;
@@ -34,8 +29,8 @@ import org.springframework.util.Assert;
 import org.springframework.util.ObjectUtils;
 
 /**
- * OSGi-specific application context that delegates the execution of its life
- * cycle methods to a different class. The main reason behind this is to
+ * OSGi-specific application context that delegates the execution of its
+ * lifecycle methods to a different class. The main reason behind this is to
  * <em>break</em> the startup of the application context in steps that can be
  * executed asynchronously.
  * 
@@ -46,9 +41,8 @@ import org.springframework.util.ObjectUtils;
  * <p/> One can still call the 'traditional' lifecycle methods through
  * {@link #normalRefresh()} and {@link #normalClose()}.
  * 
- * @see DelegatedExecutionOsgiBundleApplicationContext
- * 
  * @author Costin Leau
+ * @see DelegatedExecutionOsgiBundleApplicationContext
  */
 public abstract class AbstractDelegatedExecutionApplicationContext extends AbstractOsgiBundleApplicationContext
 		implements DelegatedExecutionOsgiBundleApplicationContext {
@@ -89,11 +83,6 @@ public abstract class AbstractDelegatedExecutionApplicationContext extends Abstr
 	private final Object availableMonitor = new Object();
 
 	private boolean available = false;
-
-	/** delegated multicaster */
-	private OsgiBundleApplicationContextEventMulticaster delegatedMulticaster;
-
-	private ContextClassLoaderProvider cclProvider;
 
 
 	/**
@@ -143,17 +132,8 @@ public abstract class AbstractDelegatedExecutionApplicationContext extends Abstr
 		ClassLoader oldTCCL = currentThread.getContextClassLoader();
 
 		try {
-			currentThread.setContextClassLoader(contextClassLoaderProvider().getContextClassLoader());
-			try {
-				super.refresh();
-				sendRefreshedEvent();
-			}
-			catch (RuntimeException ex) {
-				logger.error("Refresh error", ex);
-				sendFailedEvent(ex);
-				// propagate exception to the caller
-				throw ex;
-			}
+			currentThread.setContextClassLoader(getClassLoader());
+			super.refresh();
 		}
 		finally {
 			currentThread.setContextClassLoader(oldTCCL);
@@ -165,7 +145,8 @@ public abstract class AbstractDelegatedExecutionApplicationContext extends Abstr
 		ClassLoader oldTCCL = currentThread.getContextClassLoader();
 
 		try {
-			currentThread.setContextClassLoader(contextClassLoaderProvider().getContextClassLoader());
+			if (getBundleContext() != null)
+				currentThread.setContextClassLoader(getClassLoader());
 			super.doClose();
 		}
 		finally {
@@ -173,7 +154,7 @@ public abstract class AbstractDelegatedExecutionApplicationContext extends Abstr
 		}
 	}
 
-	// Adds behaviour for isAvailable flag.
+	// Adds behavior for isAvailable flag.
 	protected void doClose() {
 		synchronized (availableMonitor) {
 			available = false;
@@ -193,7 +174,7 @@ public abstract class AbstractDelegatedExecutionApplicationContext extends Abstr
 
 		try {
 			synchronized (contextMonitor) {
-				thread.setContextClassLoader(contextClassLoaderProvider().getContextClassLoader());
+				thread.setContextClassLoader(getClassLoader());
 
 				if (ObjectUtils.isEmpty(getConfigLocations())) {
 					setConfigLocations(getDefaultConfigLocations());
@@ -203,12 +184,11 @@ public abstract class AbstractDelegatedExecutionApplicationContext extends Abstr
 							+ OsgiStringUtils.bundleStateAsString(getBundle()));
 				}
 
-				ConfigurableListableBeanFactory beanFactory = null;
 				// Prepare this context for refreshing.
 				prepareRefresh();
 
 				// Tell the subclass to refresh the internal bean factory.
-				beanFactory = obtainFreshBeanFactory();
+				ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory();
 
 				// Prepare the bean factory for use in this context.
 				prepareBeanFactory(beanFactory);
@@ -230,16 +210,13 @@ public abstract class AbstractDelegatedExecutionApplicationContext extends Abstr
 					// Destroy already created singletons to avoid dangling
 					// resources.
 					beanFactory.destroySingletons();
-					cancelRefresh(ex);
-					// propagate exception to the caller
+					// rethrow exception to the caller
 					throw ex;
 				}
 			}
 		}
 		catch (RuntimeException ex) {
 			logger.error("Pre refresh error", ex);
-			// send failure event
-			sendFailedEvent(ex);
 			throw ex;
 		}
 		finally {
@@ -254,7 +231,7 @@ public abstract class AbstractDelegatedExecutionApplicationContext extends Abstr
 		try {
 
 			synchronized (contextMonitor) {
-				thread.setContextClassLoader(contextClassLoaderProvider().getContextClassLoader());
+				thread.setContextClassLoader(getClassLoader());
 
 				try {
 					ConfigurableListableBeanFactory beanFactory = getBeanFactory();
@@ -277,25 +254,16 @@ public abstract class AbstractDelegatedExecutionApplicationContext extends Abstr
 
 					// Last step: publish corresponding event.
 					finishRefresh();
-
-					// everything went okay, post notification
-					sendRefreshedEvent();
 				}
 				catch (BeansException ex) {
 					// Destroy already created singletons to avoid dangling
 					// resources.
 					getBeanFactory().destroySingletons();
-					cancelRefresh(ex);
-					// propagate exception to the caller
+					logger.error("Post refresh error", ex);
+					// rethrow exception to the caller
 					throw ex;
 				}
 			}
-		}
-		catch (RuntimeException ex) {
-			logger.error("Post refresh error", ex);
-			// post notification
-			sendFailedEvent(ex);
-			throw ex;
 		}
 		finally {
 			thread.setContextClassLoader(oldTCCL);
@@ -320,73 +288,4 @@ public abstract class AbstractDelegatedExecutionApplicationContext extends Abstr
 		this.executor = executor;
 	}
 
-	public void setDelegatedEventMulticaster(OsgiBundleApplicationContextEventMulticaster multicaster) {
-		this.delegatedMulticaster = multicaster;
-	}
-
-	/**
-	 * Sets the OSGi multicaster by using a Spring
-	 * {@link ApplicationEventMulticaster}. This method is added as a
-	 * covenience.
-	 * 
-	 * @param multicaster Spring multi-caster used for propagating OSGi specific
-	 * events
-	 * 
-	 * @see OsgiBundleApplicationContextEventMulticasterAdapter
-	 */
-	public void setDelegatedEventMulticaster(ApplicationEventMulticaster multicaster) {
-		this.delegatedMulticaster = new OsgiBundleApplicationContextEventMulticasterAdapter(multicaster);
-	}
-
-	public OsgiBundleApplicationContextEventMulticaster getDelegatedEventMulticaster() {
-		return this.delegatedMulticaster;
-	}
-
-	private void sendFailedEvent(Throwable cause) {
-		if (delegatedMulticaster != null)
-			delegatedMulticaster.multicastEvent(new OsgiBundleContextFailedEvent(this, this.getBundle(), cause));
-	}
-
-	private void sendRefreshedEvent() {
-		if (delegatedMulticaster != null)
-			delegatedMulticaster.multicastEvent(new OsgiBundleContextRefreshedEvent(this, this.getBundle()));
-	}
-
-	/**
-	 * Returns the context class loader to be used as the Thread Context Class
-	 * Loader for {@link #refresh()} and {@link #destroy()} calls.
-	 * 
-	 * The default implementation returns the bean class loader if it is set or
-	 * or the current context class loader otherwise.
-	 * 
-	 * @return the thread context class loader to be used during the execution
-	 * of critical section blocks
-	 * @deprecated will be removed after RC1 is released
-	 */
-	protected ClassLoader getContextClassLoader() {
-		return contextClassLoaderProvider().getContextClassLoader();
-	}
-
-	/** private method used for doing lazy-init-if-not-set for cclProvider */
-	private ContextClassLoaderProvider contextClassLoaderProvider() {
-		if (cclProvider == null) {
-			DefaultContextClassLoaderProvider defaultProvider = new DefaultContextClassLoaderProvider();
-			defaultProvider.setBeanClassLoader(getClassLoader());
-			cclProvider = defaultProvider;
-		}
-		return cclProvider;
-	}
-
-	/**
-	 * Sets the {@link ContextClassLoaderProvider} used by this OSGi application
-	 * context instance. By default, {@link DefaultContextClassLoaderProvider}
-	 * is used.
-	 * 
-	 * @param contextClassLoaderProvider context class loader provider to use
-	 * @see ContextClassLoaderProvider
-	 * @see DefaultContextClassLoaderProvider
-	 */
-	public void setContextClassLoaderProvider(ContextClassLoaderProvider contextClassLoaderProvider) {
-		this.cclProvider = contextClassLoaderProvider;
-	}
 }
