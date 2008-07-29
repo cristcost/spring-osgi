@@ -3,7 +3,7 @@
   <parent>
     <artifactId>spring-osgi</artifactId>
     <groupId>org.springframework.osgi</groupId>
-    <version>1.2.0-m1-SNAPSHOT</version>
+    <version>1.1.1</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.springframework.osgi</groupId>
@@ -98,6 +98,18 @@
       <artifactId>spring-webmvc</artifactId>
       <scope>test</scope>
     </dependency>
+
+    <dependency>
+      <groupId>org.aopalliance</groupId>
+      <artifactId>com.springsource.org.aopalliance</artifactId>
+    </dependency>    
+
+    <dependency>
+      <groupId>edu.emory.mathcs.backport</groupId>
+      <artifactId>com.springsource.edu.emory.mathcs.backport</artifactId>
+      <version>3.1.0</version>
+      <scope>provided</scope>
+    </dependency> 
 
    <!-- we add this dependencies so that the BND plugin can determine their versions -->
    <!-- they are transitive so it makes sense to use a property instead -->
