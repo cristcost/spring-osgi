@@ -30,7 +30,6 @@ import org.springframework.osgi.context.event.OsgiBundleContextRefreshedEvent;
 import org.springframework.osgi.util.OsgiBundleUtils;
 import org.springframework.osgi.util.OsgiStringUtils;
 import org.springframework.osgi.util.internal.ClassUtils;
-import org.springframework.osgi.util.internal.PrivilegedUtils;
 import org.springframework.util.Assert;
 import org.springframework.util.ObjectUtils;
 
@@ -140,40 +139,44 @@ public abstract class AbstractDelegatedExecutionApplicationContext extends Abstr
 	public void normalRefresh() {
 		Assert.notNull(getBundleContext(), "bundle context should be set before refreshing the application context");
 
-		try {
-			PrivilegedUtils.executeWithCustomTCCL(contextClassLoaderProvider().getContextClassLoader(),
-				new PrivilegedUtils.UnprivilegedExecution() {
+		Thread currentThread = Thread.currentThread();
+		ClassLoader oldTCCL = currentThread.getContextClassLoader();
 
-					public Object run() {
-						AbstractDelegatedExecutionApplicationContext.super.refresh();
-						sendRefreshedEvent();
-						return null;
-					}
-				});
+		try {
+			currentThread.setContextClassLoader(contextClassLoaderProvider().getContextClassLoader());
+			try {
+				super.refresh();
+				sendRefreshedEvent();
+			}
+			catch (Throwable th) {
+				logger.error("Refresh error", th);
+				sendFailedEvent(th);
+				// propagate exception to the caller
+				// rethrow the problem w/o rewrapping
+				if (th instanceof RuntimeException) {
+					throw (RuntimeException) th;
+				}
+				else {
+					throw (Error) th;
+				}
+			}
 		}
-		catch (Throwable th) {
-			logger.error("Refresh error", th);
-			sendFailedEvent(th);
-			// propagate exception to the caller
-			// rethrow the problem w/o rewrapping
-			if (th instanceof RuntimeException) {
-				throw (RuntimeException) th;
-			}
-			else {
-				throw (Error) th;
-			}
+		finally {
+			currentThread.setContextClassLoader(oldTCCL);
 		}
 	}
 
 	public void normalClose() {
-		PrivilegedUtils.executeWithCustomTCCL(contextClassLoaderProvider().getContextClassLoader(),
-			new PrivilegedUtils.UnprivilegedExecution() {
+		Thread currentThread = Thread.currentThread();
+		ClassLoader oldTCCL = currentThread.getContextClassLoader();
 
-				public Object run() {
-					AbstractDelegatedExecutionApplicationContext.super.doClose();
-					return null;
-				}
-			});
+		try {
+			currentThread.setContextClassLoader(contextClassLoaderProvider().getContextClassLoader());
+			super.doClose();
+		}
+		finally {
+			currentThread.setContextClassLoader(oldTCCL);
+		}
 	}
 
 	// Adds behaviour for isAvailable flag.
@@ -191,57 +194,53 @@ public abstract class AbstractDelegatedExecutionApplicationContext extends Abstr
 			throw new IllegalStateException(
 				"JVM 5+ or backport-concurrent library (for JVM 1.4) required; see the FAQ for more details");
 
+		Thread thread = Thread.currentThread();
+		ClassLoader oldTCCL = thread.getContextClassLoader();
+
 		try {
-			PrivilegedUtils.executeWithCustomTCCL(contextClassLoaderProvider().getContextClassLoader(),
-				new PrivilegedUtils.UnprivilegedExecution() {
+			synchronized (contextMonitor) {
+				thread.setContextClassLoader(contextClassLoaderProvider().getContextClassLoader());
 
-					public Object run() {
-						synchronized (contextMonitor) {
+				if (ObjectUtils.isEmpty(getConfigLocations())) {
+					setConfigLocations(getDefaultConfigLocations());
+				}
+				if (!OsgiBundleUtils.isBundleActive(getBundle())) {
+					throw new ApplicationContextException("Unable to refresh application context: bundle is "
+							+ OsgiStringUtils.bundleStateAsString(getBundle()));
+				}
 
-							if (ObjectUtils.isEmpty(getConfigLocations())) {
-								setConfigLocations(getDefaultConfigLocations());
-							}
-							if (!OsgiBundleUtils.isBundleActive(getBundle())) {
-								throw new ApplicationContextException(
-									"Unable to refresh application context: bundle is "
-											+ OsgiStringUtils.bundleStateAsString(getBundle()));
-							}
+				ConfigurableListableBeanFactory beanFactory = null;
+				// Prepare this context for refreshing.
+				prepareRefresh();
 
-							ConfigurableListableBeanFactory beanFactory = null;
-							// Prepare this context for refreshing.
-							prepareRefresh();
+				// Tell the subclass to refresh the internal bean factory.
+				beanFactory = obtainFreshBeanFactory();
 
-							// Tell the subclass to refresh the internal bean factory.
-							beanFactory = obtainFreshBeanFactory();
+				// Prepare the bean factory for use in this context.
+				prepareBeanFactory(beanFactory);
 
-							// Prepare the bean factory for use in this context.
-							prepareBeanFactory(beanFactory);
+				try {
+					// Allows post-processing of the bean factory in context
+					// subclasses.
+					postProcessBeanFactory(beanFactory);
 
-							try {
-								// Allows post-processing of the bean factory in context
-								// subclasses.
-								postProcessBeanFactory(beanFactory);
+					// Invoke factory processors registered as beans in the
+					// context.
+					invokeBeanFactoryPostProcessors(beanFactory);
 
-								// Invoke factory processors registered as beans in the
-								// context.
-								invokeBeanFactoryPostProcessors(beanFactory);
+					// Register bean processors that intercept bean creation.
+					registerBeanPostProcessors(beanFactory);
 
-								// Register bean processors that intercept bean creation.
-								registerBeanPostProcessors(beanFactory);
-
-								return null;
-							}
-							catch (BeansException ex) {
-								// Destroy already created singletons to avoid dangling
-								// resources.
-								beanFactory.destroySingletons();
-								cancelRefresh(ex);
-								// propagate exception to the caller
-								throw ex;
-							}
-						}
-					}
-				});
+				}
+				catch (BeansException ex) {
+					// Destroy already created singletons to avoid dangling
+					// resources.
+					beanFactory.destroySingletons();
+					cancelRefresh(ex);
+					// propagate exception to the caller
+					throw ex;
+				}
+			}
 		}
 		catch (Throwable th) {
 			logger.error("Pre refresh error", th);
@@ -255,56 +254,54 @@ public abstract class AbstractDelegatedExecutionApplicationContext extends Abstr
 				throw (Error) th;
 			}
 		}
+		finally {
+			thread.setContextClassLoader(oldTCCL);
+		}
 	}
 
 	public void completeRefresh() {
+		Thread thread = Thread.currentThread();
+		ClassLoader oldTCCL = thread.getContextClassLoader();
 
 		try {
 
-			PrivilegedUtils.executeWithCustomTCCL(contextClassLoaderProvider().getContextClassLoader(),
-				new PrivilegedUtils.UnprivilegedExecution() {
+			synchronized (contextMonitor) {
+				thread.setContextClassLoader(contextClassLoaderProvider().getContextClassLoader());
 
-					public Object run() {
+				try {
+					ConfigurableListableBeanFactory beanFactory = getBeanFactory();
 
-						synchronized (contextMonitor) {
+					// Initialize message source for this context.
+					initMessageSource();
 
-							try {
-								ConfigurableListableBeanFactory beanFactory = getBeanFactory();
+					// Initialize event multicaster for this context.
+					initApplicationEventMulticaster();
 
-								// Initialize message source for this context.
-								initMessageSource();
+					// Initialize other special beans in specific context
+					// subclasses.
+					onRefresh();
 
-								// Initialize event multicaster for this context.
-								initApplicationEventMulticaster();
+					// Check for listener beans and register them.
+					registerListeners();
 
-								// Initialize other special beans in specific context
-								// subclasses.
-								onRefresh();
+					// Instantiate all remaining (non-lazy-init) singletons.
+					finishBeanFactoryInitialization(beanFactory);
 
-								// Check for listener beans and register them.
-								registerListeners();
+					// Last step: publish corresponding event.
+					finishRefresh();
 
-								// Instantiate all remaining (non-lazy-init) singletons.
-								finishBeanFactoryInitialization(beanFactory);
-
-								// Last step: publish corresponding event.
-								finishRefresh();
-
-								// everything went okay, post notification
-								sendRefreshedEvent();
-								return null;
-							}
-							catch (BeansException ex) {
-								// Destroy already created singletons to avoid dangling
-								// resources.
-								getBeanFactory().destroySingletons();
-								cancelRefresh(ex);
-								// propagate exception to the caller
-								throw ex;
-							}
-						}
-					}
-				});
+					// everything went okay, post notification
+					sendRefreshedEvent();
+				}
+				catch (BeansException ex) {
+					// Destroy already created singletons to avoid dangling
+					// resources.
+					getBeanFactory().destroySingletons();
+					cancelRefresh(ex);
+					// propagate exception to the caller
+					throw ex;
+				}
+			}
 		}
 		catch (Throwable th) {
 			logger.error("Post refresh error", th);
@@ -317,6 +314,9 @@ public abstract class AbstractDelegatedExecutionApplicationContext extends Abstr
 			else {
 				throw (Error) th;
 			}
+		}
+		finally {
+			thread.setContextClassLoader(oldTCCL);
 		}
 	}
 

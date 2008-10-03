@@ -18,8 +18,6 @@ package org.springframework.osgi.io;
 
 import java.io.IOException;
 import java.net.URL;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Enumeration;
@@ -192,8 +190,7 @@ public class OsgiBundleResourcePatternResolver extends PathMatchingResourcePatte
 	}
 
 	// add a non-existing resource, if none was found and no pattern was specified
-	public Resource[] getResources(final String locationPattern) throws IOException {
-
+	public Resource[] getResources(String locationPattern) throws IOException {
 		Resource[] resources = findResources(locationPattern);
 
 		// check whether we found something or we should fall-back to a
@@ -203,7 +200,6 @@ public class OsgiBundleResourcePatternResolver extends PathMatchingResourcePatte
 		}
 		// return the original array
 		return resources;
-
 	}
 
 	/**
@@ -226,38 +222,22 @@ public class OsgiBundleResourcePatternResolver extends PathMatchingResourcePatte
 			throw new IllegalArgumentException(
 				"PackageAdmin service/a started bundle is required for classpath matching");
 
-		final ImportedBundle[] importedBundles = resolver.getImportedBundles(bundle);
+		ImportedBundle[] importedBundles = resolver.getImportedBundles(bundle);
 
 		// eliminate classpath path
-		final String path = OsgiResourceUtils.stripPrefix(locationPattern);
+		String path = OsgiResourceUtils.stripPrefix(locationPattern);
 
-		final Collection foundPaths = new LinkedHashSet();
+		Collection foundPaths = new LinkedHashSet();
 
 		// 1. search the imported packages
 
 		// find folder path matching 
-		final String rootDirPath = determineFolderPattern(path);
+		String rootDirPath = determineFolderPattern(path);
 
-		if (System.getSecurityManager() != null) {
-			AccessController.doPrivileged(new PrivilegedAction() {
-
-				public Object run() {
-					for (int i = 0; i < importedBundles.length; i++) {
-						final ImportedBundle importedBundle = importedBundles[i];
-						if (!bundle.equals(importedBundle.getBundle())) {
-							findImportedBundleMatchingResource(importedBundle, rootDirPath, path, foundPaths);
-						}
-					}
-					return null;
-				}
-			});
-		}
-		else {
-			for (int i = 0; i < importedBundles.length; i++) {
-				final ImportedBundle importedBundle = importedBundles[i];
-				if (!bundle.equals(importedBundle.getBundle())) {
-					findImportedBundleMatchingResource(importedBundle, rootDirPath, path, foundPaths);
-				}
+		for (int i = 0; i < importedBundles.length; i++) {
+			ImportedBundle importedBundle = importedBundles[i];
+			if (!bundle.equals(importedBundle.getBundle())) {
+				findImportedBundleMatchingResource(importedBundle, rootDirPath, path, foundPaths);
 			}
 		}
 
@@ -303,18 +283,11 @@ public class OsgiBundleResourcePatternResolver extends PathMatchingResourcePatte
 	 * @param path path used for pattern matching
 	 * @param foundPaths collection of found results
 	 */
-	private void findImportedBundleMatchingResource(final ImportedBundle importedBundle, String rootPath, String path,
-			final Collection foundPaths) {
-
-		final boolean trace = logger.isTraceEnabled();
-
+	private void findImportedBundleMatchingResource(ImportedBundle importedBundle, String rootPath, String path,
+			Collection foundPaths) {
 		String[] packages = importedBundle.getImportedPackages();
 
-		if (trace)
-			logger.trace("Searching path [" + path + "] on imported pkgs " + ObjectUtils.nullSafeToString(packages)
-					+ "...");
-
-		final boolean startsWithSlash = rootPath.startsWith(FOLDER_SEPARATOR);
+		boolean startsWithSlash = rootPath.startsWith(FOLDER_SEPARATOR);
 
 		for (int i = 0; i < packages.length; i++) {
 			// transform the package name into a path
@@ -324,7 +297,7 @@ public class OsgiBundleResourcePatternResolver extends PathMatchingResourcePatte
 				pkg = FOLDER_SEPARATOR + pkg;
 			}
 
-			final PathMatcher matcher = getPathMatcher();
+			PathMatcher matcher = getPathMatcher();
 			// if the imported package matches the path
 			if (matcher.matchStart(path, pkg)) {
 				// start the JAR analysis
@@ -334,11 +307,8 @@ public class OsgiBundleResourcePatternResolver extends PathMatchingResourcePatte
 					if (startsWithSlash)
 						entry = FOLDER_SEPARATOR + entry;
 
-					if (matcher.match(path, entry)) {
-						if (trace)
-							logger.trace("Found entry [" + entry + "]");
+					if (matcher.match(path, entry))
 						foundPaths.add(entry);
-					}
 				}
 			}
 		}
@@ -358,23 +328,12 @@ public class OsgiBundleResourcePatternResolver extends PathMatchingResourcePatte
 		// 1. bundle space lookup
 		OsgiBundleResourcePatternResolver localPatternResolver = new OsgiBundleResourcePatternResolver(bundle);
 		Resource[] foundResources = localPatternResolver.findResources(path);
-
-		boolean trace = logger.isTraceEnabled();
-
-		if (trace)
-			logger.trace("Found synthetic cp resources " + ObjectUtils.nullSafeToString(foundResources));
-
 		for (int j = 0; j < foundResources.length; j++) {
 			// assemble only the OSGi paths
 			foundPaths.add(foundResources[j].getURL().getPath());
 		}
 		// 2. Bundle-Classpath lookup (on the path stripped of the prefix)
-		Collection cpMatchingPaths = findBundleClassPathMatchingPaths(bundle, path);
-
-		if (trace)
-			logger.trace("Found Bundle-ClassPath matches " + cpMatchingPaths);
-
-		foundPaths.addAll(cpMatchingPaths);
+		foundPaths.addAll(findBundleClassPathMatchingPaths(bundle, path));
 
 		// 3. Required-Bundle is considered already by the dependency resolver
 	}
@@ -550,13 +509,7 @@ public class OsgiBundleResourcePatternResolver extends PathMatchingResourcePatte
 		String subPattern = locationPattern.substring(rootDirPath.length());
 		Resource[] rootDirResources = getResources(rootDirPath);
 
-		boolean trace = logger.isTraceEnabled();
-
-		if (trace)
-			logger.trace("Found root resources for [" + rootDirPath + "] :"
-					+ ObjectUtils.nullSafeToString(rootDirResources));
-
-		Set result = new LinkedHashSet();
+		Set result = new LinkedHashSet(16);
 		for (int i = 0; i < rootDirResources.length; i++) {
 			Resource rootDirResource = rootDirResources[i];
 			if (isJarResource(rootDirResource)) {
@@ -619,7 +572,7 @@ public class OsgiBundleResourcePatternResolver extends PathMatchingResourcePatte
 				cleanPath = cleanPath + FOLDER_SEPARATOR;
 			}
 			String fullPattern = cleanPath + subPattern;
-			Set result = new LinkedHashSet();
+			Set result = new LinkedHashSet(16);
 			doRetrieveMatchingBundleEntries(bundle, fullPattern, cleanPath, result, searchType);
 			return result;
 		}
@@ -665,6 +618,7 @@ public class OsgiBundleResourcePatternResolver extends PathMatchingResourcePatte
 		if (candidates != null) {
 			boolean dirDepthNotFixed = (fullPattern.indexOf(FOLDER_WILDCARD) != -1);
 			while (candidates.hasMoreElements()) {
+
 				Object path = candidates.nextElement();
 				String currPath;
 
@@ -682,7 +636,6 @@ public class OsgiBundleResourcePatternResolver extends PathMatchingResourcePatte
 						currPath = currPath.substring(dirIndex);
 					}
 				}
-
 				if (currPath.endsWith(FOLDER_SEPARATOR)
 						&& (dirDepthNotFixed || StringUtils.countOccurrencesOf(currPath, FOLDER_SEPARATOR) < StringUtils.countOccurrencesOf(
 							fullPattern, FOLDER_SEPARATOR))) {

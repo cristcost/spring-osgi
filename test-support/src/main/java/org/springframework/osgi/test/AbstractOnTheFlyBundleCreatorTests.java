@@ -17,8 +17,6 @@
 package org.springframework.osgi.test;
 
 import java.io.IOException;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -96,13 +94,7 @@ public abstract class AbstractOnTheFlyBundleCreatorTests extends AbstractDepende
 	}
 
 	private void initializeJarCreator() {
-		AccessController.doPrivileged(new PrivilegedAction() {
-
-			public Object run() {
-				jarCreator = new JarCreator();
-				return null;
-			}
-		});
+		jarCreator = new JarCreator();
 	}
 
 	/**

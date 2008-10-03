@@ -17,10 +17,6 @@
 package org.springframework.osgi.context.internal.classloader;
 
 import java.net.URL;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
-import java.security.PrivilegedActionException;
-import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,8 +38,6 @@ public class ChainedClassLoader extends ClassLoader {
 	/** index at which new classloader are added to */
 	private int index = 0;
 
-	private final ClassLoader systemClassLoader;
-
 
 	public ChainedClassLoader(ClassLoader[] loaders) {
 		Assert.notEmpty(loaders);
@@ -52,78 +46,36 @@ public class ChainedClassLoader extends ClassLoader {
 			Assert.notNull(classLoader, "null classloaders not allowed");
 			this.loaders.add(classLoader);
 		}
-
-		systemClassLoader = (ClassLoader) AccessController.doPrivileged(new PrivilegedAction() {
-
-			public Object run() {
-				return ClassLoader.getSystemClassLoader();
-			}
-		});
 	}
 
-	public URL getResource(final String name) {
-		synchronized (loaders) {
-			if (System.getSecurityManager() != null) {
-				return (URL) AccessController.doPrivileged(new PrivilegedAction() {
-
-					public Object run() {
-						return doGetResource(name);
-					}
-				});
-			}
-			else {
-				return doGetResource(name);
-			}
-		}
-	}
-
-	private URL doGetResource(String name) {
+	public URL getResource(String name) {
 		URL url = null;
-		for (int i = 0; i < loaders.size(); i++) {
-			ClassLoader loader = (ClassLoader) loaders.get(i);
-			url = loader.getResource(name);
-			if (url != null)
-				return url;
+		synchronized (loaders) {
+			for (int i = 0; i < loaders.size(); i++) {
+				ClassLoader loader = (ClassLoader) loaders.get(i);
+				url = loader.getResource(name);
+				if (url != null)
+					return url;
+			}
 		}
 		return url;
 	}
 
-	public Class loadClass(final String name) throws ClassNotFoundException {
-
-		synchronized (loaders) {
-			if (System.getSecurityManager() != null) {
-				try {
-					return (Class) AccessController.doPrivileged(new PrivilegedExceptionAction() {
-
-						public Object run() throws Exception {
-							return doLoadClass(name);
-						}
-					});
-				}
-				catch (PrivilegedActionException pae) {
-					throw (ClassNotFoundException) pae.getException();
-				}
-			}
-			else {
-				return doLoadClass(name);
-			}
-		}
-	}
-
-	private Class doLoadClass(String name) throws ClassNotFoundException {
+	public Class loadClass(String name) throws ClassNotFoundException {
 		Class clazz = null;
-
-		for (int i = 0; i < loaders.size(); i++) {
-			ClassLoader loader = (ClassLoader) loaders.get(i);
-			try {
-				clazz = loader.loadClass(name);
-				return clazz;
+		synchronized (loaders) {
+			for (int i = 0; i < loaders.size(); i++) {
+				ClassLoader loader = (ClassLoader) loaders.get(i);
+				try {
+					clazz = loader.loadClass(name);
+					return clazz;
+				}
+				catch (ClassNotFoundException e) {
+					// keep moving through the class loaders
+				}
 			}
-			catch (ClassNotFoundException e) {
-				// keep moving through the class loaders
-			}
+			throw new ClassNotFoundException(name);
 		}
-		throw new ClassNotFoundException(name);
 	}
 
 	/**
@@ -131,13 +83,8 @@ public class ChainedClassLoader extends ClassLoader {
 	 * 
 	 * @param clazz
 	 */
-	public void addClassLoader(final Class clazz) {
-		addClassLoader((ClassLoader) AccessController.doPrivileged(new PrivilegedAction() {
-
-			public Object run() {
-				return ClassUtils.getClassLoader(clazz);
-			}
-		}));
+	public void addClassLoader(Class clazz) {
+		addClassLoader(ClassUtils.getClassLoader(clazz));
 	}
 
 	/**
@@ -151,7 +98,7 @@ public class ChainedClassLoader extends ClassLoader {
 		synchronized (loaders) {
 			if (!loaders.contains(classLoader)) {
 				// special case - add the system classloader last since otherwise you can run into CCE problems 
-				if (systemClassLoader.equals(classLoader)) {
+				if (ClassLoader.getSystemClassLoader().equals(classLoader)) {
 					loaders.add(classLoader);
 				}
 				else {

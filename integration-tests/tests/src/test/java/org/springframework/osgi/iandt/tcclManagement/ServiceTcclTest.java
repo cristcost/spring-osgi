@@ -13,14 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.springframework.osgi.iandt.tcclManagement;
 
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.List;
 
-import org.osgi.framework.AdminPermission;
 import org.osgi.framework.ServiceReference;
 import org.springframework.osgi.iandt.BaseIntegrationTest;
 import org.springframework.osgi.iandt.tccl.TCCLService;
@@ -45,7 +42,6 @@ public class ServiceTcclTest extends BaseIntegrationTest {
 	private static final String SERVICE_CLASS = "org.springframework.osgi.iandt.tccl.internal.PrivateTCCLServiceImplementation";
 
 	private static final String SERVICE_PUBLIC_CLASS = "org.springframework.osgi.iandt.tccl.TCCLService";
-
 
 	protected String[] getConfigLocations() {
 		return new String[] { "/org/springframework/osgi/iandt/tcclManagement/service-context.xml" };
@@ -151,14 +147,6 @@ public class ServiceTcclTest extends BaseIntegrationTest {
 
 	private TCCLService getClientTCCL() {
 		return (TCCLService) applicationContext.getBean("client");
-	}
-
-	// provide permission for loading class using the service bundle
-	protected List getTestPermissions() {
-		List perms = super.getTestPermissions();
-		perms.add(new AdminPermission("(name=org.springframework.osgi.iandt.tccl)", AdminPermission.CLASS));
-		perms.add(new AdminPermission("(name=org.springframework.osgi.iandt.tccl)", AdminPermission.RESOURCE));
-		return perms;
 	}
 
 }

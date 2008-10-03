@@ -16,8 +16,6 @@
 
 package org.springframework.osgi.service.util.internal.aop;
 
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.util.List;
 
 import org.aopalliance.aop.Advice;
@@ -40,9 +38,9 @@ public abstract class ProxyUtils {
 			(advices != null ? (Advice[]) advices.toArray(new Advice[advices.size()]) : new Advice[0]));
 	}
 
-	public static Object createProxy(Class[] classes, Object target, final ClassLoader classLoader,
+	public static Object createProxy(Class[] classes, Object target, ClassLoader classLoader,
 			BundleContext bundleContext, Advice[] advices) {
-		final ProxyFactory factory = new ProxyFactory();
+		ProxyFactory factory = new ProxyFactory();
 
 		ClassUtils.configureFactoryForClass(factory, classes);
 
@@ -59,12 +57,7 @@ public abstract class ProxyUtils {
 		factory.setFrozen(true);
 		factory.setOpaque(true);
 		try {
-			return AccessController.doPrivileged(new PrivilegedAction() {
-
-				public Object run() {
-					return factory.getProxy(classLoader);
-				}
-			});
+			return factory.getProxy(classLoader);
 		}
 		catch (NoClassDefFoundError ncdfe) {
 			DebugUtils.debugClassLoadingThrowable(ncdfe, bundleContext.getBundle(), classes);

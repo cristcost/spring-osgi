@@ -25,7 +25,6 @@ import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.springframework.osgi.config.internal.MethodUtils;
 import org.springframework.osgi.util.internal.ReflectionUtils;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
@@ -127,7 +126,7 @@ abstract class CustomListenerAdapterUtils {
 
 	/**
 	 * Invoke the custom listener method. Takes care of iterating through the
-	 * method map (normally acquired through
+	 * method map (normally aquired through
 	 * {@link #determineCustomMethods(Class, String, Class[])} and invoking the
 	 * method using the arguments.
 	 * 
@@ -149,16 +148,17 @@ abstract class CustomListenerAdapterUtils {
 				// find the compatible types (accept null service)
 				if (service == null || key.isInstance(service)) {
 					if (trace)
-						log.trace("Invoking listener custom method " + method);
+						log.trace("invoking listener custom method " + method);
 
 					try {
 						ReflectionUtils.invokeMethod(method, target, args);
 					}
 					// make sure to log exceptions and continue with the
-					// rest of the methods
+					// rest of
+					// the listeners
 					catch (Exception ex) {
 						Exception cause = ReflectionUtils.getInvocationException(ex);
-						log.warn("Custom method [" + method + "] threw exception when passing service type ["
+						log.warn("custom method [" + method + "] threw exception when passing service type ["
 								+ (service != null ? service.getClass().getName() : null) + "]", cause);
 					}
 				}

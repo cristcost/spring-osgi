@@ -13,21 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.springframework.osgi.iandt.propertyplaceholder;
 
 import java.io.File;
-import java.io.FilePermission;
 import java.util.Dictionary;
 import java.util.Hashtable;
-import java.util.List;
-import java.util.PropertyPermission;
 
-import org.osgi.framework.AdminPermission;
 import org.osgi.framework.ServiceReference;
 import org.osgi.service.cm.Configuration;
 import org.osgi.service.cm.ConfigurationAdmin;
-import org.osgi.service.cm.ConfigurationPermission;
 import org.springframework.osgi.context.ConfigurableOsgiBundleApplicationContext;
 import org.springframework.osgi.context.support.OsgiBundleXmlApplicationContext;
 import org.springframework.osgi.iandt.BaseIntegrationTest;
@@ -49,7 +43,6 @@ public class PropertyPlaceholderTest extends BaseIntegrationTest {
 	private ConfigurableOsgiBundleApplicationContext ctx;
 
 	private static String CONFIG_DIR = "test-config";
-
 
 	protected static void initializeDirectory(String dir) {
 		File directory = new File(dir);
@@ -76,7 +69,7 @@ public class PropertyPlaceholderTest extends BaseIntegrationTest {
 	protected String[] getTestBundlesNames() {
 		return new String[] {
 		// required by cm_all for logging
-		"org.apache.felix, org.apache.felix.configadmin, 1.0.4" };
+				"org.knopflerfish.bundles, log_all, 2.0.0", "org.knopflerfish.bundles, cm_all, 2.0.0" };
 	}
 
 	protected void onSetUp() throws Exception {
@@ -84,7 +77,6 @@ public class PropertyPlaceholderTest extends BaseIntegrationTest {
 		DICT.put("white", "horse");
 		// Set up the bundle storage dirctory
 		System.setProperty("com.gatespace.bundle.cm.store", CONFIG_DIR);
-		System.setProperty("felix.cm.dir", CONFIG_DIR);
 		initializeDirectory(CONFIG_DIR);
 		prepareConfiguration();
 
@@ -118,18 +110,5 @@ public class PropertyPlaceholderTest extends BaseIntegrationTest {
 	public void testFallbackProperties() throws Exception {
 		String bean = (String) ctx.getBean("bean2");
 		assertEquals("treasures", bean);
-	}
-
-	protected List getTestPermissions() {
-		List perms = super.getTestPermissions();
-		// export package
-		perms.add(new AdminPermission("*", AdminPermission.EXECUTE));
-		perms.add(new PropertyPermission("*", "write"));
-		perms.add(new PropertyPermission("*", "read"));
-		perms.add(new FilePermission("<<ALL FILES>>", "read"));
-		perms.add(new FilePermission("<<ALL FILES>>", "delete"));
-		perms.add(new FilePermission("<<ALL FILES>>", "write"));
-		perms.add(new ConfigurationPermission("*", ConfigurationPermission.CONFIGURE));
-		return perms;
 	}
 }

@@ -13,13 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.springframework.osgi.iandt.lifecycle;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.osgi.framework.AdminPermission;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.Constants;
 import org.osgi.util.tracker.ServiceTracker;
@@ -38,7 +33,8 @@ public class LifecycleTest extends BaseIntegrationTest {
 	}
 
 	protected String[] getTestBundlesNames() {
-		return new String[] { "org.springframework.osgi.iandt,lifecycle," + getSpringDMVersion() };
+		return new String[] { "org.springframework.osgi.iandt,lifecycle,"
+				+ getSpringDMVersion() };
 	}
 
 	public void testLifecycle() throws Exception {
@@ -85,12 +81,5 @@ public class LifecycleTest extends BaseIntegrationTest {
 		finally {
 			tracker.close();
 		}
-	}
-
-	protected List getTestPermissions() {
-		List perms = super.getTestPermissions();
-		// export package
-		perms.add(new AdminPermission("*", AdminPermission.EXECUTE));
-		return perms;
 	}
 }
