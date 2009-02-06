@@ -13,7 +13,7 @@
     <properties>
         <slf4j.version>1.5.0</slf4j.version>
         <spring.maven.artifact.version>2.5.5</spring.maven.artifact.version>
-        <spring.osgi.version>1.2.0-rc1-SNAPSHOT</spring.osgi.version>
+        <spring.osgi.version>1.1.3-SNAPSHOT</spring.osgi.version>
         <equinox.ver>3.2.2</equinox.ver>
     </properties>
 
@@ -34,12 +34,12 @@
             <groupId>org.springframework</groupId>
             <artifactId>spring-core</artifactId>
             <version>${spring.maven.artifact.version}</version>
-            <exclusions>
+            <exclusions>      
               <exclusion>
                 <groupId>commons-logging</groupId>
                 <artifactId>commons-logging</artifactId>
               </exclusion>
-            </exclusions>
+            </exclusions>        
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
@@ -54,7 +54,7 @@
                 <groupId>commons-logging</groupId>
                 <artifactId>commons-logging</artifactId>
               </exclusion>
-            </exclusions>
+            </exclusions>           
         </dependency>
         <dependency>
           <groupId>org.slf4j</groupId>
@@ -82,7 +82,7 @@
                 <groupId>org.apache.log4j</groupId>
                 <artifactId>com.springsource.org.apache.log4j</artifactId>
             </exclusion>
-          </exclusions>
+          </exclusions>      
         </dependency>
 
         <!-- test scoped dependencies -->
@@ -105,7 +105,7 @@
             <exclusion>
               <groupId>junit</groupId>
               <artifactId>junit</artifactId>
-            </exclusion>
+            </exclusion>        
           </exclusions>
         </dependency>
         <dependency>
@@ -118,13 +118,6 @@
         <dependency>
             <groupId>org.springframework.osgi</groupId>
             <artifactId>spring-osgi-annotation</artifactId>
-            <version>${spring.osgi.version}</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.osgi</groupId>
-            <artifactId>spring-osgi-extender</artifactId>
             <version>${spring.osgi.version}</version>
             <scope>test</scope>
         </dependency>

@@ -132,52 +132,49 @@ public class WarLoaderListener implements BundleActivator {
 				localConfig = configuration;
 			}
 
-			// the config might not be initialized (if the server hasn't been resolved)
-			if (localConfig != null) {
-				// depending on the configuration, the bundles can be undeployed as well
-				if (localConfig.shouldUndeployWarsAtShutdown()) {
+			// depending on the configuration, the bundles can be undeployed as well
+			if (localConfig.shouldUndeployWarsAtShutdown()) {
 
-					final List bundles = new ArrayList(bundlesToDeployments.keySet());
-					StringBuffer bundlesToString = new StringBuffer("\n");
-					for (Iterator iterator = bundles.iterator(); iterator.hasNext();) {
-						Bundle bundle = (Bundle) iterator.next();
-						bundlesToString.append("[ ");
-						bundlesToString.append(OsgiStringUtils.nullSafeNameAndSymName(bundle));
-						bundlesToString.append(" ]\n");
-					}
+				final List bundles = new ArrayList(bundlesToDeployments.keySet());
+				StringBuffer bundlesToString = new StringBuffer("\n");
+				for (Iterator iterator = bundles.iterator(); iterator.hasNext();) {
+					Bundle bundle = (Bundle) iterator.next();
+					bundlesToString.append("[ ");
+					bundlesToString.append(OsgiStringUtils.nullSafeNameAndSymName(bundle));
+					bundlesToString.append(" ]\n");
+				}
 
-					// get a snapshot of the keys and maintain the order
-					log.info("Undeploying all deployed bundle wars: {" + bundlesToString.toString() + "}");
+				// get a snapshot of the keys and maintain the order
+				log.info("Undeploying all deployed bundle wars: {" + bundlesToString.toString() + "}");
 
-					Runnable undeployBundlesRunnable = new Runnable() {
+				Runnable undeployBundlesRunnable = new Runnable() {
 
-						public void run() {
-							for (Iterator iterator = bundles.iterator(); iterator.hasNext();) {
-								Bundle bundle = (Bundle) iterator.next();
-								// undeploy the bundle
-								new UndeployTask(bundle, onGoingTask).run();
-							}
-
-							// when finished, clear the map just in case
-							bundlesToDeployments.clear();
-
-							// only after everything is done, the configuration can be destroyed as well
-							// as it holds a reference to the Tomcat service
-							localConfig.destroy();
+					public void run() {
+						for (Iterator iterator = bundles.iterator(); iterator.hasNext();) {
+							Bundle bundle = (Bundle) iterator.next();
+							// undeploy the bundle
+							new UndeployTask(bundle, onGoingTask).run();
 						}
-					};
 
-					Thread thread = new Thread(undeployBundlesRunnable, "Spring-DM WebExtender[" + extenderVersion
-							+ "] war undeployment thread");
-					thread.start();
-				}
-				else {
-					// if there's a task currently on going, wait for it
-					if (onGoingTask.waitForZero(SHUTDOWN_WAIT_TIME)) {
-						log.debug("An on-going deploy/undeploy task did not finish in time; continuing shutdown...");
+						// when finished, clear the map just in case
+						bundlesToDeployments.clear();
+
+						// only after everything is done, the configuration can be destroyed as well
+						// as it holds a reference to the Tomcat service
+						localConfig.destroy();
 					}
-					localConfig.destroy();
+				};
+
+				Thread thread = new Thread(undeployBundlesRunnable, "Spring-DM WebExtender[" + extenderVersion
+						+ "] war undeployment thread");
+				thread.start();
+			}
+			else {
+				// if there's a task currently on going, wait for it
+				if (onGoingTask.waitForZero(SHUTDOWN_WAIT_TIME)) {
+					log.debug("An on-going deploy/undeploy task did not finish in time; continuing shutdown...");
 				}
+				localConfig.destroy();
 			}
 		}
 
@@ -247,13 +244,6 @@ public class WarLoaderListener implements BundleActivator {
 
 			public void doRun() {
 				try {
-					synchronized (lock) {
-						// check if the bundle has been stopped in the meantime
-						if (destroyed) {
-							return;
-						}
-					}
-
 					WarDeployment deployment = warDeployer.deploy(bundle, contextPath);
 					// deploy the bundle 
 					bundlesToDeployments.put(bundle, deployment);
@@ -324,8 +314,6 @@ public class WarLoaderListener implements BundleActivator {
 	/** lock used for reading non-final fields between multiple threads */
 	/** transient would be nice to have ... */
 	private final Object lock = new Object();
-	/** flag indicated whether the extender has been stopped */
-	private boolean destroyed = false;
 
 
 	/**
@@ -349,7 +337,6 @@ public class WarLoaderListener implements BundleActivator {
 			this.bundleContext = context;
 			this.bundleId = bundleContext.getBundle().getBundleId();
 			this.extenderVersion = OsgiBundleUtils.getBundleVersion(context.getBundle());
-			this.destroyed = false;
 		}
 
 		final boolean trace = log.isTraceEnabled();
@@ -357,7 +344,7 @@ public class WarLoaderListener implements BundleActivator {
 		log.info("Starting [" + bundleContext.getBundle().getSymbolicName() + "] bundle v.[" + extenderVersion + "]");
 
 		// start the initialization on a different thread
-		// this helps if the web server is deployed after the extender (due to the service lookup wait)
+		// this helps if the web server is deployed after the extender
 		Thread th = new Thread(new Runnable() {
 
 			public void run() {
@@ -365,23 +352,16 @@ public class WarLoaderListener implements BundleActivator {
 					// read configuration
 					WarListenerConfiguration config = new WarListenerConfiguration(bundleContext);
 					synchronized (lock) {
-						// check whether the extender has been stopped in the meantime
-						if (!destroyed) {
-							configuration = config;
-							// instantiate fields
-							warScanner = configuration.getWarScanner();
-							warDeployer = configuration.getWarDeployer();
-							contextPathStrategy = configuration.getContextPathStrategy();
+						configuration = config;
+						// instantiate fields
+						warScanner = configuration.getWarScanner();
+						warDeployer = configuration.getWarDeployer();
+						contextPathStrategy = configuration.getContextPathStrategy();
 
-							// register war listener
-							warListener = new WarBundleListener();
-							context.addBundleListener(warListener);
-						}
-						else {
-							// clean up the configuration
-							config.destroy();
-						}
+						// register war listener
+						warListener = new WarBundleListener();
 					}
+					context.addBundleListener(warListener);
 
 					// check existing bundles
 					Bundle[] bnds = context.getBundles();
@@ -397,7 +377,7 @@ public class WarLoaderListener implements BundleActivator {
 					}
 				}
 				catch (Exception ex) {
-					log.error("Cannot property start Spring DM WebExtender; stopping bundle...", ex);
+					log.error("Cannot property start Spring-DM WebExtender; stopping bundle...", ex);
 					try {
 						context.getBundle().stop();
 					}
@@ -417,12 +397,8 @@ public class WarLoaderListener implements BundleActivator {
 	 * @param bundle
 	 */
 	private void maybeDeployWar(Bundle bundle) {
+		// exclude special bundles (such as the framework or this bundle)
 		synchronized (lock) {
-			// first check if the bundle has been stopped or not
-			if (destroyed)
-				return;
-
-			// exclude special bundles (such as the framework or this bundle)
 			if (OsgiBundleUtils.isSystemBundle(bundle) || bundle.getBundleId() == bundleId)
 				return;
 		}
@@ -485,8 +461,6 @@ public class WarLoaderListener implements BundleActivator {
 	public void stop(BundleContext context) throws Exception {
 		// unregister listener
 		synchronized (lock) {
-			destroyed = true;
-
 			if (warListener != null) {
 				context.removeBundleListener(warListener);
 				warListener = null;

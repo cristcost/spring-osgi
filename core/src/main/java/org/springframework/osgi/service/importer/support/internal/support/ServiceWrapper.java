@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.springframework.osgi.service.importer.support.internal.support;
 
 import org.osgi.framework.BundleContext;
@@ -40,7 +39,6 @@ public class ServiceWrapper implements Comparable {
 
 	/** this should be determined in OSGi 4.1 directly from the Bundle * */
 	private BundleContext context;
-
 
 	public ServiceWrapper(ServiceReference ref) {
 		this(ref, OsgiBundleUtils.getBundleContext(ref.getBundle()));
@@ -96,7 +94,15 @@ public class ServiceWrapper implements Comparable {
 	}
 
 	public Object getService() {
-		return context.getService(reference);
+		if (isServiceAlive()) {
+			try {
+				return context.getService(reference);
+			}
+			finally {
+				// context.ungetService(reference);
+			}
+		}
+		return null;
 	}
 
 	public ServiceReference getReference() {
@@ -109,6 +115,13 @@ public class ServiceWrapper implements Comparable {
 
 	public int getServiceRanking() {
 		return serviceRanking;
+	}
+
+	public void cleanup() {
+		// if (isServiceAlive()) {
+		// context.ungetService(reference);
+		// }
+		this.context = null;
 	}
 
 	public int compareTo(Object o) {

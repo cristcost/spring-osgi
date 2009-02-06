@@ -2,94 +2,33 @@ SPRING DYNAMIC MODULES FRAMEWORK CHANGELOG
 ==========================================
 http://www.springframework.org/osgi
 
-Changes in version 1.2.0 RC1 (2009-xx-yy)
------------------------------------------
+Changes in version 1.1.3 (2009-01-dd)
+-------------------------------------
 
 General
 * various documentation improvements and fixes
-* upgraded to Felix 1.4.1
-* upgraded to Knopflerfish 2.2.0
-
-Package org.springframework.osgi.compendium
-* fixed OSGi service unregistration of <managed-service/> listeners
-* fixed property injection to occur before the initializing method is invoked for <managed-service-factory/> beans
 
 Package org.springframework.osgi.context
 * improved proxying of classes that are boot delegated outside the OSGi environment
-* error handling is delegated to the multicaster unless debug is on
-* improved type filtering for tracked services 
-* improved AbstractOsgiBundleApplicationContext to republish the context OSGi service during #refresh calls
-
-Package org.springframework.osgi.extender
-* added support for disabling the ApplicationContext error handler through extender configuration
-* added support for install.context.error.handler property
-* changed namespace handlers lifecycle to depend on bundle events STARTED/STOPPED instead of RESOLVED/UNRESOLVED
-* removed type compatibility check for custom namespace handlers as it caused false warnings in some cases
-+ add extender configuration setting for controlling the default bundle service dependency wait time
 
 Package org.springframework.osgi.io
-* improved OsgiBundleResource#getFile() file detection method
-* eliminated existance check on resolved files for OsgiBundleResource#getFile()
-
-Package org.springframework.osgi.service
-* removed deprecated retryTimes parameter in OsgiServiceProxyFactoryBean
-* improved type filtering for tracked services
-* fixed visibility issue when invoking non-public proxied methods 
-* improved waiting code to deal with spurious or accidental wakeups
-* fixed issue with OsgiServiceProxyFactoryBean that caused autowiring to fail in some cases
-
-Package org.springframework.osgi.test
-* improved FelixOsgiPlatform to support API changes in Felix 1.4.x
-* improved exception descriptions
-
-Package org.springframework.osgi.web
-* fixed extender configuration race condition
-
-
-Changes in version 1.2.0 M2 (2008-11-24)
-----------------------------------------
-
-General
-* upgraded to Spring Framework 2.5.6
-* raised required Spring Framework version to 2.5.6
-* upgraded to Knopflerfish 2.1.1
-* aligned bundle symbolic names to Spring convention (changed prefix org.springframework.bundle.osgi. to 
-  org.springframework.osgi. )
-* added support for compendium namespace (managed-service, config-properties)
-* incremented version of spring-osgi.xsd and spring-osgi-compendium.xsd
-
-Package org.springframework.osgi.context
-* removed deprecated method AbstractDelegatedExecutionApplicationContext#getContextClassLoader
-* introduced dedicated PostProcessor interfaces aware of DelegatedExecutionOsgiBundleApplicationContext's multi-stage
-  refresh
-
-Package org.springframework.osgi.extender
-* improved shutdown algorithm to deal with self-referenced and transitive service references
-
-Package org.springframework.osgi.io
-* improved existence check for bundle resources
 * fixed manifest headers parsing problem when dealing with nested whitespaces
 * fixed handling of optional required bundles
 * improved OsgiBundlePatternMatchingResolver to return ContextResources
 * changed OsgiBundlePatternMatchingResolver#findResources(String) visibility to protected
 
 Package org.springframework.osgi.service
-* refined single service proxies so that any waiting activity is interrupted on destruction
-* improved single service proxies to allow settings update at runtime
-* deprecated retryTimes parameter in OsgiServiceProxyFactoryBean
-* added a weak cache to prevent the creation of identical proxies when publishing scoped beans with managed context
-  class loader
-* improved the proxy creation (when needed) for bean publishing
+* fixed visibility issue when invoking non-public proxied methods 
+* improved waiting code to deal with spurious or accidental wakeups
+* fixed issue with OsgiServiceProxyFactoryBean that caused autowiring to fail in some cases
 
 
-Changes in version 1.2.0 M1 (2008-09-05)
-----------------------------------------
+Changes in version 1.1.2 (2008-10-03)
+-------------------------------------
 
 General
-* added new annotation-based, Spring-MVC sample
-* removed petclinic sample (superseeded by simple-web-app and web-console samples)
 * improved sample wars packaging
-* improved framework behaviour when running in environments with Java 2 security enabled
+* various minor documentation improvements
 
 Package org.springframework.osgi.context
 * added reporting of Errors raised during delegated refresh in AbstractDelegatedExecutionApplicationContext
@@ -104,11 +43,14 @@ Package org.springframework.osgi.io
 * improved existence check for bundle resources
 * improved jar space pattern matching when the root is not specified
 * fixed classpath pattern matching on certain resources when the default Bundle-ClassPath entry (.) is not specified
+* improved file resolving under Equinox
 
 Package org.springframework.osgi.service
 * changed the proxying classloader strategy to address package dependency visibility
 * fixed usage of incorrect class loader for imported services with client thread context class loader management
 * fixed intermittent deadlock that appeared in some cases betweem importers and exporters during shutdown
+* refined single service proxies so that any waiting activity is interrupted on destruction
+* improved single service proxies to allow settings update at runtime
 
 Package org.springframework.osgi.web
 * improved web extender configuration thread-safety
@@ -124,17 +66,15 @@ Package org.springframework.osgi.io
 * fixed handling of required bundles that do not export packages
 * fixed premature failure when searching missing resources in multiple paths
 
-Package org.springframework.osgi.service
-* fixed potential NPE when comparing managed service references
-* improved thread safety for the managed service reference returned to the user
-
 Package org.springframework.osgi.mock
 * improved dependency between MockBundleContext and the bundle it returns
 * added OSGi R4.1 start/stop signatures to MockBundle
 * added OSGi R4.1 compareTo contract to MockServiceReference
-
-Package org.springframework.osgi.mock
 * improved local maven artifact search by adding groupId filtering
+
+Package org.springframework.osgi.service
+* fixed potential NPE when comparing managed service references
+* improved thread safety for the managed service reference returned to the user
 
 Package org.springframework.osgi.web
 * DefaultContextPathStrategy allows "/" contexts to be specified through Web-ContextPath header
@@ -175,7 +115,6 @@ Package org.springframework.osgi.web
 * removed support for extender configuration at META-INF/spring
 * improved war scanner Servlet 2.5 compliance (by considering as WARs only bundles with ".war" extension)
 * extended DefaultWarScanner scanning mechanism by considering as WARs bundles with WEB-INF/ entries
-
 
 Changes in version 1.1.0 RC1 (2008-06-24)
 -----------------------------------------
@@ -284,13 +223,6 @@ Package org.springframework.osgi.context
 * refined AbstractOsgiBundleApplicationContext to allow customization of the OSGi service properties
 * AbstractDelegatedExecutionApplicationContext rethrows all exceptions occuring during refresh
 
-Package org.springframework.osgi.service
-* refined weaving process for service importers so that knowledge of org.springframework.osgi package is not required
-* fixed potential infrastructure class leak through the thread context class loader management of imported services
-* improved proxy class loader creation by using an internal cache
-* improved thread-safety of the dynamic service collections
-* introduced InfrastructureProxy interface to imported OSGi service proxies
-
 Package org.springframework.osgi.extender
 * added OsgiApplicationContextCreator interface for handling the extender contexts creation
 * added OsgiBeanFactoryPostProcessor interface for customizing the contexts created by the extender
@@ -306,6 +238,11 @@ Package org.springframework.osgi.io
 * fixed internal PackageAdminResolver parsing of Require-Bundle entries which specify versions
 
 Package org.springframework.osgi.service
+* refined weaving process for service importers so that knowledge of org.springframework.osgi package is not required
+* fixed potential infrastructure class leak through the thread context class loader management of imported services
+* improved proxy class loader creation by using an internal cache
+* improved thread-safety of the dynamic service collections
+* introduced InfrastructureProxy interface to imported OSGi service proxies
 * refined OsgiServiceCollectionProxyFactoryBean to allow for configurable 'greedy-proxying' behaviour
 * changed service collection behaviour to not perform greedy proxying by default
 * improved the proxy weaving process by providing the aop infrastructure dependencies internally
@@ -400,10 +337,8 @@ General
 * added log4j.properties to spring-osgi bundle archetype
 * added OSGi integration test to the spring-osgi bundle archetype
 
-Package org.springframework.context.support
-* the namespace resolver mechanism first checks the local bundle classpath before using the extender namespace service
-
 Package org.springframework.osgi.context
+* the namespace resolver mechanism first checks the local bundle classpath before using the extender namespace service
 * fixed AbstractDelegatedExecutionApplicationContext to log errors that occur during the bean factory startup
 
 Package org.springframework.osgi.io

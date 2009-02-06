@@ -3,7 +3,7 @@
 	<parent>
 		<artifactId>spring-osgi</artifactId>
 		<groupId>org.springframework.osgi</groupId>
-		<version>1.2.0-rc1-SNAPSHOT</version>
+		<version>1.1.3-SNAPSHOT</version>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.springframework.osgi</groupId>
@@ -21,22 +21,13 @@
     <javadoc.loc>${basedir}/../docs/src/javadoc</javadoc.loc>
 
   
-  	<spring.osgi.private.pkg>
-        org.springframework.osgi.extender.*internal*,
-        org.springframework.osgi.io.*internal*
-    </spring.osgi.private.pkg>
-    <!-- careful what you export -->
-	<spring.osgi.export>
-        !org.springframework.osgi.extender.*internal*,
-        !org.springframework.osgi.io.*,
-        org.springframework.osgi.extender*;version=${spring.osgi.export.version}
-    </spring.osgi.export>
-    
+  	<spring.osgi.private.pkg>org.springframework.osgi.extender.*internal*</spring.osgi.private.pkg>
+  	<!-- don't export a thing -->
+	<spring.osgi.export.pkg>!${spring.osgi.private.pkg}, org.springframework.osgi.extender*</spring.osgi.export.pkg>
 	<spring.osgi.import.pkg>
-        org.osgi.service.packageadmin;version=1.2,
-        org.springframework.osgi.extensions.annotation;resolution:=optional;version=${spring.osgi.import.version}
+	 org.osgi.service.packageadmin;version=1.2,
+	 org.springframework.osgi.extensions.annotation;resolution:=optional;version=${spring.osgi.import.version}
 	</spring.osgi.import.pkg>
-
 	<spring.osgi.symbolic.name>${symName.prefix}.extender</spring.osgi.symbolic.name>
   </properties>
   
@@ -51,21 +42,12 @@
 			<groupId>org.springframework.osgi</groupId>
 			<artifactId>spring-osgi-core</artifactId>
 		</dependency>
-		<dependency>
-			<groupId>org.springframework.osgi</groupId>
-			<artifactId>spring-osgi-io</artifactId>
-		</dependency>
-	    <dependency>
+	   <dependency>
 		  <groupId>edu.emory.mathcs.backport</groupId>
 		  <artifactId>com.springsource.edu.emory.mathcs.backport</artifactId>
 		  <version>3.1.0</version>
 		  <scope>test</scope>
-	    </dependency>
-	    <dependency>
-            <groupId>org.aopalliance</groupId>
-            <artifactId>com.springsource.org.aopalliance</artifactId>
-            <scope>test</scope>
-        </dependency>
+	   </dependency> 
 	</dependencies>
 
 </project>

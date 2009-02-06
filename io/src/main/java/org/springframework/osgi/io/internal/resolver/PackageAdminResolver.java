@@ -16,8 +16,6 @@
 
 package org.springframework.osgi.io.internal.resolver;
 
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -40,8 +38,8 @@ import org.springframework.util.ObjectUtils;
  * 
  * <p/> This implementation uses the OSGi PackageAdmin service to determine
  * dependencies between bundles. Since it's highly dependent on an external
- * service, it might be better to use a listener based implementation for poor
- * performing environments.
+ * service, it might be better to use a listener based implementation for
+ * non-performant environments.
  * 
  * <p/> This implementation does consider required bundles.
  * 
@@ -113,7 +111,8 @@ public class PackageAdminResolver implements DependencyResolver {
 						if (importingBundles != null)
 							for (int k = 0; k < importingBundles.length; k++) {
 								if (bundle.equals(importingBundles[k])) {
-									addImportedBundle(importedBundles, exportedPackage);
+									addImportedBundle(importedBundles, exportedPackage.getExportingBundle(),
+										exportedPackage.getName());
 								}
 							}
 					}
@@ -134,20 +133,19 @@ public class PackageAdminResolver implements DependencyResolver {
 	}
 
 	/**
-	 * Adds the imported bundle to the map of packages.
+	 * Adds the imported bundles to the map of packages.
 	 * 
 	 * @param map
 	 * @param bundle
 	 * @param packageName
 	 */
-	private void addImportedBundle(Map map, ExportedPackage expPackage) {
-		Bundle bnd = expPackage.getExportingBundle();
-		List packages = (List) map.get(bnd);
+	private void addImportedBundle(Map map, Bundle bundle, String packageName) {
+		List packages = (List) map.get(bundle);
 		if (packages == null) {
 			packages = new ArrayList(4);
-			map.put(bnd, packages);
+			map.put(bundle, packages);
 		}
-		packages.add(new String(expPackage.getName()));
+		packages.add(packageName);
 	}
 
 	/**
@@ -166,22 +164,17 @@ public class PackageAdminResolver implements DependencyResolver {
 			map.put(bundle, packages);
 		}
 		for (int i = 0; i < pkgs.length; i++) {
-			packages.add(pkgs[i].getName());
+			ExportedPackage exportedPackage = pkgs[i];
+			packages.add(exportedPackage.getName());
 		}
 	}
 
 	private PackageAdmin getPackageAdmin() {
-
-		return (PackageAdmin) AccessController.doPrivileged(new PrivilegedAction() {
-
-			public Object run() {
-				ServiceReference ref = bundleContext.getServiceReference(PackageAdmin.class.getName());
-				if (ref == null)
-					throw new IllegalStateException(PackageAdmin.class.getName() + " service is required");
-				// don't do any proxying since PackageAdmin is normally a framework service
-				// we can assume for now that it will always be available
-				return (PackageAdmin) bundleContext.getService(ref);
-			}
-		});
+		ServiceReference ref = bundleContext.getServiceReference(PackageAdmin.class.getName());
+		if (ref == null)
+			throw new IllegalStateException(PackageAdmin.class.getName() + " service is required");
+		// don't do any proxying since PackageAdmin is normally a framework service
+		// we can assume for now that it will stay
+		return (PackageAdmin) bundleContext.getService(ref);
 	}
-}
+};

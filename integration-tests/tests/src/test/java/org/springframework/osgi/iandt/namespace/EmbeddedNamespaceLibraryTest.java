@@ -57,7 +57,7 @@ public class EmbeddedNamespaceLibraryTest extends BaseIntegrationTest {
 	}
 
 	public void testNamespaceFilesOnTheClassPath() throws Exception {
-		// simple code to trigger an import for this package
+		// simpe code to trigger an import for this package
 		assertNotNull(NamespaceHandlerResolver.class);
 
 		Bundle bundle = bundleContext.getBundle();

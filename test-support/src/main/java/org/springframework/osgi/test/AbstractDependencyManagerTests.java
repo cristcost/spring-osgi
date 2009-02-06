@@ -16,8 +16,6 @@
 
 package org.springframework.osgi.test;
 
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.util.Properties;
 
 import org.osgi.framework.BundleContext;
@@ -99,7 +97,7 @@ public abstract class AbstractDependencyManagerTests extends AbstractSynchronize
 	 */
 	protected String getSpringDMVersion() {
 		if (springOsgiVersion == null) {
-			springOsgiVersion = readProperty(SPRING_OSGI_VERSION_PROP_KEY);
+			springOsgiVersion = System.getProperty(SPRING_OSGI_VERSION_PROP_KEY);
 		}
 
 		return springOsgiVersion;
@@ -113,22 +111,9 @@ public abstract class AbstractDependencyManagerTests extends AbstractSynchronize
 	 */
 	protected String getSpringVersion() {
 		if (springBundledVersion == null) {
-			springBundledVersion = readProperty(SPRING_VERSION_PROP_KEY);
+			springBundledVersion = System.getProperty(SPRING_VERSION_PROP_KEY);
 		}
 		return springBundledVersion;
-	}
-
-	private String readProperty(final String name) {
-		if (System.getSecurityManager() != null) {
-			return (String) AccessController.doPrivileged(new PrivilegedAction() {
-
-				public Object run() {
-					return System.getProperty(name);
-				}
-			});
-		}
-		else
-			return System.getProperty(name);
 	}
 
 	/**
@@ -207,7 +192,7 @@ public abstract class AbstractDependencyManagerTests extends AbstractSynchronize
 		String[] bundles = (String[]) props.keySet().toArray(new String[props.size()]);
 		// sort the array (as the Properties file doesn't respect the order)
 		bundles = StringUtils.sortStringArray(bundles);
-
+		
 		if (logger.isDebugEnabled())
 			logger.debug("Default framework bundles :" + ObjectUtils.nullSafeToString(bundles));
 
@@ -278,14 +263,7 @@ public abstract class AbstractDependencyManagerTests extends AbstractSynchronize
 	 * start up related to the thread context class loader.
 	 */
 	protected void preProcessBundleContext(BundleContext platformBundleContext) throws Exception {
-		AccessController.doPrivileged(new PrivilegedAction() {
-
-			public Object run() {
-				System.setProperty("log4j.ignoreTCL", "true");
-				return null;
-			}
-		});
-
+		System.setProperty("log4j.ignoreTCL", "true");
 		super.preProcessBundleContext(platformBundleContext);
 	}
 
@@ -320,8 +298,8 @@ public abstract class AbstractDependencyManagerTests extends AbstractSynchronize
 
 	/**
 	 * Returns the ArtifactLocator used by this test suite. Subclasses should
-	 * override this method if the default locator (searching the local
-	 * projects, falling back to the Maven2 repository) is not enough.
+	 * override this method if the default locator (searching the local Maven2
+	 * repository) is not enough.
 	 * 
 	 * <p>
 	 * <b>Note</b>: This method will be used each time a bundle has to be

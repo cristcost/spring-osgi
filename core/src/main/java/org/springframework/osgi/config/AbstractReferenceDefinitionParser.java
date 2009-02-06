@@ -36,9 +36,7 @@ import org.springframework.beans.factory.xml.AbstractBeanDefinitionParser;
 import org.springframework.beans.factory.xml.ParserContext;
 import org.springframework.core.Conventions;
 import org.springframework.core.enums.StaticLabeledEnumResolver;
-import org.springframework.osgi.config.internal.adapter.OsgiServiceLifecycleListenerAdapter;
-import org.springframework.osgi.config.internal.util.AttributeCallback;
-import org.springframework.osgi.config.internal.util.ParserUtils;
+import org.springframework.osgi.config.ParserUtils.AttributeCallback;
 import org.springframework.osgi.service.importer.support.Cardinality;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
@@ -156,7 +154,7 @@ abstract class AbstractReferenceDefinitionParser extends AbstractBeanDefinitionP
 	 */
 	private OsgiDefaultsDefinition resolveDefaults(Document document) {
 		if (defaults == null) {
-			defaults = OsgiDefaultsDefinition.initOsgiDefaults(document);
+			defaults = ParserUtils.initOsgiDefaults(document);
 		}
 		return defaults;
 	}

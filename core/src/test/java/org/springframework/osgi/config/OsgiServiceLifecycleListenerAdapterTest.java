@@ -29,12 +29,11 @@ import junit.framework.TestCase;
 import org.easymock.MockControl;
 import org.osgi.framework.ServiceReference;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.osgi.config.internal.adapter.OsgiServiceLifecycleListenerAdapter;
 import org.springframework.osgi.mock.MockServiceReference;
 import org.springframework.osgi.service.importer.ImportedOsgiServiceProxy;
 import org.springframework.osgi.service.importer.OsgiServiceLifecycleListener;
 import org.springframework.osgi.service.importer.ServiceReferenceProxy;
-import org.springframework.osgi.service.importer.support.internal.aop.PublicStaticSwappingServiceReferenceProxy;
+import org.springframework.osgi.service.importer.support.internal.aop.StaticServiceReferenceProxy;
 import org.springframework.osgi.util.internal.MapBasedDictionary;
 
 /**
@@ -594,7 +593,7 @@ public class OsgiServiceLifecycleListenerAdapterTest extends TestCase {
 		}
 
 		public ServiceReferenceProxy getServiceReference() {
-			return new PublicStaticSwappingServiceReferenceProxy(new MockServiceReference());
+			return new StaticServiceReferenceProxy(new MockServiceReference());
 		}
 	}
 

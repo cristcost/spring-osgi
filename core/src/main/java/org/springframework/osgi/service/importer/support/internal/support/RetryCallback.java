@@ -24,14 +24,14 @@ package org.springframework.osgi.service.importer.support.internal.support;
 public interface RetryCallback {
 
 	/**
-	 * Does the actual work.
+	 * Do the actual work.
 	 * 
 	 * @return
 	 */
 	Object doWithRetry();
 
 	/**
-	 * Returns true if the work has been completed or false is a retry is
+	 * Return true if the work has been completed or false is a retry is
 	 * required.
 	 * 
 	 * @return

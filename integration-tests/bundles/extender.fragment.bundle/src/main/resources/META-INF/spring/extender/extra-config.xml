@@ -19,6 +19,5 @@
 	
 	<util:properties id="extenderProperties">
 		<prop key="smth">bla</prop>
-		<prop key="dependencies.wait.time">180</prop>
 	</util:properties>
 </beans>

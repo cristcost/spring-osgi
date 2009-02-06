@@ -22,6 +22,7 @@ import java.util.Enumeration;
 import java.util.Map;
 import java.util.Properties;
 
+import org.osgi.framework.ServiceReference;
 import org.osgi.framework.ServiceRegistration;
 import org.springframework.aop.SpringProxy;
 import org.springframework.core.InfrastructureProxy;
@@ -43,6 +44,7 @@ public class ServiceRefAwareWithSingleServiceTest extends ServiceBaseTest {
 		fb = new OsgiServiceProxyFactoryBean();
 		fb.setBundleContext(bundleContext);
 		// execute retries fast
+		fb.setRetryTimes(1);
 		fb.setTimeout(1);
 		fb.setBeanClassLoader(getClass().getClassLoader());
 	}

@@ -19,7 +19,6 @@ package org.springframework.osgi.extender.internal.activator;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +33,7 @@ import org.osgi.framework.BundleEvent;
 import org.osgi.framework.ServiceReference;
 import org.osgi.framework.SynchronousBundleListener;
 import org.osgi.framework.Version;
+import org.osgi.service.packageadmin.PackageAdmin;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.core.CollectionFactory;
@@ -41,12 +41,9 @@ import org.springframework.core.task.SyncTaskExecutor;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.osgi.context.ConfigurableOsgiBundleApplicationContext;
 import org.springframework.osgi.context.DelegatedExecutionOsgiBundleApplicationContext;
-import org.springframework.osgi.context.event.OsgiBundleApplicationContextEvent;
 import org.springframework.osgi.context.event.OsgiBundleApplicationContextEventMulticaster;
 import org.springframework.osgi.context.event.OsgiBundleApplicationContextListener;
-import org.springframework.osgi.context.event.OsgiBundleContextFailedEvent;
 import org.springframework.osgi.extender.OsgiApplicationContextCreator;
-import org.springframework.osgi.extender.internal.dependencies.shutdown.BundleDependencyComparator;
 import org.springframework.osgi.extender.internal.dependencies.shutdown.ComparatorServiceDependencySorter;
 import org.springframework.osgi.extender.internal.dependencies.shutdown.ServiceDependencySorter;
 import org.springframework.osgi.extender.internal.dependencies.startup.DependencyWaiterApplicationContextExecutor;
@@ -62,6 +59,7 @@ import org.springframework.osgi.service.importer.support.CollectionType;
 import org.springframework.osgi.service.importer.support.OsgiServiceCollectionProxyFactoryBean;
 import org.springframework.osgi.util.OsgiBundleUtils;
 import org.springframework.osgi.util.OsgiStringUtils;
+import org.springframework.util.Assert;
 
 /**
  * Osgi Extender that bootstraps 'Spring powered bundles'.
@@ -198,11 +196,11 @@ public class ContextLoaderListener implements BundleActivator {
 			Bundle bundle = event.getBundle();
 
 			switch (event.getType()) {
-				case BundleEvent.STARTED: {
+				case BundleEvent.RESOLVED: {
 					maybeAddNamespaceHandlerFor(bundle);
 					break;
 				}
-				case BundleEvent.STOPPED: {
+				case BundleEvent.UNRESOLVED: {
 					maybeRemoveNameSpaceHandlerFor(bundle);
 					break;
 				}
@@ -324,7 +322,10 @@ public class ContextLoaderListener implements BundleActivator {
 
 	/** dynamicList clean up hook */
 	private DisposableBean applicationListenersCleaner;
-
+	/** Spring compatibility checker */
+	private SpringTypeCompatibilityChecker compatibilityChecker;
+	/** Spring version used */
+	private Bundle wiredSpringBundle;
 	/** shutdown task executor */
 	private TaskExecutor shutdownTaskExecutor;
 
@@ -354,6 +355,10 @@ public class ContextLoaderListener implements BundleActivator {
 
 		this.extenderVersion = OsgiBundleUtils.getBundleVersion(context.getBundle());
 		log.info("Starting [" + bundleContext.getBundle().getSymbolicName() + "] bundle v.[" + extenderVersion + "]");
+
+		detectSpringVersion(context);
+
+		compatibilityChecker = new SpringTypeCompatibilityChecker(bundleContext);
 
 		// Step 1 : discover existing namespaces (in case there are fragments with custom XML definitions)
 		nsManager = new NamespaceManager(context);
@@ -414,6 +419,32 @@ public class ContextLoaderListener implements BundleActivator {
 
 	}
 
+	private void detectSpringVersion(BundleContext context) {
+		boolean debug = log.isDebugEnabled();
+
+		// use PackageAdmin internally to determine the wired Spring version
+		ServiceReference ref = bundleContext.getServiceReference(PackageAdmin.class.getName());
+		if (ref != null) {
+			PackageAdmin pa = (PackageAdmin) bundleContext.getService(ref);
+			wiredSpringBundle = pa.getBundle(Assert.class);
+		}
+		else {
+			if (debug) {
+				log.debug("PackageAdmin not available; falling back to raw class loading for detecting the wired Spring bundle");
+			}
+			wiredSpringBundle = SpringTypeCompatibilityChecker.findOriginatingBundle(context, Assert.class);
+			if (wiredSpringBundle == null) {
+				throw new IllegalStateException("Impossible to find the originating Spring bundle for " + Assert.class
+						+ "; bailing out");
+			}
+		}
+
+		if (debug)
+			log.debug("Spring-DM v.[" + extenderVersion + "] is wired to Spring core bundle "
+					+ OsgiStringUtils.nullSafeSymbolicName(wiredSpringBundle) + " version ["
+					+ OsgiBundleUtils.getBundleVersion(wiredSpringBundle) + "]");
+	}
+
 	/**
 	 * Called by OSGi when this bundled is stopped. Unregister the
 	 * namespace/entity resolving service and clear all state. No further
@@ -470,23 +501,10 @@ public class ContextLoaderListener implements BundleActivator {
 		boolean debug = log.isDebugEnabled();
 
 		StringBuffer buffer = new StringBuffer();
-
 		if (debug) {
 			buffer.append("Shutdown order is: {");
 			for (i = 0; i < bundles.length; i++) {
 				buffer.append("\nBundle [" + bundles[i].getSymbolicName() + "]");
-				ServiceReference[] services = bundles[i].getServicesInUse();
-				HashSet usedBundles = new HashSet();
-				for (int j = 0; j < services.length; j++) {
-					if (BundleDependencyComparator.isSpringManagedService(services[j])) {
-						Bundle used = services[j].getBundle();
-						if (!used.equals(bundleContext.getBundle()) && !usedBundles.contains(used)) {
-							usedBundles.add(used);
-							buffer.append("\n  Using [" + used.getSymbolicName() + "]");
-						}
-					}
-
-				}
 			}
 			buffer.append("\n}");
 			log.debug(buffer);
@@ -691,6 +709,19 @@ public class ContextLoaderListener implements BundleActivator {
 			return;
 		}
 
+		// an application context has been created - do type filtering
+		// filtering could be applied before creating the application context but then user might disable this by accident
+		// so its best to do this inside the extender itself (this could change in the future)
+
+		if (compatibilityChecker.checkCompatibility(bundle)) {
+			log.debug("Bundle " + bundleString + " is Spring type compatible with Spring-DM");
+
+		}
+		else {
+			log.debug("Ignoring bundle " + bundleString + " as it's Spring incompatible with Spring-DM...");
+			return;
+		}
+
 		// create a dedicated hook for this application context
 		BeanFactoryPostProcessor processingHook = new OsgiBeanFactoryPostProcessorAdapter(localBundleContext,
 			postProcessors);
@@ -741,25 +772,7 @@ public class ContextLoaderListener implements BundleActivator {
 				localApplicationContext, !config.isCreateAsynchronously(),
 				extenderConfiguration.getDependencyFactories());
 
-			long timeout;
-			// check whether a timeout has been defined
-
-			if (ConfigUtils.isDirectiveDefined(bundle.getHeaders(), ConfigUtils.DIRECTIVE_TIMEOUT)) {
-				timeout = config.getTimeout();
-				if (debug)
-					log.debug("Setting bundle-defined, wait-for-dependencies timeout value=" + timeout
-							+ " ms, for bundle " + bundleString);
-
-			}
-			else {
-				timeout = extenderConfiguration.getDependencyWaitTime();
-				if (debug)
-					log.debug("Setting globally defined wait-for-dependencies timeout value=" + timeout
-							+ " ms, for bundle " + bundleString);
-			}
-
 			appCtxExecutor.setTimeout(config.getTimeout());
-
 			appCtxExecutor.setWatchdog(timer);
 			appCtxExecutor.setTaskExecutor(executor);
 			appCtxExecutor.setMonitoringCounter(contextsStarted);
@@ -813,19 +826,6 @@ public class ContextLoaderListener implements BundleActivator {
 		createListenersList();
 		// register the listener that does the dispatching
 		multicaster.addApplicationListener(new ListListenerAdapter(applicationListeners));
-
-		// Register an error handle if required
-		if (extenderConfiguration.shouldInstallContextErrorHandler()) {
-			multicaster.addApplicationListener(new OsgiBundleApplicationContextListener() {
-
-				public void onOsgiApplicationEvent(OsgiBundleApplicationContextEvent event) {
-					if (event instanceof OsgiBundleContextFailedEvent) {
-						log.error("Context creation error for [" + event.getBundle().getSymbolicName() + "]",
-							((OsgiBundleContextFailedEvent) event).getFailureCause());
-					}
-				}
-			});
-		}
 
 		if (log.isDebugEnabled())
 			log.debug("Initialization of OSGi listeners service completed...");

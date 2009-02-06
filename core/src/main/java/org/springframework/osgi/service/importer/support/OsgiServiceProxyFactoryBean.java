@@ -38,7 +38,6 @@ import org.springframework.osgi.service.importer.support.internal.controller.Imp
 import org.springframework.osgi.service.importer.support.internal.controller.ImporterInternalActions;
 import org.springframework.osgi.service.importer.support.internal.dependency.ImporterStateListener;
 import org.springframework.osgi.service.importer.support.internal.support.RetryTemplate;
-import org.springframework.osgi.util.internal.ClassUtils;
 import org.springframework.util.Assert;
 import org.springframework.util.ObjectUtils;
 
@@ -88,10 +87,11 @@ public final class OsgiServiceProxyFactoryBean extends AbstractServiceImporterPr
 
 	private static final Log log = LogFactory.getLog(OsgiServiceProxyFactoryBean.class);
 
+	private int retriesNumber;
 	private long retryTimeout;
 	private RetryTemplate retryTemplate;
 
-	/** proxy cast to a specific interface to allow specific method calls */
+	/** proxy casted to a specific interface to allow specific method calls */
 	private ImportedOsgiServiceProxy proxy;
 
 	/** proxy infrastructure hook exposed to allow clean up */
@@ -126,8 +126,8 @@ public final class OsgiServiceProxyFactoryBean extends AbstractServiceImporterPr
 	 * {@inheritDoc}
 	 * 
 	 * Returns the managed proxy type. If the proxy is not created when this
-	 * method is invoked, the method will try to create a composite interface (if only
-	 * interfaces are specified) or null otherwise.
+	 * method is invoked, the method will try to create a composite interface
+	 * (if only interfaces are specified) or null otherwise.
 	 */
 	public Class getObjectType() {
 		synchronized (monitor) {
@@ -171,7 +171,7 @@ public final class OsgiServiceProxyFactoryBean extends AbstractServiceImporterPr
 		final OsgiServiceLifecycleListener tcclListener = tcclAdvice.new ServiceProviderTCCLListener();
 
 		final ServiceDynamicInterceptor lookupAdvice = new ServiceDynamicInterceptor(getBundleContext(),
-			ClassUtils.getParticularClass(getInterfaces()).getName(), getUnifiedFilter(), getAopClassLoader());
+			getUnifiedFilter(), getAopClassLoader());
 
 		lookupAdvice.setRequiredAtStartup(getCardinality().isMandatory());
 
@@ -179,7 +179,7 @@ public final class OsgiServiceProxyFactoryBean extends AbstractServiceImporterPr
 
 		lookupAdvice.setListeners(listeners);
 		synchronized (monitor) {
-			lookupAdvice.setRetryTimeout(retryTimeout);
+			lookupAdvice.setRetryParams(retriesNumber, retryTimeout);
 			retryTemplate = lookupAdvice.getRetryTemplate();
 		}
 		lookupAdvice.setApplicationEventPublisher(applicationEventPublisher);
@@ -241,6 +241,39 @@ public final class OsgiServiceProxyFactoryBean extends AbstractServiceImporterPr
 	}
 
 	/**
+	 * Sets how many times should this importer attempt to rebind to a target
+	 * service if the backing service currently used is unregistered. Default is
+	 * 3 times.
+	 * 
+	 * <p/> It is possible to change this property after initialization however,
+	 * the changes will <b>not</b> be applied on the running proxy until
+	 * {@link #setTimeout(long)} is called. Thus, to change both the number of
+	 * retries and timeout, after initialization, one should call first {{@link #setRetryTimes(int)}
+	 * followed by {@link #setTimeout(long)}. If the timeout value is
+	 * unchanged, retrieve the current value through {@link #getTimeout()} and
+	 * pass it again to {@link #setTimeout(long)}.
+	 * 
+	 * @param maxRetries The maxRetries to set.
+	 */
+	public void setRetryTimes(int maxRetries) {
+		synchronized (monitor) {
+			this.retriesNumber = maxRetries;
+		}
+	}
+
+	/**
+	 * Returns the number of attempts to rebind a target service before giving
+	 * up.
+	 * 
+	 * @return number of retries to find a matching service before failing
+	 */
+	public int getRetryTimes() {
+		synchronized (monitor) {
+			return this.retriesNumber;
+		}
+	}
+
+	/**
 	 * Sets how long (in milliseconds) should this importer wait between failed
 	 * attempts at rebinding to a service that has been unregistered.
 	 * 
@@ -249,18 +282,20 @@ public final class OsgiServiceProxyFactoryBean extends AbstractServiceImporterPr
 	 * Any in-flight waiting will be restarted using the new values. Note that
 	 * if both values are the same, no restart will be applied.
 	 * 
-	 * @param timeoutInMillis Timeout to set, in milliseconds
+	 * @param millisBetweenRetries The millisBetweenRetries to set.
 	 */
-	public void setTimeout(long timeoutInMillis) {
+	public void setTimeout(long millisBetweenRetries) {
 		RetryTemplate rt;
+		int retries;
 
 		synchronized (monitor) {
-			this.retryTimeout = timeoutInMillis;
+			this.retryTimeout = millisBetweenRetries;
 			rt = retryTemplate;
+			retries = this.retriesNumber;
 		}
 
 		if (rt != null) {
-			rt.reset(timeoutInMillis);
+			rt.reset(retries, millisBetweenRetries);
 		}
 	}
 

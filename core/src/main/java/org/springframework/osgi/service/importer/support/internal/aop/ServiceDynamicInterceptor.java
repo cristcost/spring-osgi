@@ -36,8 +36,8 @@ import org.springframework.osgi.service.importer.OsgiServiceDependency;
 import org.springframework.osgi.service.importer.OsgiServiceLifecycleListener;
 import org.springframework.osgi.service.importer.ServiceProxyDestroyedException;
 import org.springframework.osgi.service.importer.event.OsgiServiceDependencyWaitEndedEvent;
-import org.springframework.osgi.service.importer.event.OsgiServiceDependencyWaitStartingEvent;
 import org.springframework.osgi.service.importer.event.OsgiServiceDependencyWaitTimedOutEvent;
+import org.springframework.osgi.service.importer.event.OsgiServiceDependencyWaitStartingEvent;
 import org.springframework.osgi.service.importer.support.internal.dependency.ImporterStateListener;
 import org.springframework.osgi.service.importer.support.internal.support.DefaultRetryCallback;
 import org.springframework.osgi.service.importer.support.internal.support.RetryCallback;
@@ -72,36 +72,43 @@ public class ServiceDynamicInterceptor extends ServiceInvoker implements Initial
 	 */
 	private class EventSenderRetryTemplate extends RetryTemplate {
 
-		public EventSenderRetryTemplate(long waitTime) {
-			super(waitTime, lock);
+		public EventSenderRetryTemplate(int retryNumbers, long waitTime) {
+			super(retryNumbers, waitTime, lock);
 		}
 
 		public EventSenderRetryTemplate() {
 			super(lock);
 		}
 
-		protected void callbackFailed(long stop) {
-			publishEvent(new OsgiServiceDependencyWaitTimedOutEvent(eventSource, dependency, stop));
-		}
-
-		protected void callbackSucceeded(long stop) {
-			publishEvent(new OsgiServiceDependencyWaitEndedEvent(eventSource, dependency, stop));
-		}
-
-		protected void onMissingTarget() {
+		public Object execute(RetryCallback callback) {
 			//send event
-			publishEvent(new OsgiServiceDependencyWaitStartingEvent(eventSource, dependency, this.getWaitTime()));
-		}
-	}
+			publishEvent(new OsgiServiceDependencyWaitStartingEvent(eventSource, dependency, this.getWaitTime()
+					* (this.getRetryNumbers() + 1)));
 
-	private class ServiceLookUpCallback extends DefaultRetryCallback {
+			Object result = null;
 
-		public Object doWithRetry() {
-			// before checking for a service, check whether the proxy is still valid
-			if (destroyed && !isDuringDestruction)
-				throw new ServiceProxyDestroyedException();
+			long start = System.currentTimeMillis();
+			long stop;
 
-			return (wrapper != null) ? wrapper.getService() : null;
+			try {
+				result = super.execute(callback);
+				stop = System.currentTimeMillis() - start;
+			}
+			catch (RuntimeException exception) {
+				stop = System.currentTimeMillis() - start;
+				publishEvent(new OsgiServiceDependencyWaitTimedOutEvent(eventSource, dependency, stop));
+				throw exception;
+			}
+
+			// send finalization event
+			if (callback.isComplete(result)) {
+				publishEvent(new OsgiServiceDependencyWaitEndedEvent(eventSource, dependency, stop));
+			}
+			else {
+				publishEvent(new OsgiServiceDependencyWaitTimedOutEvent(eventSource, dependency, stop));
+			}
+
+			return result;
 		}
 	}
 
@@ -189,7 +196,7 @@ public class ServiceDynamicInterceptor extends ServiceInvoker implements Initial
 						// discover a new reference only if we are still running
 						if (!isDestroyed) {
 							newReference = OsgiServiceReferenceUtils.getServiceReference(bundleContext,
-								filterClassName, (filter == null ? null : filter.toString()));
+								(filter == null ? null : filter.toString()));
 
 							// we have a rebind (a new service was bound)
 							// so another candidate has to be searched from the existing candidates
@@ -272,7 +279,7 @@ public class ServiceDynamicInterceptor extends ServiceInvoker implements Initial
 			try {
 				synchronized (lock) {
 					if (wrapper != null && wrapper.isServiceAlive()) {
-						// if there is a higher rank service
+						// if have a higher rank service
 						if (serviceRanking > wrapper.getServiceRanking()) {
 							updated = true;
 							updateReferenceHolders(ref);
@@ -325,8 +332,6 @@ public class ServiceDynamicInterceptor extends ServiceInvoker implements Initial
 
 	private final BundleContext bundleContext;
 
-	private final String filterClassName;
-
 	private final Filter filter;
 
 	/** TCCL to set when calling listeners */
@@ -359,9 +364,6 @@ public class ServiceDynamicInterceptor extends ServiceInvoker implements Initial
 	/** retry template */
 	private final RetryTemplate retryTemplate = new EventSenderRetryTemplate();
 
-	/** retry callback */
-	private final RetryCallback retryCallback = new ServiceLookUpCallback();
-
 	/** dependable service importer */
 	private Object eventSource;
 
@@ -384,10 +386,8 @@ public class ServiceDynamicInterceptor extends ServiceInvoker implements Initial
 	private List stateListeners = Collections.EMPTY_LIST;
 
 
-	public ServiceDynamicInterceptor(BundleContext context, String filterClassName, Filter filter,
-			ClassLoader classLoader) {
+	public ServiceDynamicInterceptor(BundleContext context, Filter filter, ClassLoader classLoader) {
 		this.bundleContext = context;
-		this.filterClassName = filterClassName;
 		this.filter = filter;
 		this.classLoader = classLoader;
 
@@ -411,7 +411,16 @@ public class ServiceDynamicInterceptor extends ServiceInvoker implements Initial
 	 */
 	private Object lookupService() {
 		synchronized (lock) {
-			return (Object) retryTemplate.execute(retryCallback);
+			return (Object) retryTemplate.execute(new DefaultRetryCallback() {
+
+				public Object doWithRetry() {
+					// before checking for a service, check whether the proxy is still valid
+					if (destroyed && !isDuringDestruction)
+						throw new ServiceProxyDestroyedException();
+
+					return (wrapper != null) ? wrapper.getService() : null;
+				}
+			});
 		}
 	}
 
@@ -487,8 +496,8 @@ public class ServiceDynamicInterceptor extends ServiceInvoker implements Initial
 		return referenceDelegate;
 	}
 
-	public void setRetryTimeout(long timeout) {
-		retryTemplate.reset(timeout);
+	public void setRetryParams(int numberRetries, long timeout) {
+		retryTemplate.reset(numberRetries, timeout);
 	}
 
 	public RetryTemplate getRetryTemplate() {

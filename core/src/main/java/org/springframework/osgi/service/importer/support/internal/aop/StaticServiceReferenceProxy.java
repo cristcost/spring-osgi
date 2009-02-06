@@ -16,8 +16,12 @@
 
 package org.springframework.osgi.service.importer.support.internal.aop;
 
+import java.util.Comparator;
+
 import org.osgi.framework.Bundle;
 import org.osgi.framework.ServiceReference;
+import org.springframework.osgi.service.importer.ServiceReferenceProxy;
+import org.springframework.osgi.service.importer.support.internal.collection.comparator.ServiceReferenceComparator;
 import org.springframework.util.Assert;
 
 /**
@@ -28,9 +32,11 @@ import org.springframework.util.Assert;
  * @author Costin Leau
  * 
  */
-class StaticServiceReferenceProxy extends BaseServiceReferenceProxy {
+public class StaticServiceReferenceProxy implements ServiceReferenceProxy {
 
 	private static final int HASH_CODE = StaticServiceReferenceProxy.class.hashCode() * 13;
+
+	private static final Comparator COMPARATOR = new ServiceReferenceComparator();
 
 	private final ServiceReference target;
 
