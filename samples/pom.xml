@@ -3,7 +3,7 @@
   <parent>
     <artifactId>spring-osgi</artifactId>
     <groupId>org.springframework.osgi</groupId>
-    <version>1.2.0-rc1-SNAPSHOT</version>
+    <version>1.1.3</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.springframework.osgi.samples</groupId>
@@ -14,6 +14,7 @@
   <modules>
     <module>simple-service</module>
     <module>weather</module>
+    <module>petclinic</module>
     <module>simple-web-app</module>
   </modules>
   
@@ -46,17 +47,5 @@
 
     </plugins>
   </build>
-
-  <profiles>
-    <profile>
-      <id>jdk-1.5+</id>
-        <activation>
-          <jdk>!1.4</jdk>
-        </activation>
-        <modules>
-          <module>web-console</module>
-        </modules>
-    </profile>
-  </profiles>
 	
 </project>

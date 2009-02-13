@@ -37,6 +37,7 @@ public class ServiceProxyFactoryBeanTest extends ServiceBaseTest {
 		fb = new OsgiServiceProxyFactoryBean();
 		fb.setBundleContext(bundleContext);
 		// execute retries fast
+		fb.setRetryTimes(1);
 		fb.setTimeout(1);
 		fb.setBeanClassLoader(getClass().getClassLoader());
 	}

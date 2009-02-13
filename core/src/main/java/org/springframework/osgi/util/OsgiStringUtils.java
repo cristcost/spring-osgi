@@ -143,10 +143,7 @@ public abstract class OsgiStringUtils {
 
 		for (int i = 0; i < keys.length; i++) {
 			if (!org.osgi.framework.Constants.OBJECTCLASS.equals(keys[i])) {
-				buf.append(keys[i]).append('=').append(reference.getProperty(keys[i]));
-				if (i < keys.length - 1) {
-					buf.append(',');
-				}
+				buf.append(keys[i]).append('=').append(reference.getProperty(keys[i])).append(',');
 			}
 		}
 

@@ -19,16 +19,14 @@ package org.springframework.osgi.iandt.compliance.io;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Enumeration;
-import java.util.List;
 
-import org.osgi.framework.AdminPermission;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleEvent;
 import org.osgi.framework.SynchronousBundleListener;
 import org.springframework.osgi.iandt.BaseIntegrationTest;
+import org.springframework.osgi.test.platform.Platforms;
 import org.springframework.osgi.util.OsgiBundleUtils;
 import org.springframework.osgi.util.OsgiStringUtils;
-import org.springframework.util.ObjectUtils;
 
 /**
  * 
@@ -72,14 +70,13 @@ public class CallingResourceOnDifferentBundlesTest extends BaseIntegrationTest {
 	}
 
 	public void testCallGetResourceOnADifferentBundleRetrievedThroughBundleEvent() throws Exception {
-		String EXTRA_BUNDLE = "spring-core";
+		String CGLIB_BUNDLE_NAME = "spring-core";
 
 		Bundle[] bundles = bundleContext.getBundles();
 		Bundle bundle = null;
 		// find cglib library as we don't use it
 		for (int i = 1; bundle == null && i < bundles.length; i++) {
-			String location = bundles[i].getLocation();
-			if (location != null && location.indexOf(EXTRA_BUNDLE) > -1)
+			if (CGLIB_BUNDLE_NAME.equals(OsgiStringUtils.nullSafeName(bundles[i])))
 				bundle = bundles[i];
 		}
 
@@ -123,15 +120,6 @@ public class CallingResourceOnDifferentBundlesTest extends BaseIntegrationTest {
 
 	private boolean isKF() {
 		return (getPlatformName().indexOf("Knopflerfish") > -1);
-	}
-
-	protected List getTestPermissions() {
-		List list = super.getTestPermissions();
-		list.add(new AdminPermission("*", AdminPermission.METADATA));
-		list.add(new AdminPermission("*", AdminPermission.LISTENER));
-		list.add(new AdminPermission("*", AdminPermission.EXECUTE));
-		list.add(new AdminPermission("*", AdminPermission.RESOURCE));
-		return list;
 	}
 
 }

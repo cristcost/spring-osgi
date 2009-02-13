@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.springframework.osgi.context;
 
 import junit.framework.TestCase;
@@ -34,14 +33,13 @@ public class OsgiBundleScopeTest extends TestCase {
 
 	OsgiBundleScope scope;
 
-
 	/*
 	 * (non-Javadoc)
 	 * @see junit.framework.TestCase#setUp()
 	 */
 	protected void setUp() throws Exception {
 		scope = new OsgiBundleScope();
-		OsgiBundleScope.EXTERNAL_BUNDLE.set(null);
+		OsgiBundleScope.CALLING_BUNDLE.set(null);
 	}
 
 	/*
@@ -56,7 +54,6 @@ public class OsgiBundleScopeTest extends TestCase {
 
 	public void testLocalBeans() {
 		ObjectFactory factory = new ObjectFactory() {
-
 			public Object getObject() throws BeansException {
 				return new Object();
 			}
@@ -74,9 +71,9 @@ public class OsgiBundleScopeTest extends TestCase {
 	}
 
 	public void testIsExternalBundleCalling() {
-		assertFalse(OsgiBundleScope.EXTERNAL_BUNDLE.get() != null);
-		OsgiBundleScope.EXTERNAL_BUNDLE.set(new Object());
-		assertTrue(OsgiBundleScope.EXTERNAL_BUNDLE.get() != null);
+		assertFalse(scope.CALLING_BUNDLE.get() != null);
+		OsgiBundleScope.CALLING_BUNDLE.set(new Object());
+		assertTrue(scope.CALLING_BUNDLE.get() != null);
 	}
 
 	public void testLocalDestructionCallback() {
@@ -84,7 +81,6 @@ public class OsgiBundleScopeTest extends TestCase {
 		final Object[] callbackCalls = new Object[1];
 
 		scope.registerDestructionCallback("foo", new Runnable() {
-
 			public void run() {
 				callbackCalls[0] = Boolean.TRUE;
 			}
@@ -95,15 +91,14 @@ public class OsgiBundleScopeTest extends TestCase {
 	}
 
 	public void testDestructionCallbackPassedAround() {
-		OsgiBundleScope.EXTERNAL_BUNDLE.set(new Object());
+		OsgiBundleScope.CALLING_BUNDLE.set(new Object());
 
 		Runnable callback = new Runnable() {
-
 			public void run() {
 			}
 		};
 
 		scope.registerDestructionCallback("foo", callback);
-		assertSame(callback, OsgiBundleScope.EXTERNAL_BUNDLE.get());
+		assertSame(callback, OsgiBundleScope.CALLING_BUNDLE.get());
 	}
 }

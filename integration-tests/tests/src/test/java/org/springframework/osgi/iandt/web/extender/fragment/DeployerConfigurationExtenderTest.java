@@ -22,7 +22,6 @@ import java.util.List;
 import org.springframework.osgi.iandt.web.BaseWebIntegrationTest;
 import org.springframework.osgi.iandt.web.HttpClient;
 import org.springframework.osgi.iandt.web.HttpResponse;
-import org.springframework.osgi.test.platform.Platforms;
 import org.springframework.util.CollectionUtils;
 
 /**
@@ -38,11 +37,7 @@ public class DeployerConfigurationExtenderTest extends BaseWebIntegrationTest {
 
 
 	protected void onSetUp() throws Exception {
-		System.setProperty("felix.fragment.validation", "warning");
-	}
 
-	protected void onTearDown() throws Exception {
-		super.onTearDown();
 	}
 
 	protected String base() {
@@ -86,13 +81,5 @@ public class DeployerConfigurationExtenderTest extends BaseWebIntegrationTest {
 	public void testUnexistingNestedPage() throws Exception {
 		HttpResponse response = HttpClient.getLocalResponse(base(), "nested/no-such-page.html");
 		assertTrue(response.toString(), response.isNotFound());
-	}
-
-	protected boolean isDisabledInThisEnvironment(String testMethodName) {
-		return isFelix();
-	}
-
-	private boolean isFelix() {
-		return (getPlatformName().indexOf("Felix") > -1);
 	}
 }

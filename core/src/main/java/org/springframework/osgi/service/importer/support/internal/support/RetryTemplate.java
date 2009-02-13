@@ -30,27 +30,32 @@ public class RetryTemplate {
 
 	public static final long DEFAULT_WAIT_TIME = 1000;
 
+	public static final int DEFAULT_RETRY_NUMBER = 3;
+	// wait threshold (in millis)
+	private static final long WAIT_THRESHOLD = 4;
+
 	private final Object monitor = new Object();
 	private final Object notificationLock;
 
 	private long waitTime = DEFAULT_WAIT_TIME;
 
-	// wait threshold (in millis)
-	private static final long WAIT_THRESHOLD = 3;
+	private int retryNumbers = DEFAULT_RETRY_NUMBER;
 
 
-	public RetryTemplate(long waitTime, Object notificationLock) {
+	public RetryTemplate(int retryNumbers, long waitTime, Object notificationLock) {
+		Assert.isTrue(retryNumbers >= 0, "retryNumbers must be positive");
 		Assert.isTrue(waitTime >= 0, "waitTime must be positive");
 		Assert.notNull(notificationLock, "notificationLock must be non null");
 
 		synchronized (monitor) {
+			this.retryNumbers = retryNumbers;
 			this.waitTime = waitTime;
 			this.notificationLock = notificationLock;
 		}
 	}
 
 	public RetryTemplate(Object notificationLock) {
-		this(DEFAULT_WAIT_TIME, notificationLock);
+		this(DEFAULT_RETRY_NUMBER, DEFAULT_WAIT_TIME, notificationLock);
 	}
 
 	/**
@@ -66,107 +71,60 @@ public class RetryTemplate {
 	 * @return
 	 */
 	public Object execute(RetryCallback callback) {
+		Assert.notNull(callback, "callback is required");
+		Assert.notNull(notificationLock, "notificationLock is required");
+
 		long waitTime;
+		int retryNumbers;
 
 		synchronized (monitor) {
 			waitTime = this.waitTime;
+			retryNumbers = this.retryNumbers;
 		}
 
-		boolean retry = false;
-
-		long initialStart = 0, start = 0, stop = 0;
+		int count = -1;
 		long waitLeft = waitTime;
-
-		boolean startWaiting = false;
-
 		do {
 			Object result = callback.doWithRetry();
 
-			if (callback.isComplete(result)) {
-
-				if (startWaiting) {
-					callbackSucceeded(stop);
-				}
+			if (callback.isComplete(result))
 				return result;
-			}
-
-			if (!startWaiting) {
-				startWaiting = true;
-				onMissingTarget();
-				// initial wait
-				initialStart = System.currentTimeMillis();
-			}
 
 			if (waitLeft > 0) {
 				try {
-					start = System.currentTimeMillis();
+					long start = System.currentTimeMillis();
+
 					synchronized (notificationLock) {
-						// Do NOT use Thread.sleep() here - it does not release
-						// locks.
-						notificationLock.wait(waitTime);
+						notificationLock.wait(waitLeft);
 					}
-					// local wait timer
-					stop = System.currentTimeMillis();
-					waitLeft -= (stop - start);
-					// total wait timer
-					stop -= initialStart;
+
+					waitLeft -= (System.currentTimeMillis() - start);
 				}
 				catch (InterruptedException ex) {
-					stop = System.currentTimeMillis() - initialStart;
-					callbackFailed(stop);
 					throw new RuntimeException("Retry failed; interrupted while waiting", ex);
 				}
 			}
-
-			retry = false;
-
+			// did we wait enough ?
+			if (waitLeft <= WAIT_THRESHOLD) {
+				count++;
+				waitLeft = waitTime;
+			}
 			// handle reset cases
 			synchronized (monitor) {
 				// has there been a reset in place ?
-				if (waitTime != this.waitTime) {
-					// start counting again
-					retry = true;
+				if (waitTime != this.waitTime || retryNumbers != this.retryNumbers) {
 					waitTime = this.waitTime;
+					retryNumbers = this.retryNumbers;
+
+					// start counting again
+					count = -1;
 					waitLeft = waitTime;
 				}
 			}
-		} while (retry || waitLeft > WAIT_THRESHOLD);
+		} while (count < retryNumbers);
 
-		Object result = callback.doWithRetry();
-		stop = System.currentTimeMillis() - initialStart;
-
-		if (callback.isComplete(result)) {
-			callbackSucceeded(stop);
-			return result;
-		}
-		else {
-			callbackFailed(stop);
-			return null;
-		}
-	}
-
-	/**
-	 * Template method invoked if the backing service is missing.
-	 */
-	protected void onMissingTarget() {
-	}
-
-	/**
-	 * Template method invoked when the retry succeeded.
-	 * 
-	 * @param stop the time it took to execute the call (including waiting for
-	 *        the service)
-	 */
-	protected void callbackSucceeded(long stop) {
-	}
-
-	/**
-	 * Template method invoked when the retry has failed.
-	 * 
-	 * @param stop the time it took to execute the call (including waiting for
-	 *        the service)
-	 */
-	protected void callbackFailed(long stop) {
+		// last try (out of the loop)
+		return callback.doWithRetry();
 	}
 
 	/**
@@ -176,13 +134,20 @@ public class RetryTemplate {
 	 * @param retriesNumber
 	 * @param waitTime
 	 */
-	public void reset(long waitTime) {
+	public void reset(int retriesNumber, long waitTime) {
 		synchronized (monitor) {
+			this.retryNumbers = retriesNumber;
 			this.waitTime = waitTime;
 		}
 
 		synchronized (notificationLock) {
 			notificationLock.notifyAll();
+		}
+	}
+
+	public int getRetryNumbers() {
+		synchronized (monitor) {
+			return retryNumbers;
 		}
 	}
 
@@ -198,7 +163,7 @@ public class RetryTemplate {
 		if (other instanceof RetryTemplate) {
 			RetryTemplate oth = (RetryTemplate) other;
 
-			return (getWaitTime() == oth.getWaitTime());
+			return (getWaitTime() == oth.getWaitTime() && getRetryNumbers() == oth.getRetryNumbers());
 		}
 		return false;
 	}

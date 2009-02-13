@@ -17,8 +17,6 @@
 package org.springframework.osgi.test;
 
 import java.io.IOException;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -96,13 +94,7 @@ public abstract class AbstractOnTheFlyBundleCreatorTests extends AbstractDepende
 	}
 
 	private void initializeJarCreator() {
-		AccessController.doPrivileged(new PrivilegedAction() {
-
-			public Object run() {
-				jarCreator = new JarCreator();
-				return null;
-			}
-		});
+		jarCreator = new JarCreator();
 	}
 
 	/**
@@ -213,15 +205,14 @@ public abstract class AbstractOnTheFlyBundleCreatorTests extends AbstractDepende
 	 * only the test class will be searched for dependencies.
 	 * 
 	 * @return true if only the test hierarchy is searched for dependencies or
-	 *         false if all classes discovered in the test archive need to be
-	 *         parsed.
+	 * false if all classes discovered in the test archive need to be parsed.
 	 */
 	protected boolean createManifestOnlyFromTestClass() {
 		return true;
 	}
 
 	private Manifest createManifestFrom(Resource resource) {
-		Assert.notNull(resource, "unable to create manifest for empty resources");
+		Assert.notNull(resource);
 		try {
 			return new Manifest(resource.getInputStream());
 		}
@@ -383,17 +374,10 @@ public abstract class AbstractOnTheFlyBundleCreatorTests extends AbstractDepende
 				for (Iterator iterator = classes.iterator(); iterator.hasNext();) {
 					Class classToInspect = (Class) iterator.next();
 
-					Package pkg = classToInspect.getPackage();
-					if (pkg != null) {
-						clazzPackage = pkg.getName();
-						String classFile = ClassUtils.getClassFileName(classToInspect);
-						entries.put(classToInspect.getName().replace('.', '/').concat(ClassUtils.CLASS_FILE_SUFFIX),
-							new InputStreamResource(classToInspect.getResourceAsStream(classFile)));
-					}
-					// handle default package
-					else {
-						logger.warn("Could not find package for class " + classToInspect + "; ignoring...");
-					}
+					clazzPackage = classToInspect.getPackage().getName();
+					String classFile = ClassUtils.getClassFileName(classToInspect);
+					entries.put(classToInspect.getName().replace('.', '/').concat(ClassUtils.CLASS_FILE_SUFFIX),
+						new InputStreamResource(classToInspect.getResourceAsStream(classFile)));
 				}
 
 				clazz = clazz.getSuperclass();

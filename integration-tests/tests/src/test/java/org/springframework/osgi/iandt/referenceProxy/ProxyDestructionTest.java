@@ -1,9 +1,6 @@
 
 package org.springframework.osgi.iandt.referenceProxy;
 
-import java.util.List;
-
-import org.osgi.framework.AdminPermission;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleException;
 import org.springframework.osgi.iandt.BaseIntegrationTest;
@@ -88,13 +85,5 @@ public class ProxyDestructionTest extends BaseIntegrationTest {
 
 	protected long getDefaultWaitTime() {
 		return 60L;
-	}
-
-	protected List getTestPermissions() {
-		List perms = super.getTestPermissions();
-		// export package
-		perms.add(new AdminPermission("*", AdminPermission.EXECUTE));
-		perms.add(new AdminPermission("*", AdminPermission.LIFECYCLE));
-		return perms;
 	}
 }

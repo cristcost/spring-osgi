@@ -42,8 +42,8 @@ import java.util.WeakHashMap;
 public class DynamicCollection extends AbstractCollection {
 
 	/**
-	 * Dynamic <strong>consistent</strong> iterator. This iterator is not
-	 * thread-safe with respect to iteration (it should not be shared against
+	 * Dynamic <strong>consistent</strong> iterator. This iterator is
+	 * not-thread with respect to iteration (it should not be shared against
 	 * multiple threads) but it is thread safe with respect to the backing
 	 * storage which might be modified during the iterator life cycle.
 	 * 
@@ -58,67 +58,39 @@ public class DynamicCollection extends AbstractCollection {
 		protected volatile int cursor = 0;
 
 		/**
-		 * Temporary object holder. Used in case the last element in the
-		 * collection becomes empty after an iterator #hasNext() method was
-		 * called but before #next() is invoked since otherwise the iterator
-		 * needs to return an element but it cannot.
-		 * 
-		 * Subclasses (such as lists) should implement their own strategy when
-		 * it comes to assign a value to it to accommodate the collection
-		 * semantics (ordered vs indexed).
-		 * 
-		 * This particular field represents the tail of the collection, since no
-		 * order or indexing is enforced and the iteration can only go forward.
-		 * 
-		 * 
-		 * The field is assigned when an object is removed and resetted by calls
-		 * to hasNext() or next().
-		 * 
-		 * Thread-safety note: Since this object is affected by the storage
-		 * shrinking it needs to be synchronized.
-		 */
-		protected volatile Object tailGhost = null;
-
-		/**
-		 * Lock protecting the cursor and tailGhost which might be affected by
-		 * the backing collection shrinking.
+		 * Lock protecting the cursor which might be affected by the backing
+		 * collection shrinking.
 		 */
 		protected final Object lock = new Object();
 
-		// flag used for enforcing the iterator consistency:
+		/**
+		 * Iterator variable - not thread-safe since only one thread should use
+		 * the iterator.
+		 */
+		protected boolean removalAllowed = false;
+
+		// flag for enforcing the iterator consistency:
 		// null - do not enforce anything
 		// true - should not throw exception
 		// false - should throw exception
 		/**
-		 * Iterator variable - not thread-safe/synchronized since only one
-		 * thread should use the iterator.
+		 * Iterator variable - not thread-safe since only one thread should use
+		 * the iterator.
 		 */
 		protected Boolean hasNext = null;
-
-		/**
-		 * Iterator variable - not thread-safe/synchronized since only one
-		 * thread should use the iterator.
-		 */
-		protected boolean removalAllowed = false;
 
 
 		public boolean hasNext() {
 			synchronized (storage) {
 				synchronized (iteratorsLock) {
-					synchronized (lock) {
-						tailGhost = null;
-						return unsafeHasNext();
-					}
+					return unsafeHasNext();
 				}
 			}
 		}
 
 		/**
-		 * Updates the hasNext field.
-		 * 
 		 * Internal unprotected method to avoid nested synchronization blocks.
-		 * To execute this code, one needs the storage, iteratorsLock and
-		 * iterator lock.
+		 * To execute this code, one needs both the storage and iteratorsLock.
 		 * 
 		 * @return
 		 */
@@ -134,82 +106,42 @@ public class DynamicCollection extends AbstractCollection {
 				if (hasNext == null) {
 					synchronized (storage) {
 						synchronized (iteratorsLock) {
-							synchronized (lock) {
-								if (unsafeHasNext())
-									return storage.get(cursor++);
-								else
-									throw new NoSuchElementException();
-							}
+							if (unsafeHasNext())
+								return storage.get(cursor++);
+							else
+								throw new NoSuchElementException();
 						}
 					}
 				}
-				// need to return an object no matter what
 				else if (hasNext.booleanValue()) {
 					synchronized (storage) {
 						synchronized (iteratorsLock) {
-							synchronized (lock) {
-								// if there is an element available, return it
-								if (unsafeHasNext()) {
-									return storage.get(cursor++);
-								}
-								else {
-									// otherwise return the last one seen
-									// return tailGhost;
-									return tailGhost;
-								}
-							}
+							if (unsafeHasNext())
+								return storage.get(cursor++);
 						}
 					}
+					return null;
 				}
-				// should throw exception no matter what
-				else {
+				else if (!hasNext.booleanValue())
 					throw new NoSuchElementException();
-				}
+
+				// default
+				throw new NoSuchElementException();
 			}
 			finally {
 				// no matter what, reset hasNext
 				hasNext = null;
-				// remove ghost object
-				synchronized (lock) {
-					tailGhost = null;
-				}
 			}
 		}
 
 		public void remove() {
 			// make sure the cursor is valid
 			if (removalAllowed) {
+				DynamicCollection.this.remove(cursor - 1);
 				removalAllowed = false;
-				int cursorCopy;
-				synchronized (lock) {
-					cursorCopy = cursor;
-				}
-				DynamicCollection.this.remove(removalIndex(cursorCopy));
-
 			}
 			else
 				throw new IllegalStateException();
-		}
-
-		protected int removalIndex(int cursor) {
-			return cursor - 1;
-		}
-
-		/**
-		 * Removes the object from the underlying collection. This operation is
-		 * relevant to the iterators since it can occur in between
-		 * hasNext()/next() calls. If no object is left, next() is forced to
-		 * return null which can contradict the hasNext() contract. For such a
-		 * case, the iterator is forced to temporarily recall the last available
-		 * object.
-		 * 
-		 * @param index
-		 * @param o
-		 */
-		void removeObject(int index, Object o) {
-			synchronized (lock) {
-				tailGhost = o;
-			}
 		}
 	}
 
@@ -326,19 +258,13 @@ public class DynamicCollection extends AbstractCollection {
 				o = storage.remove(index);
 
 				// update iterators
+
 				for (Iterator iter = iterators.entrySet().iterator(); iter.hasNext();) {
 					Map.Entry entry = (Map.Entry) iter.next();
 					DynamicIterator dynamicIterator = (DynamicIterator) entry.getKey();
 
-					synchronized (dynamicIterator.lock) {
-						if (index < dynamicIterator.cursor) {
-							dynamicIterator.cursor--;
-						}
-						// set ghost object (if objects disappear in between hasNext()/next() calls) 
-						else {
-							dynamicIterator.removeObject(index, o);
-						}
-					}
+					if (index < dynamicIterator.cursor)
+						dynamicIterator.cursor--;
 				}
 			}
 		}
@@ -363,10 +289,8 @@ public class DynamicCollection extends AbstractCollection {
 					Map.Entry entry = (Map.Entry) iter.next();
 					DynamicIterator dynamicIterator = (DynamicIterator) entry.getKey();
 
-					synchronized (dynamicIterator.lock) {
-						if (index < dynamicIterator.cursor)
-							dynamicIterator.cursor++;
-					}
+					if (index < dynamicIterator.cursor)
+						dynamicIterator.cursor++;
 				}
 			}
 		}
@@ -402,4 +326,5 @@ public class DynamicCollection extends AbstractCollection {
 			return storage.indexOf(o);
 		}
 	}
+
 }

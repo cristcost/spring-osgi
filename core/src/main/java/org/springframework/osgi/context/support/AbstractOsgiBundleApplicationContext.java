@@ -18,8 +18,6 @@ package org.springframework.osgi.context.support;
 
 import java.beans.PropertyEditor;
 import java.io.IOException;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.util.Dictionary;
 import java.util.Map;
 
@@ -192,7 +190,16 @@ public abstract class AbstractOsgiBundleApplicationContext extends AbstractRefre
 	 * Unregister the ApplicationContext OSGi service (in case there is any).
 	 */
 	protected void doClose() {
-		unpublishContextAsOsgiService();
+		if (!OsgiServiceUtils.unregisterService(serviceRegistration)) {
+			logger.info("Unpublishing application context OSGi service for bundle "
+					+ OsgiStringUtils.nullSafeNameAndSymName(bundle));
+			serviceRegistration = null;
+		}
+		else {
+			if (publishContextAsService)
+				logger.info("Application Context service already unpublished");
+		}
+
 		// call super class
 		super.doClose();
 	}
@@ -223,18 +230,6 @@ public abstract class AbstractOsgiBundleApplicationContext extends AbstractRefre
 	 */
 	protected String[] getDefaultConfigLocations() {
 		return null;
-	}
-
-	protected void prepareRefresh() {
-		super.prepareRefresh();
-		// unpublish the service (if there is any) during the refresh
-		unpublishContextAsOsgiService();
-	}
-
-	protected void finishRefresh() {
-		super.finishRefresh();
-		// publish the context only after all the beans have been published
-		publishContextAsOsgiServiceIfNecessary();
 	}
 
 	protected void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
@@ -268,23 +263,16 @@ public abstract class AbstractOsgiBundleApplicationContext extends AbstractRefre
 	 * @param beanFactory
 	 */
 	private void enforceExporterImporterDependency(ConfigurableListableBeanFactory beanFactory) {
+		// create the service manager
+		ClassLoader loader = AbstractOsgiBundleApplicationContext.class.getClassLoader();
 		Object instance = null;
-
-		instance = AccessController.doPrivileged(new PrivilegedAction() {
-
-			public Object run() {
-				// create the service manager
-				ClassLoader loader = AbstractOsgiBundleApplicationContext.class.getClassLoader();
-				try {
-					Class managerClass = loader.loadClass(EXPORTER_IMPORTER_DEPENDENCY_MANAGER);
-					return BeanUtils.instantiateClass(managerClass);
-				}
-				catch (ClassNotFoundException cnfe) {
-					throw new ApplicationContextException("Cannot load class " + EXPORTER_IMPORTER_DEPENDENCY_MANAGER,
-						cnfe);
-				}
-			}
-		});
+		try {
+			Class managerClass = loader.loadClass(EXPORTER_IMPORTER_DEPENDENCY_MANAGER);
+			instance = BeanUtils.instantiateClass(managerClass);
+		}
+		catch (ClassNotFoundException cnfe) {
+			throw new ApplicationContextException("Cannot load class " + EXPORTER_IMPORTER_DEPENDENCY_MANAGER, cnfe);
+		}
 
 		// sanity check
 		Assert.isInstanceOf(BeanFactoryAware.class, instance);
@@ -312,13 +300,13 @@ public abstract class AbstractOsgiBundleApplicationContext extends AbstractRefre
 	}
 
 	/**
-	 * Publishes the application context as an OSGi service. The method
-	 * internally takes care of parsing the bundle headers and determined if
-	 * actual publishing is required or not.
+	 * Publish the application context as an OSGi service. The method internally
+	 * takes care of parsing the bundle headers and determined if actual
+	 * publishing is required or not.
 	 * 
 	 */
-	private void publishContextAsOsgiServiceIfNecessary() {
-		if (publishContextAsService && serviceRegistration == null) {
+	void publishContextAsOsgiServiceIfNecessary() {
+		if (publishContextAsService) {
 			Dictionary serviceProperties = new MapBasedDictionary();
 
 			customizeApplicationContextServiceProperties((Map) serviceProperties);
@@ -352,21 +340,6 @@ public abstract class AbstractOsgiBundleApplicationContext extends AbstractRefre
 	}
 
 	/**
-	 * Unpublishes the application context OSGi service.
-	 */
-	private void unpublishContextAsOsgiService() {
-		if (!OsgiServiceUtils.unregisterService(serviceRegistration)) {
-			logger.info("Unpublishing application context OSGi service for bundle "
-					+ OsgiStringUtils.nullSafeNameAndSymName(bundle));
-			serviceRegistration = null;
-		}
-		else {
-			if (publishContextAsService)
-				logger.info("Application Context service already unpublished");
-		}
-	}
-
-	/**
 	 * Customizes the properties of the application context OSGi service. This
 	 * method is called only if the application context will be published as an
 	 * OSGi service.
@@ -381,7 +354,7 @@ public abstract class AbstractOsgiBundleApplicationContext extends AbstractRefre
 	 * available inside the same bundle).
 	 * 
 	 * @param serviceProperties service properties map (can be casted to
-	 *        {@link Dictionary})
+	 * {@link Dictionary})
 	 */
 	protected void customizeApplicationContextServiceProperties(Map serviceProperties) {
 		serviceProperties.put(APPLICATION_CONTEXT_SERVICE_PROPERTY_NAME, getBundleSymbolicName());

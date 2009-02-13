@@ -1,29 +1,13 @@
 Spring Dynamic Modules Samples
 ------------------------------
 
-This folder contains various various demo applications and samples for Spring-DM.
+This folder contains various samples and demos for Spring-DM.
 
-Please see each folder for detailed instructions (readme.txt).
+Please see each demo folder for detailed instructions (readme.txt).
 
 As a general rule, each demo provides an integration tests that bootstraps
 the OSGi platform, installs the demo and its dependencies and interacts with 
 the demo application.
-
-SAMPLES OVERVIEW
-----------------
-
-* simple-service
-A simple demo for publishing OSGi services using Spring-DM
-
-* simple-web-app
-A simple web application running inside OSGi using Spring-DM. The war contains
-servlets, static resources and Java Server Faces (JSF)
-
-* weather
-A weather service publisher/consumer application that consists of multiple bundles.
-
-* web-console
-A Spring-MVC application that interacts with the OSGi platform.
 
 BUILDING AND DEPLOYMENT
 -----------------------

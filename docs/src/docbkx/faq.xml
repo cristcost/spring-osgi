@@ -41,7 +41,7 @@
         url="http://www.osgi.org/">The OSGi Alliance</ulink>. In order to
         comply with their guidelines, it was decided that the project name 
         be changed to "Spring Dynamic Modules for OSGi Service Platforms" 
-        (aka Spring DM). The new name is still pending final approval 
+        (aka Spring-DM). The new name is still pending final approval 
         by the OSGi Alliance. 
         The name change was the result of an amicable discussion between 
         the OSGi Alliance and Interface21. Interface21 is a member of the 
@@ -79,7 +79,7 @@
 	    Note that, Spring 2.5 also requires Java 1.4.
 	  </para>
 	  <para>
-	    Nevertheless, experiences and feedback on running Spring DM in restricted environments 
+	    Nevertheless, experiences and feedback on running Spring-DM in restricted environments 
 	    is welcomed - please use our mailing list.
 	  </para>
     </section>
@@ -90,14 +90,14 @@
 	</section>
 	
 	<section id="restricted-environments">
-	  <title>Will Spring DM work in restricted environments (such as small/mobile devices)?</title>
+	  <title>Will Spring-DM work in restricted environments (such as small/mobile devices)?</title>
 	  <para>See the <link linkend="requirements">requirements</link> entry. The OSGi Service Platform is designed to run in 
 	  very constrained environments however, Spring Dynamic Modules depends on the Spring Framework v2.5 which in turn depends on 
 	  JDK 1.4. Thus Spring Dynamic Modules cannot run on more constrained environments (such as the OSGi Minimum Execution Environment) 
 	  unless Spring itself also runs in those environments. There are no current plans to make such a version of Spring. 
 	  However as existing OSGi developers adopt Spring Dynamic Modules to simplify creation of OSGi applications and the user
 	  base expands, the target audience can cover domains much broader than <emphasis>enterprise Java applications</emphasis>. 
-	  In time this could create a large enough demand to justify the investment needed to allow Spring and Spring DM to run in
+	  In time this could create a large enough demand to justify the investment needed to allow Spring and Spring-DM to run in
 	  restricted environments.</para>
 	</section>
 
@@ -106,7 +106,7 @@
     <section id="supported-osgi-platforms">
 	  <title>What OSGi platforms are supported?</title>
 	  <para>
-	  Spring DM requires an OSGi 4.0 platform. The framework has been tested
+	  Spring-DM requires an OSGi 4.0 platform. The framework has been tested
 	  on <ulink url="http://www.eclipse.org/equinox/">Equinox</ulink>, <ulink url="http://felix.apache.org">Felix</ulink> 
 	  and <ulink url="http://www.knopflerfish.org/">Knopflerfish</ulink> 
 	  - in fact, the test suite is <ulink url="http://build.springframework.org:8085/bamboo/browse/OSGI">ran</ulink> 
@@ -194,11 +194,11 @@
         enforces tighter classloading. Thus, you can, in most of the cases,
         use the same logging strategy used in non-OSGi environments.</para>
 
-        <para>Spring (and Spring DM) use internally the <ulink
+        <para>Spring (and Spring-DM) use internally the <ulink
         url="http://commons.apache.org/logging/">commons-logging API</ulink>
         which acts as an "ultra-thin bridge between different logging
         implementations". In OSGi, just like in a non-OSGi environment, Spring
-        and Spring DM delegate all logging (including initialisation) to the
+        and Spring-DM delegate all logging (including initialisation) to the
         actual commons-logging API implementation.</para>
 
         <para>Out of the box, <ulink url="http://www.slf4j.org/">SLF4J</ulink> library is provided, which
@@ -214,7 +214,7 @@
         question</link > for more details on why commons-logging jar is not
         used.</para>
 
-        <para>Spring DM uses SLF4J on top of <ulink
+        <para>Spring-DM uses SLF4J on top of <ulink
         url="http://logging.apache.org/log4j/">Log4J</ulink> but this can be
         easily changed. As part of log4j initialisation, a
         <literal>log4j.properties</literal> or <literal>log4j.xml</literal>
@@ -296,7 +296,7 @@
         logging library in here]?</title>
 
         <para>It is completely up to you what logging implementation you want
-        Spring DM to use. To route log messages to the OSGi logging service, 
+        Spring-DM to use. To route log messages to the OSGi logging service, 
         just use a commons-logging API implementation that delegates to the 
         OSGi logging service, such as Pax Logging.</para>
       </section>
@@ -315,9 +315,9 @@
           	  <para>Use a repository of pre-wrapped libraries such as <ulink url="http://www.eclipse.org/orbit/">Orbit</ulink>,
           	  <ulink url="http://felix.apache.org/site/apache-felix-commons.html">Felix Commons</ulink> or Knopflerfish <ulink 
           	  url="http://www.knopflerfish.org/repo/index.html">repository</ulink>.
-          	  Spring DM uses the SpringSource Enterprise <ulink url="http://www.springsource.com/repository/app/">Bundle Repository</ulink> 
+          	  Spring-DM uses the SpringSource Enterprise <ulink url="http://www.springsource.com/repository/app/">Bundle Repository</ulink> 
           	  for its dependencies, which you might find useful. Additionally, for artifacts that have not yet made it into SpringSource Repository,
-          	  Spring DM provides a small, temporary (Amazon S3) 
+          	  Spring-DM provides a small, temporary (Amazon S3) 
           	  Maven repository (<ulink url="http://s3.amazonaws.com/maven.springframework.org/osgi">link</ulink> | 
           	  <ulink url="http://s3browse.com/explore/maven.springframework.org/osgi/">browser-friendly link</ulink>) for its internal usage.</para> 
           	</listitem>
@@ -336,7 +336,7 @@
 	  </section>
 	  
 	  <section id="jdk-crippled-jta-api">
-          <title>I keep getting <emphasis>java.lang.NoClassDefFoundError: javax/transaction/...</emphasis> when trying to do data access..</title>
+        <title><emphasis>java.lang.NoClassDefFoundError: javax/transaction/...</emphasis> when trying to do data access</title>
         
           <para>
           This problem is likely to be caused by bad class wiring. All 1.3+ JDKs include incomplete <emphasis>javax.transaction</emphasis> 
@@ -345,21 +345,13 @@
           confusion.
           </para>
           <para>
-          Spring DM wraps JTA 1.1 library for OSGI environments which can be found at Spring snapshot repository. One can deploy this library
+          Spring-DM wraps JTA 1.1 library for OSGI environments which can be found at Spring snapshot repository. One can deploy this library
           and specify version 1.1 for <emphasis>javax.transaction*</emphasis> packages inside <emphasis>Import-Package</emphasis> header.
           By specifying the version, one can be sure that the proper package is used.
           </para>
           <para>
           Note that JTA 1.1 is compatible with version 1.0.1.
           </para>
-	  </section>
-	  
-	  <section id="incomplete-osgi-jar">
-	  	 <title>When doing integration testing I receive <emphasis>java.lang.NoClassDefFoundError: org.osgi.vendor.framework property not set</emphasis>... </title>
-	  	 
-	  	 <para>Remove the official OSGi jars (osgi.jar or osgi-r4-core.jar) from the classpath and use only the actual OSGi platform (Equinox/Knopflerfish/Felix) 
-	  	 jars. The former provides only the public classes without an actual implementation and thus cannot be used during runtime, only during the compilation stage.
-	  	 </para>
 	  </section>
       <!-- this should be part of an OSGi intro more likely -->
 
@@ -407,12 +399,12 @@
       </section>
       
       <section id="junit382-serialization">
-      	<title>When using Spring DM integration testing I get an exception about serialVersionUID. What is the problem?</title>
+      	<title>When using Spring-DM integration testing I get an exception about serialVersionUID. What is the problem?</title>
       	
       	<para>
       	This problem occurs on Spring DM versions up to 1.0 - consider upgrading to 1.0.1 or better. If you are stuck with 1.0 see below.
-      	When running an integration test, Spring DM will duplicate the test instance and execute it inside OSGi. To avoid problems
-      	like this one, make sure you are using the same libraries (with the same version) as Spring DM when running your test. This
+      	When running an integration test, Spring-DM will duplicate the test instance and execute it inside OSGi. To avoid problems
+      	like this one, make sure you are using the same libraries (with the same version) as Spring-DM when running your test. This
       	particular problem for example is caused by a JUnit 3.8.2 vs 3.8.x serialization compatibility. Make sure that you are using
       	at least JUnit 3.8.2 for the execution of your tests. 
       	</para>
@@ -431,47 +423,25 @@
       </section>
       
      <section id="upgrade-to-1.1">
-      	<title>I'm upgrading to Spring DM 1.1 but now I get some ClassNotFoundExceptions. What has changed?</title>
+      	<title>I'm upgrading to Spring-DM 1.1 but now I get some ClassNotFoundExceptions. What has changed?</title>
       	
       	<para>
-      	In Spring DM 1.1 M2, the proxy infrastructure has been refined to avoid <emphasis>type leaks</emphasis>, the usage of dynamic imports
+      	In Spring-DM 1.1 M2, the proxy infrastructure has been refined to avoid <emphasis>type leaks</emphasis>, the usage of dynamic imports
       	or exposure of class loader chain delegation. If you encounter class visibility problems during the upgrade then it's likely you have
-      	missing imports which were previously resolved as a side effect of Spring DM proxy weaving process. 
+      	missing imports which were previously resolved as a side effect of Spring-DM proxy weaving process. 
       	</para>
      </section>
       
      <section id="proxy-equality">
-     	<title>I've noticed that objects imported by Spring DM are not always equal to the raw target service. Why is that?</title>
+     	<title>I've noticed that objects imported by Spring-DM are not always equal to the raw target service. Why is that?</title>
      	
      	<para>
-     	To deal with dynamics, Spring DM creates proxies around the imported services. The proxies are classes (generated at runtime), different
+     	To deal with dynamics, Spring-DM creates proxies around the imported services. The proxies are classes (generated at runtime), different
      	from the target but able to intercept the calls made to it. Since a proxy is different then its target, comparing objects against it can 
      	yield different results then when the comparison is done against the target. In most scenarios this is not a problem but there might be 
-     	corner cases where this contract matters. Since 1.1, Spring DM importer proxies implement <interfacename>InfrastructureProxy</interfacename> 
+     	corner cases where this contract matters. Since 1.1, Spring-DM importer proxies implement <interfacename>InfrastructureProxy</interfacename> 
      	interface (from Spring framework) which allow access to the raw target.
      	</para>
-     </section>
-     <section id="static-collections">
-     	<title>My Spring DM collection doesn't change even though the number of OSGi service changes. What's wrong?</title>
-     	
-     	<para>
-     	Make sure the Spring DM collections are injected into object of compatible types (for example <literal>list</literal> into 
-     	<interfacename>java.util.List</interfacename> or <interfacename>java.util.Collection</interfacename>). If the types are not compatible,
-     	the container will have to perform 
-     	<ulink url="http://static.springframework.org/spring/docs/2.5.x/reference/validation.html#beans-beans-conversion">type conversion</ulink>,
-     	transforming the Spring DM managed collection into a 'normal' one, unaware of the OSGi dynamics.
-     	</para>
-     </section>
-     
-     <section id="update-to-1.2">
-     	<title>I have upgraded to Spring DM 1.2 but my custom extender/web extender configuration doesn't work anymore. What has changed?</title>
-     	
-     	<para>Since Spring 2.5.6, the symbolic names of the artifacts have changed slightly. Spring DM aligned its symbolic names as well with the 
-     	new patter since 1.2.0 M2. Thus the prefix <literal>org.springframework.bundle.osgi</literal> has been changed to 
-     	<literal>org.springframework.osgi</literal>; for example Spring DM extender symbolic name was changed from 
-     	<literal>org.springframework.bundle.osgi.extender</literal> to <literal>org.springframework.osgi.extender</literal> 
-		(notice the missing <literal>bundle</literal> word).
-		To fix this problem, change the reference to the old symbolic name (usually inside the fragments manifests or LDAP filters) to the new one.</para>
      </section>       
     </chapter>
 </book>

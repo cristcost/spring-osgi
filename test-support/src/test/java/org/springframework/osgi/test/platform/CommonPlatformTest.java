@@ -85,4 +85,5 @@ public abstract class CommonPlatformTest extends TestCase {
 		platform.stop();
 		assertNull(platform.getBundleContext());
 	}
+
 }
