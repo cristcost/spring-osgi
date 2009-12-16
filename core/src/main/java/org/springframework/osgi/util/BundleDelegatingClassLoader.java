@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,13 +67,13 @@ public class BundleDelegatingClassLoader extends ClassLoader {
 	 * 
 	 * @param bundle bundle used for class loading and resource acquisition
 	 * @param bridge class loader used as fall back in case the bundle cannot
-	 *        load a class or find a resource. Can be <code>null</code>
+	 * load a class or find a resource. Can be <code>null</code>
 	 * @return class loader adapter over the given bundle and class loader
 	 */
 	public static BundleDelegatingClassLoader createBundleClassLoaderFor(final Bundle bundle, final ClassLoader bridge) {
-		return AccessController.doPrivileged(new PrivilegedAction<BundleDelegatingClassLoader>() {
+		return (BundleDelegatingClassLoader) AccessController.doPrivileged(new PrivilegedAction() {
 
-			public BundleDelegatingClassLoader run() {
+			public Object run() {
 				return new BundleDelegatingClassLoader(bundle, bridge);
 			}
 		});
@@ -94,7 +94,7 @@ public class BundleDelegatingClassLoader extends ClassLoader {
 		this.bridge = bridgeLoader;
 	}
 
-	protected Class<?> findClass(String name) throws ClassNotFoundException {
+	protected Class findClass(String name) throws ClassNotFoundException {
 		try {
 			return this.backingBundle.loadClass(name);
 		}
@@ -128,14 +128,13 @@ public class BundleDelegatingClassLoader extends ClassLoader {
 		return url;
 	}
 
-	@SuppressWarnings("unchecked")
-	protected Enumeration<URL> findResources(String name) throws IOException {
+	protected Enumeration findResources(String name) throws IOException {
 		boolean trace = log.isTraceEnabled();
 
 		if (trace)
 			log.trace("Looking for resources " + name);
 
-		Enumeration<URL> enm = this.backingBundle.getResources(name);
+		Enumeration enm = this.backingBundle.getResources(name);
 
 		if (trace && enm != null && enm.hasMoreElements())
 			log.trace("Found resource " + name + " at " + this.backingBundle.getLocation());
@@ -151,8 +150,8 @@ public class BundleDelegatingClassLoader extends ClassLoader {
 		return resource;
 	}
 
-	protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
-		Class<?> clazz = null;
+	protected Class loadClass(String name, boolean resolve) throws ClassNotFoundException {
+		Class clazz = null;
 		try {
 			clazz = findClass(name);
 		}
@@ -180,4 +179,5 @@ public class BundleDelegatingClassLoader extends ClassLoader {
 	public Bundle getBundle() {
 		return backingBundle;
 	}
+
 }

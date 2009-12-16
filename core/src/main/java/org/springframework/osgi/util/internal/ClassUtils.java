@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,27 +27,30 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.osgi.framework.Bundle;
 import org.springframework.aop.framework.ProxyFactory;
+import org.springframework.core.CollectionFactory;
+import org.springframework.core.JdkVersion;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
 /**
- * Class utility used internally. Contains mainly class inheritance mechanisms used when creating OSGi service proxies.
+ * Class utility used internally. Contains mainly class inheritance mechanisms
+ * used when creating OSGi service proxies.
  * 
  * @author Costin Leau
  * 
  */
 public abstract class ClassUtils {
 
-	private static class ReadOnlySetFromMap<E> implements Set<E> {
+	private static class ReadOnlySetFromMap implements Set {
 
-		private final Set<E> keys;
+		private final Set keys;
 
-		public ReadOnlySetFromMap(Map<E, ?> lookupMap) {
+
+		public ReadOnlySetFromMap(Map lookupMap) {
 			keys = lookupMap.keySet();
 		}
 
@@ -55,7 +58,7 @@ public abstract class ClassUtils {
 			throw new UnsupportedOperationException();
 		}
 
-		public boolean addAll(Collection<? extends E> c) {
+		public boolean addAll(Collection c) {
 			throw new UnsupportedOperationException();
 		}
 
@@ -67,7 +70,7 @@ public abstract class ClassUtils {
 			return keys.contains(o);
 		}
 
-		public boolean containsAll(Collection<?> c) {
+		public boolean containsAll(Collection c) {
 			return keys.containsAll(c);
 		}
 
@@ -75,7 +78,7 @@ public abstract class ClassUtils {
 			return keys.isEmpty();
 		}
 
-		public Iterator<E> iterator() {
+		public Iterator iterator() {
 			return keys.iterator();
 		}
 
@@ -83,11 +86,11 @@ public abstract class ClassUtils {
 			throw new UnsupportedOperationException();
 		}
 
-		public boolean removeAll(Collection<?> c) {
+		public boolean removeAll(Collection c) {
 			throw new UnsupportedOperationException();
 		}
 
-		public boolean retainAll(Collection<?> c) {
+		public boolean retainAll(Collection c) {
 			throw new UnsupportedOperationException();
 		}
 
@@ -99,7 +102,7 @@ public abstract class ClassUtils {
 			return keys.toArray();
 		}
 
-		public <T> T[] toArray(T[] array) {
+		public Object[] toArray(Object[] array) {
 			return keys.toArray(array);
 		}
 
@@ -116,24 +119,40 @@ public abstract class ClassUtils {
 		}
 	}
 
-	public enum ClassSet {
-		/** Include only the interfaces inherited from superclasses or implemented by the current class */
-		INTERFACES,
-		/** Include only the class hierarchy (interfaces are excluded) */
-		CLASS_HIERARCHY,
-		/** Include all inherited classes (classes or interfaces) */
-		ALL_CLASSES;
-	}
 
 	/**
-	 * List of special class loaders, outside OSGi, that might be used by the user through boot delegation. read-only.
+	 * Include only the interfaces inherited from superclasses or implemented by
+	 * the current class.
 	 */
-	public static final List<ClassLoader> knownNonOsgiLoaders;
+	public static final int INCLUDE_INTERFACES = 1;
 
 	/**
-	 * Set of special class loaders, outside OSGi, that might be used by the user through boot delegation. read-only.
+	 * Include only the class hierarchy (interfaces are excluded).
 	 */
-	public static final Set<ClassLoader> knownNonOsgiLoadersSet;
+	public static final int INCLUDE_CLASS_HIERARCHY = 2;
+
+	/**
+	 * Include all inherited classes (classes or interfaces).
+	 */
+	public static final int INCLUDE_ALL_CLASSES = INCLUDE_INTERFACES | INCLUDE_CLASS_HIERARCHY;
+
+	/** Whether the backport-concurrent library is present on the classpath */
+	// the CollectionFactory classloader is used since this creates the map
+	// internally
+	private static final boolean backportConcurrentAvailable = org.springframework.util.ClassUtils.isPresent(
+		"edu.emory.mathcs.backport.java.util.concurrent.ConcurrentHashMap", CollectionFactory.class.getClassLoader());
+
+	/**
+	 * List of special class loaders, outside OSGi, that might be used by the
+	 * user through boot delegation. read-only.
+	 */
+	public static final List knownNonOsgiLoaders;
+
+	/**
+	 * Set of special class loaders, outside OSGi, that might be used by the
+	 * user through boot delegation. read-only.
+	 */
+	public static final Set knownNonOsgiLoadersSet;
 
 	// add the known, non-OSGi class loaders
 	// note that the order is important
@@ -142,44 +161,38 @@ public abstract class ClassUtils {
 		// then get all its parents (normally the this should be fwk -> (*) -> app -> ext -> boot)
 		// where (*) represents some optional loaders for cases where the framework is embedded
 
-		final Map<ClassLoader, Boolean> lookupMap = new ConcurrentHashMap<ClassLoader, Boolean>(8);
-		final List<ClassLoader> lookupList = Collections.synchronizedList(new ArrayList<ClassLoader>());
+		final Map lookupMap = CollectionFactory.createConcurrentMap(8);
+		final List lookupList = Collections.synchronizedList(new ArrayList());
 
-		final ClassLoader classLoader = getFwkClassLoader();
+		AccessController.doPrivileged(new PrivilegedAction() {
 
-		if (System.getSecurityManager() != null) {
-			AccessController.doPrivileged(new PrivilegedAction<Object>() {
-				public Object run() {
-					addNonOsgiClassLoader(classLoader, lookupList, lookupMap);
-					// get the system class loader
-					ClassLoader sysLoader = ClassLoader.getSystemClassLoader();
-					addNonOsgiClassLoader(sysLoader, lookupList, lookupMap);
-					return null;
-				}
-			});
-		} else {
-			addNonOsgiClassLoader(classLoader, lookupList, lookupMap);
-			// get the system class loader
-			ClassLoader sysLoader = ClassLoader.getSystemClassLoader();
-			addNonOsgiClassLoader(sysLoader, lookupList, lookupMap);
-		}
+			public Object run() {
+
+				ClassLoader classLoader = getFwkClassLoader();
+				addNonOsgiClassLoader(classLoader, lookupList, lookupMap);
+
+				// get the system class loader
+				classLoader = ClassLoader.getSystemClassLoader();
+				addNonOsgiClassLoader(classLoader, lookupList, lookupMap);
+
+				return null;
+			}
+		});
 
 		// wrap the fields as read-only collections
 		knownNonOsgiLoaders = Collections.unmodifiableList(lookupList);
-		knownNonOsgiLoadersSet = new ReadOnlySetFromMap<ClassLoader>(lookupMap);
+		knownNonOsgiLoadersSet = new ReadOnlySetFromMap(lookupMap);
 
 	}
 
+
 	public static ClassLoader getFwkClassLoader() {
-		if (System.getSecurityManager() != null) {
-			return AccessController.doPrivileged(new PrivilegedAction<ClassLoader>() {
-				public ClassLoader run() {
-					return Bundle.class.getClassLoader();
-				}
-			});
-		} else {
-			return Bundle.class.getClassLoader();
-		}
+		return (ClassLoader) AccessController.doPrivileged(new PrivilegedAction() {
+
+			public Object run() {
+				return Bundle.class.getClassLoader();
+			}
+		});
 	}
 
 	/**
@@ -187,8 +200,7 @@ public abstract class ClassUtils {
 	 * 
 	 * @param classLoader non OSGi class loader
 	 */
-	private static void addNonOsgiClassLoader(ClassLoader classLoader, List<ClassLoader> list,
-			Map<ClassLoader, Boolean> map) {
+	private static void addNonOsgiClassLoader(ClassLoader classLoader, List list, Map map) {
 		while (classLoader != null) {
 			synchronized (list) {
 				if (!map.containsKey(classLoader)) {
@@ -200,8 +212,10 @@ public abstract class ClassUtils {
 		}
 	}
 
+
 	/**
-	 * Simple class loading abstraction working on both ClassLoader and Bundle classes.
+	 * Simple class loading abstraction working on both ClassLoader and Bundle
+	 * classes.
 	 * 
 	 * @author Costin Leau
 	 * 
@@ -211,6 +225,7 @@ public abstract class ClassUtils {
 		private final Bundle bundle;
 
 		private final ClassLoader classLoader;
+
 
 		public ClassLoaderBridge(Bundle bundle) {
 			Assert.notNull(bundle);
@@ -224,24 +239,26 @@ public abstract class ClassUtils {
 			this.bundle = null;
 		}
 
-		public Class<?> loadClass(String className) throws ClassNotFoundException {
+		public Class loadClass(String className) throws ClassNotFoundException {
 			return (bundle == null ? classLoader.loadClass(className) : bundle.loadClass(className));
 		}
 
 		public boolean canSee(String className) {
 			return (bundle == null ? org.springframework.util.ClassUtils.isPresent(className, classLoader) : isPresent(
-					className, bundle));
+				className, bundle));
 		}
 	}
 
+
 	/**
-	 * Returns an array of parent classes for the given class. The mode paramater indicates whether only interfaces
-	 * should be included, classes or both.
+	 * Return an array of parent classes for the given class. The mode paramater
+	 * indicates whether only interfaces should be included, classes or both.
 	 * 
 	 * This method is normally used for publishing services and determing the
 	 * {@link org.osgi.framework.Constants#OBJECTCLASS} property.
 	 * 
-	 * <p/> Note: this method does class expansion returning parent as well as children classes.
+	 * <p/> Note: this method does class expansion returning parent as well as
+	 * children classes.
 	 * 
 	 * </p>
 	 * 
@@ -254,18 +271,16 @@ public abstract class ClassUtils {
 	 * 
 	 * @return array of classes extended or implemented by the given class
 	 */
-	public static Class<?>[] getClassHierarchy(Class<?> clazz, ClassSet inclusion) {
-		Class<?>[] classes = null;
+	public static Class[] getClassHierarchy(Class clazz, int mode) {
+		Class[] classes = null;
 
-		if (clazz != null) {
+		if (clazz != null && isModeValid(mode)) {
 
-			Set<Class<?>> composingClasses = new LinkedHashSet<Class<?>>();
-			boolean includeClasses =
-					(inclusion.equals(ClassSet.CLASS_HIERARCHY) || inclusion.equals(ClassSet.ALL_CLASSES));
-			boolean includeInterfaces =
-					(inclusion.equals(ClassSet.INTERFACES) || inclusion.equals(ClassSet.ALL_CLASSES));
+			Set composingClasses = new LinkedHashSet();
+			boolean includeClasses = includesMode(mode, INCLUDE_CLASS_HIERARCHY);
+			boolean includeInterfaces = includesMode(mode, INCLUDE_INTERFACES);
 
-			Class<?> clz = clazz;
+			Class clz = clazz;
 			do {
 				if (includeClasses) {
 					composingClasses.add(clz);
@@ -284,62 +299,65 @@ public abstract class ClassUtils {
 	}
 
 	/**
-	 * Sugar method that determines the class hierarchy of a given class and then filtering based on the given
-	 * classloader. If a null classloader, the one of the given class will be used.
+	 * Sugar method, determining the class hierarchy of a given class and then
+	 * filtering based on the given classloader. If a null classloader, the one
+	 * of the given class will be used.
 	 * 
 	 * @param clazz
 	 * @param mode
 	 * @param loader
 	 * @return
 	 */
-	public static Class<?>[] getVisibleClassHierarchy(Class<?> clazz, ClassSet inclusion, ClassLoader loader) {
+	public static Class[] getVisibleClassHierarchy(Class clazz, int mode, ClassLoader loader) {
 		if (clazz == null)
 			return new Class[0];
 
-		return getVisibleClasses(getClassHierarchy(clazz, inclusion), getClassLoader(clazz));
+		return getVisibleClasses(getClassHierarchy(clazz, mode), getClassLoader(clazz));
 	}
 
 	/**
-	 * 'Sugar' method that determines the class hierarchy of the given class, returning only the classes visible to the
-	 * given bundle.
+	 * 'Sugar' method that determines the class hierarchy of the given class,
+	 * returning only the classes visible to the given bundle.
 	 * 
 	 * @param clazz the class for which the hierarchy has to be determined
 	 * @param mode discovery mode
 	 * @param bundle bundle used for class visibility
 	 * @return array of visible classes part of the hierarchy
 	 */
-	public static Class<?>[] getVisibleClassHierarchy(Class<?> clazz, ClassSet inclusion, Bundle bundle) {
-		return getVisibleClasses(getClassHierarchy(clazz, inclusion), bundle);
+	public static Class[] getVisibleClassHierarchy(Class clazz, int mode, Bundle bundle) {
+		return getVisibleClasses(getClassHierarchy(clazz, mode), bundle);
 	}
 
 	/**
-	 * Given an array of classes, eliminates the ones that cannot be loaded by the given classloader.
+	 * Given an array of classes, eliminate the ones that cannot be loaded by
+	 * the given classloader.
 	 * 
 	 * @return
 	 */
-	public static Class<?>[] getVisibleClasses(Class<?>[] classes, ClassLoader classLoader) {
+	public static Class[] getVisibleClasses(Class[] classes, ClassLoader classLoader) {
 		return getVisibleClasses(classes, new ClassLoaderBridge(classLoader));
 	}
 
 	/**
-	 * Given an array of classes, eliminates the ones that cannot be loaded by the given bundle.
+	 * Given an array of classes, eliminate the ones that cannot be loaded by
+	 * the given bundle.
 	 * 
 	 * @return
 	 */
-	public static Class<?>[] getVisibleClasses(Class<?>[] classes, Bundle bundle) {
+	public static Class[] getVisibleClasses(Class[] classes, Bundle bundle) {
 		return getVisibleClasses(classes, new ClassLoaderBridge(bundle));
 	}
 
-	private static Class<?>[] getVisibleClasses(Class<?>[] classes, ClassLoaderBridge loader) {
+	private static Class[] getVisibleClasses(Class[] classes, ClassLoaderBridge loader) {
 		if (ObjectUtils.isEmpty(classes))
 			return classes;
 
-		Set<Class<?>> classSet = new LinkedHashSet<Class<?>>(classes.length);
+		Set classSet = new LinkedHashSet(classes.length);
 		CollectionUtils.mergeArrayIntoCollection(classes, classSet);
 
 		// filter class collection based on visibility
-		for (Iterator<Class<?>> iter = classSet.iterator(); iter.hasNext();) {
-			Class<?> clzz = iter.next();
+		for (Iterator iter = classSet.iterator(); iter.hasNext();) {
+			Class clzz = (Class) iter.next();
 			if (!loader.canSee(clzz.getName())) {
 				iter.remove();
 			}
@@ -348,26 +366,26 @@ public abstract class ClassUtils {
 	}
 
 	/**
-	 * Gets all interfaces implemented by the given class. This method returns both parent and children interfaces (i.e.
-	 * Map and SortedMap).
+	 * Get all interfaces implemented by the given class. This method returns
+	 * both parent and children interfaces (i.e. Map and SortedMap).
 	 * 
 	 * @param clazz
 	 * @return all interfaces implemented by the given class.
 	 */
-	public static Class<?>[] getAllInterfaces(Class<?> clazz) {
+	public static Class[] getAllInterfaces(Class clazz) {
 		Assert.notNull(clazz);
-		return getAllInterfaces(clazz, new LinkedHashSet<Class<?>>(8));
+		return getAllInterfaces(clazz, new LinkedHashSet(8));
 	}
 
 	/**
-	 * Gets all the interfaces recursively.
+	 * Recursive implementation for getting all interfaces.
 	 * 
 	 * @param clazz
 	 * @param interfaces
 	 * @return
 	 */
-	private static Class<?>[] getAllInterfaces(Class<?> clazz, Set<Class<?>> interfaces) {
-		Class<?>[] intfs = clazz.getInterfaces();
+	private static Class[] getAllInterfaces(Class clazz, Set interfaces) {
+		Class[] intfs = clazz.getInterfaces();
 		CollectionUtils.mergeArrayIntoCollection(intfs, interfaces);
 
 		for (int i = 0; i < intfs.length; i++) {
@@ -378,8 +396,8 @@ public abstract class ClassUtils {
 	}
 
 	/**
-	 * Checks the present of a class inside a bundle. This method returns true if the given bundle can load the given
-	 * class or false otherwise.
+	 * Check the present of a class inside a bundle. This method returns true if
+	 * the given bundle can load the given class or false otherwise.
 	 * 
 	 * @param className
 	 * @param bundle
@@ -392,31 +410,53 @@ public abstract class ClassUtils {
 		try {
 			bundle.loadClass(className);
 			return true;
-		} catch (Exception cnfe) {
+		}
+		catch (Exception cnfe) {
 			return false;
 		}
 	}
 
 	/**
-	 * Returns the classloader for the given class. This method deals with JDK classes which return by default, a null
-	 * classloader.
+	 * Return the classloader for the given class. This method deals with JDK
+	 * classes which return by default, a null classloader.
 	 * 
 	 * @param clazz
 	 * @return
 	 */
-	public static ClassLoader getClassLoader(Class<?> clazz) {
+	public static ClassLoader getClassLoader(Class clazz) {
 		Assert.notNull(clazz);
 		ClassLoader loader = clazz.getClassLoader();
 		return (loader == null ? ClassLoader.getSystemClassLoader() : loader);
 	}
 
 	/**
-	 * Returns an array of class string names for the given classes.
+	 * Test if testedMode includes an expected mode.
+	 * 
+	 * @param testedMode
+	 * @param mode
+	 * @return
+	 */
+	private static boolean includesMode(int testedMode, int mode) {
+		return (testedMode & mode) == mode;
+	}
+
+	/**
+	 * Test if a mode is valid.
+	 * 
+	 * @param mode
+	 * @return
+	 */
+	private static boolean isModeValid(int mode) {
+		return (mode >= INCLUDE_INTERFACES && mode <= INCLUDE_ALL_CLASSES);
+	}
+
+	/**
+	 * Return an array of class string names for the given classes.
 	 * 
 	 * @param array
 	 * @return
 	 */
-	public static String[] toStringArray(Class<?>[] array) {
+	public static String[] toStringArray(Class[] array) {
 		if (ObjectUtils.isEmpty(array))
 			return new String[0];
 
@@ -430,17 +470,28 @@ public abstract class ClassUtils {
 	}
 
 	/**
-	 * Determines if multiple classes(not interfaces) are specified, without any relation to each other. Interfaces will
-	 * simply be ignored.
+	 * Check the present of appropriate concurrent collection in the classpath.
+	 * This means backport-concurrent on Java 1.4, or Java5+.
+	 * 
+	 * @return true if a ConcurrentHashMap is available on the classpath.
+	 */
+	public static boolean concurrentLibAvailable() {
+		return (backportConcurrentAvailable || JdkVersion.isAtLeastJava15());
+	}
+
+	/**
+	 * Determining if multiple classes(not interfaces) are specified, without
+	 * any relation to each other. Interfaces will simply be ignored.
 	 * 
 	 * @param classes an array of classes
-	 * @return true if at least two classes unrelated to each other are found, false otherwise
+	 * @return true if at least two classes unrelated to each other are found,
+	 *         false otherwise
 	 */
-	public static boolean containsUnrelatedClasses(Class<?>[] classes) {
+	public static boolean containsUnrelatedClasses(Class[] classes) {
 		if (ObjectUtils.isEmpty(classes))
 			return false;
 
-		Class<?> clazz = null;
+		Class clazz = null;
 		// check if is more then one class specified
 		for (int i = 0; i < classes.length; i++) {
 			if (!classes[i].isInterface()) {
@@ -463,8 +514,9 @@ public abstract class ClassUtils {
 	}
 
 	/**
-	 * Parses the given class array and eliminate parents of existing classes. Useful when creating proxies to minimize
-	 * the number of implemented interfaces and redundant class information.
+	 * Parse the given class array and eliminate parents of existing classes.
+	 * Useful when creating proxies to minimize the number of implemented
+	 * interfaces and redundant class information.
 	 * 
 	 * @see #containsUnrelatedClasses(Class[])
 	 * @see #configureFactoryForClass(ProxyFactory, Class[])
@@ -472,11 +524,11 @@ public abstract class ClassUtils {
 	 * @param classes array of classes
 	 * @return a new array without superclasses
 	 */
-	public static Class<?>[] removeParents(Class<?>[] classes) {
+	public static Class[] removeParents(Class[] classes) {
 		if (ObjectUtils.isEmpty(classes))
 			return new Class[0];
 
-		List<Class<?>> clazz = new ArrayList<Class<?>>(classes.length);
+		List clazz = new ArrayList(classes.length);
 		for (int i = 0; i < classes.length; i++) {
 			clazz.add(classes[i]);
 		}
@@ -493,10 +545,10 @@ public abstract class ClassUtils {
 		do {
 			dirty = false;
 			for (int i = 0; i < clazz.size(); i++) {
-				Class<?> currentClass = clazz.get(i);
+				Class currentClass = (Class) clazz.get(i);
 				for (int j = 0; j < clazz.size(); j++) {
 					if (i != j) {
-						if (currentClass.isAssignableFrom(clazz.get(j))) {
+						if (currentClass.isAssignableFrom((Class) clazz.get(j))) {
 							clazz.remove(i);
 							i--;
 							dirty = true;
@@ -511,8 +563,8 @@ public abstract class ClassUtils {
 	}
 
 	/**
-	 * Based on the given class, properly instructs the ProxyFactory proxies. For additional sanity checks on the passed
-	 * classes, check the methods below.
+	 * Based on the given class, properly instruct the ProxyFactory proxies. For
+	 * additional sanity checks on the passed classes, check the methods below.
 	 * 
 	 * @see #containsUnrelatedClasses(Class[])
 	 * @see #removeParents(Class[])
@@ -520,16 +572,17 @@ public abstract class ClassUtils {
 	 * @param factory
 	 * @param classes
 	 */
-	public static void configureFactoryForClass(ProxyFactory factory, Class<?>[] classes) {
+	public static void configureFactoryForClass(ProxyFactory factory, Class[] classes) {
 		if (ObjectUtils.isEmpty(classes))
 			return;
 
 		for (int i = 0; i < classes.length; i++) {
-			Class<?> clazz = classes[i];
+			Class clazz = classes[i];
 
 			if (clazz.isInterface()) {
 				factory.addInterface(clazz);
-			} else {
+			}
+			else {
 				factory.setTargetClass(clazz);
 				factory.setProxyTargetClass(true);
 			}
@@ -537,24 +590,27 @@ public abstract class ClassUtils {
 	}
 
 	/**
-	 * Loads classes with the given name, using the given classloader. {@link ClassNotFoundException} exceptions are
-	 * being ignored. The return class array will not contain duplicates.
+	 * Load classes with the given name, using the given classloader.
+	 * {@link ClassNotFoundException} exceptions are being ignored. The return
+	 * class array will not contain duplicates.
 	 * 
 	 * @param classNames array of classnames to load (in FQN format)
 	 * @param classLoader classloader used for loading the classes
-	 * @return an array of classes (can be smaller then the array of class names) w/o duplicates
+	 * @return an array of classes (can be smaller then the array of class
+	 *         names) w/o duplicates
 	 */
-	public static Class<?>[] loadClassesIfPossible(String[] classNames, ClassLoader classLoader) {
+	public static Class[] loadClasses(String[] classNames, ClassLoader classLoader) {
 		if (ObjectUtils.isEmpty(classNames))
 			return new Class[0];
 
 		Assert.notNull(classLoader, "classLoader is required");
-		Set<Class<?>> classes = new LinkedHashSet<Class<?>>(classNames.length);
+		Set classes = new LinkedHashSet(classNames.length);
 
 		for (int i = 0; i < classNames.length; i++) {
 			try {
 				classes.add(classLoader.loadClass(classNames[i]));
-			} catch (ClassNotFoundException ex) {
+			}
+			catch (ClassNotFoundException ex) {
 				// ignore
 			}
 		}
@@ -563,41 +619,20 @@ public abstract class ClassUtils {
 	}
 
 	/**
-	 * Loads and returns the classes given as names, using the given class loader. Throws IllegalArgument exception if
-	 * the classes cannot be loaded.
-	 * 
-	 * @param classNames array of class names
-	 * @param classLoader class loader for loading the classes
-	 * @return the loaded classes
-	 */
-	public static Class<?>[] loadClasses(String[] classNames, ClassLoader classLoader) {
-		if (ObjectUtils.isEmpty(classNames))
-			return new Class[0];
-
-		Assert.notNull(classLoader, "classLoader is required");
-		Set<Class<?>> classes = new LinkedHashSet<Class<?>>(classNames.length);
-
-		for (int i = 0; i < classNames.length; i++) {
-			classes.add(org.springframework.util.ClassUtils.resolveClassName(classNames[i], classLoader));
-		}
-
-		return (Class[]) classes.toArray(new Class[classes.size()]);
-	}
-
-	/**
-	 * Excludes classes from the given array, which match the given modifier.
+	 * Exclude classes from the given array, which match the given modifier.
 	 * 
 	 * @see Modifier
 	 * 
 	 * @param classes array of classes (can be null)
 	 * @param modifier class modifier
-	 * @return array of classes (w/o duplicates) which does not have the given modifier
+	 * @return array of classes (w/o duplicates) which does not have the given
+	 *         modifier
 	 */
-	public static Class<?>[] excludeClassesWithModifier(Class<?>[] classes, int modifier) {
+	public static Class[] excludeClassesWithModifier(Class[] classes, int modifier) {
 		if (ObjectUtils.isEmpty(classes))
 			return new Class[0];
 
-		Set<Class<?>> clazzes = new LinkedHashSet<Class<?>>(classes.length);
+		Set clazzes = new LinkedHashSet(classes.length);
 
 		for (int i = 0; i < classes.length; i++) {
 			if ((modifier & classes[i].getModifiers()) == 0)
@@ -607,37 +642,29 @@ public abstract class ClassUtils {
 	}
 
 	/**
-	 * Returns the first matching class from the given array, that doens't belong to common libraries such as the JDK or
-	 * OSGi API. Useful for filtering OSGi services by type to prevent class cast problems.
+	 * Returns the first matching class from the given array, that doens't
+	 * belong to common libraries such as the JDK or OSGi API. Useful for
+	 * filtering OSGi services by type to prevent class cast problems.
 	 * 
 	 * <p/> No sanity checks are done on the given array class.
 	 * 
 	 * @param classes array of classes
-	 * @return a 'particular' (non JDK/OSGi) class if one is found. Else the first available entry is returned.
+	 * @return a 'particular' (non JDK/OSGi) class if one is found. Else the
+	 *         first available entry is returned.
 	 */
-	public static Class<?> getParticularClass(Class<?>[] classes) {
-		boolean hasSecurity = (System.getSecurityManager() != null);
+	public static Class getParticularClass(Class[] classes) {
 		for (int i = 0; i < classes.length; i++) {
-			final Class<?> clazz = classes[i];
-			ClassLoader loader = null;
-			if (hasSecurity) {
-				loader = AccessController.doPrivileged(new PrivilegedAction<ClassLoader>() {
-					public ClassLoader run() {
-						return clazz.getClassLoader();
-					}
-				});
-			} else {
-				loader = clazz.getClassLoader();
-			}
+			Class clazz = classes[i];
+			ClassLoader loader = clazz.getClassLoader();
 			// quick boot/system check
 			if (loader != null) {
-				// consider known loaders
+				// consider known loaders 
 				if (!knownNonOsgiLoadersSet.contains(loader)) {
 					return clazz;
 				}
 			}
 		}
 
-		return (ObjectUtils.isEmpty(classes) ? null : classes[0]);
+		return classes[0];
 	}
 }

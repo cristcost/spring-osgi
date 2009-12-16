@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -124,7 +124,7 @@ public class OsgiServiceProxyEqualityTest extends TestCase {
 		bundleContext = null;
 	}
 
-	private Object createProxy(Object target, Class<?> intf, Advice[] advices) {
+	private Object createProxy(Object target, Class intf, Advice[] advices) {
 		ProxyFactory factory = new ProxyFactory();
 		factory.addInterface(intf);
 		if (advices != null)
@@ -138,7 +138,7 @@ public class OsgiServiceProxyEqualityTest extends TestCase {
 
 	private ServiceDynamicInterceptor createInterceptorWServiceRequired() {
 		ServiceDynamicInterceptor interceptor = new ServiceDynamicInterceptor(bundleContext, null, null, classLoader);
-		interceptor.setMandatoryService(true);
+		interceptor.setRequiredAtStartup(true);
 		interceptor.setProxy(new Object());
 		interceptor.setServiceImporter(new Object());
 
@@ -148,7 +148,7 @@ public class OsgiServiceProxyEqualityTest extends TestCase {
 
 	private ServiceDynamicInterceptor createInterceptorWOServiceRequired() {
 		ServiceDynamicInterceptor interceptor = new ServiceDynamicInterceptor(bundleContext, null, null, classLoader);
-		interceptor.setMandatoryService(false);
+		interceptor.setRequiredAtStartup(false);
 		interceptor.setProxy(new Object());
 		interceptor.setServiceImporter(new Object());
 		interceptor.afterPropertiesSet();

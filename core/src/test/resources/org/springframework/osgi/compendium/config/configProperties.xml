@@ -6,8 +6,7 @@
 	xmlns:p="http://www.springframework.org/schema/p"
 	xsi:schemaLocation="
 		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
-		http://www.springframework.org/schema/osgi-compendium http://www.springframework.org/schema/osgi-compendium/spring-osgi-compendium.xsd"
-	default-lazy-init="true">
+		http://www.springframework.org/schema/osgi-compendium http://www.springframework.org/schema/osgi-compendium/spring-osgi-compendium.xsd">
 
 	<osgix:cm-properties id="named" persistent-id="foo.bar" />
 
@@ -23,16 +22,5 @@
  
 	
 	<beans:bean id="props" class="java.util.Properties"/>
-	
-	<!-- dynamic properties -->
-	<osgix:cm-properties id="dynamic-noOverride" persistent-id="noLocalOverride" dynamic="true">
-		<beans:prop key="bo">zo</beans:prop>
-		<beans:prop key="kry">pton</beans:prop>
-	</osgix:cm-properties>
-
-	<osgix:cm-properties id="dynamic-override" persistent-id="localOverride" local-override="true" dynamic="true">
-		<beans:prop key="bo">zo</beans:prop>
-		<beans:prop key="kry">pton</beans:prop>
-	</osgix:cm-properties>
 	
 </beans:beans>

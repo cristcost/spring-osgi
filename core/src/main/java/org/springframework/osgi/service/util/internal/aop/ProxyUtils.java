@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,13 +34,13 @@ import org.springframework.osgi.util.internal.ClassUtils;
  */
 public abstract class ProxyUtils {
 
-	public static Object createProxy(Class<?>[] classes, Object target, ClassLoader classLoader,
+	public static Object createProxy(Class[] classes, Object target, ClassLoader classLoader,
 			BundleContext bundleContext, List advices) {
-		return createProxy(classes, target, classLoader, bundleContext, (advices != null ? (Advice[]) advices
-				.toArray(new Advice[advices.size()]) : new Advice[0]));
+		return createProxy(classes, target, classLoader, bundleContext,
+			(advices != null ? (Advice[]) advices.toArray(new Advice[advices.size()]) : new Advice[0]));
 	}
 
-	public static Object createProxy(Class<?>[] classes, Object target, final ClassLoader classLoader,
+	public static Object createProxy(Class[] classes, Object target, final ClassLoader classLoader,
 			BundleContext bundleContext, Advice[] advices) {
 		final ProxyFactory factory = new ProxyFactory();
 
@@ -58,19 +58,15 @@ public abstract class ProxyUtils {
 		// factory.setOptimize(true);
 		factory.setFrozen(true);
 		factory.setOpaque(true);
-		boolean isSecurityOn = (System.getSecurityManager() != null);
 		try {
-			if (isSecurityOn) {
-				return AccessController.doPrivileged(new PrivilegedAction<Object>() {
-					public Object run() {
-						return factory.getProxy(classLoader);
-					}
-				});
-			} else {
-				return factory.getProxy(classLoader);
-			}
+			return AccessController.doPrivileged(new PrivilegedAction() {
 
-		} catch (NoClassDefFoundError ncdfe) {
+				public Object run() {
+					return factory.getProxy(classLoader);
+				}
+			});
+		}
+		catch (NoClassDefFoundError ncdfe) {
 			DebugUtils.debugClassLoadingThrowable(ncdfe, bundleContext.getBundle(), classes);
 			throw ncdfe;
 		}

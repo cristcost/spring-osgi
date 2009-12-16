@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,11 @@
  * limitations under the License.
  *
  */
-
 package org.springframework.osgi.config;
 
 import org.springframework.beans.factory.xml.NamespaceHandlerSupport;
-import org.springframework.osgi.config.internal.BundleBeanDefinitionParser;
-import org.springframework.osgi.config.internal.CollectionBeanDefinitionParser;
-import org.springframework.osgi.config.internal.ReferenceBeanDefinitionParser;
-import org.springframework.osgi.config.internal.ServiceBeanDefinitionParser;
 import org.springframework.osgi.service.importer.support.CollectionType;
+
 
 /**
  * Namespace handler for Osgi definitions.

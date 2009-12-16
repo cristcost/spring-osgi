@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.springframework.osgi.iandt.testingFramework;
 
-import java.util.Arrays;
 import java.util.HashMap;
 
 import org.springframework.osgi.iandt.BaseIntegrationTest;
@@ -32,14 +30,11 @@ public class AppCtxInjectionTest extends BaseIntegrationTest {
 
 	private HashMap map;
 
-
 	public void setMap(HashMap map) {
 		this.map = map;
 	}
 
-	@SuppressWarnings("deprecation")
 	public void testInjection() throws Exception {
-		System.out.println(Arrays.toString(applicationContext.getBeanDefinitionNames()));
 		assertNotNull(map);
 		assertEquals(applicationContext.getBean("injected-bean"), map);
 	}

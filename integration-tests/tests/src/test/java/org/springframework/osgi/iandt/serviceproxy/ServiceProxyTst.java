@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ public abstract class ServiceProxyTst extends AbstractConfigurableBundleCreatorT
 		return bundleContext.registerService(obj.getClass().getName(), obj, null);
 	}
 
-	private Object createProxy(final Class<?> clazz, Advice cardinalityInterceptor) {
+	private Object createProxy(final Class clazz, Advice cardinalityInterceptor) {
 		ProxyFactory factory = new ProxyFactory();
 		factory.setProxyTargetClass(true);
 		factory.setOptimize(true);
@@ -60,12 +60,12 @@ public abstract class ServiceProxyTst extends AbstractConfigurableBundleCreatorT
 		return factory.getProxy(ProxyFactory.class.getClassLoader());
 	}
 
-	private Advice createCardinalityAdvice(Class<?> clazz) {
+	private Advice createCardinalityAdvice(Class clazz) {
 		ClassLoader classLoader = BundleDelegatingClassLoader.createBundleClassLoaderFor(bundleContext.getBundle());
 		ServiceDynamicInterceptor interceptor = new ServiceDynamicInterceptor(bundleContext, null,
 			OsgiFilterUtils.createFilter(OsgiFilterUtils.unifyFilter(clazz, null)), classLoader);
 		// fast retry
-		interceptor.setMandatoryService(true);
+		interceptor.setRequiredAtStartup(true);
 		interceptor.afterPropertiesSet();
 		interceptor.getRetryTemplate().reset(1);
 		return interceptor;

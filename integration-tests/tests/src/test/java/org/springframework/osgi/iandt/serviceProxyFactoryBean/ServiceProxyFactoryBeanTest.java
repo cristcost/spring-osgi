@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ public class ServiceProxyFactoryBeanTest extends ServiceBaseTest {
 		ServiceRegistration reg = publishService(date);
 
 		fb.setCardinality(Cardinality.C_1__1);
-		fb.setInterfaces(new Class<?>[] { Date.class });
+		fb.setInterfaces(new Class[] { Date.class });
 		fb.afterPropertiesSet();
 
 		try {
@@ -69,7 +69,7 @@ public class ServiceProxyFactoryBeanTest extends ServiceBaseTest {
 		long time = 1234;
 		Date date = new Date(time);
 
-		Class<?>[] intfs = new Class<?>[] { Comparable.class, Serializable.class, Cloneable.class };
+		Class[] intfs = new Class[] { Comparable.class, Serializable.class, Cloneable.class };
 
 		String[] classes = new String[] { Comparable.class.getName(), Serializable.class.getName(),
 			Cloneable.class.getName(), Date.class.getName() };

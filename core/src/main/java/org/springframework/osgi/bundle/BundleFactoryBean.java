@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,26 +43,30 @@ import org.springframework.util.StringUtils;
 /**
  * {@link Bundle} installer.
  * 
- * <p/> This {@link FactoryBean} allows customers to use Spring to drive bundle management. Bundles states can be
- * modified using the <code>action</code> (defaults to <em>start</em>) and <code>destroyAction</code> (not set by
+ * <p/> This {@link FactoryBean} allows customers to use Spring to drive bundle
+ * management. Bundles states can be modified using the <code>action</code>
+ * (defaults to <em>start</em>) and <code>destroyAction</code> (not set by
  * default) parameters.
  * 
- * <p/> For example, to automatically install and start a bundle from the local maven repository (assuming the bundle
- * has been already retrieved), one can use the following configuration:
+ * <p/> For example, to automatically install and start a bundle from the local
+ * maven repository (assuming the bundle has been already retrieved), one can
+ * use the following configuration:
  * 
- * <pre class="code"> &lt;osgi:bundle id=&quot;aBundle&quot; symbolic-name=&quot;org.company.bundles.a&quot;
- * location=&quot;file:${localRepository }/org/company/bundles/a/${pom.version}/a-${pom.version}.jar&quot;
- * action=&quot;start&quot;/&gt; </pre>
+ * <pre class="code">
+ * &lt;osgi:bundle id=&quot;aBundle&quot; symbolic-name=&quot;org.company.bundles.a&quot;
+ *  location=&quot;file:${localRepository}/org/company/bundles/a/${pom.version}/a-${pom.version}.jar&quot; 
+ *  action=&quot;start&quot;/&gt;
+ * </pre>
  * 
  * 
- * <p/> <strong>Note:</strong> Pay attention when installing bundles dynamically since classes can be loaded
- * aggressively.
+ * <p/><strong>Note:</strong> Pay attention when installing bundles
+ * dynamically since classes can be loaded aggressively.
  * 
  * @author Andy Piper
  * @author Costin Leau
  * @see BundleAction
  */
-public class BundleFactoryBean implements FactoryBean<Bundle>, BundleContextAware, InitializingBean, DisposableBean,
+public class BundleFactoryBean implements FactoryBean, BundleContextAware, InitializingBean, DisposableBean,
 		ResourceLoaderAware {
 
 	private static Log log = LogFactory.getLog(BundleFactoryBean.class);
@@ -83,7 +87,7 @@ public class BundleFactoryBean implements FactoryBean<Bundle>, BundleContextAwar
 
 	private BundleContext bundleContext;
 
-	private BundleActionEnum action, destroyAction;
+	private BundleAction action, destroyAction;
 
 	private int startLevel;
 
@@ -92,8 +96,9 @@ public class BundleFactoryBean implements FactoryBean<Bundle>, BundleContextAwar
 	/** unused at the moment */
 	private boolean pushBundleAsContextClassLoader = false;
 
+
 	// FactoryBean methods
-	public Class<? extends Bundle> getObjectType() {
+	public Class getObjectType() {
 		return (bundle != null ? bundle.getClass() : Bundle.class);
 	}
 
@@ -101,7 +106,7 @@ public class BundleFactoryBean implements FactoryBean<Bundle>, BundleContextAwar
 		return true;
 	}
 
-	public Bundle getObject() throws Exception {
+	public Object getObject() throws Exception {
 		return bundle;
 	}
 
@@ -129,24 +134,20 @@ public class BundleFactoryBean implements FactoryBean<Bundle>, BundleContextAwar
 
 		if (log.isDebugEnabled())
 			log.debug("executing start-up action " + action);
-		if (action != null) {
-			executeAction(action);
-		}
+		executeAction(action);
 	}
 
 	public void destroy() throws Exception {
 		if (log.isDebugEnabled())
 			log.debug("executing shutdown action " + action);
 
-		if (destroyAction != null) {
-			executeAction(destroyAction);
-		}
+		executeAction(destroyAction);
 
 		bundle = null;
 		classLoader = null;
 	}
 
-	protected void executeAction(BundleActionEnum action) {
+	protected void executeAction(BundleAction action) {
 		ClassLoader ccl = Thread.currentThread().getContextClassLoader();
 		try {
 			if (pushBundleAsContextClassLoader) {
@@ -160,48 +161,44 @@ public class BundleFactoryBean implements FactoryBean<Bundle>, BundleContextAwar
 
 				// Apply these actions only if we have a bundle, do not subsequently install a bundle
 				// if none exists
-				switch (action) {
+				if (BundleAction.STOP == action) {
+					if (bundle != null) {
+						bundle.stop();
+					}
+				}
 
-				case INSTALL:
+				else if (BundleAction.UNINSTALL == action) {
+					if (bundle != null) {
+						bundle.uninstall();
+					}
+				}
+				// Apply these actions and install a bundle if necessary
+				else if (BundleAction.INSTALL == action) {
 					bundle = installBundle();
-					break;
+				}
 
-				case START:
+				else if (BundleAction.START == action) {
 					if (bundle == null) {
 						bundle = installBundle();
 					}
 					bundle.start();
-					break;
+				}
 
-				case UPDATE:
+				else if (BundleAction.UPDATE == action) {
 					if (bundle == null) {
 						bundle = installBundle();
 					}
 					bundle.update();
-
-					break;
-
-				case STOP:
-					if (bundle != null) {
-						bundle.stop();
-					}
-					break;
-
-				case UNINSTALL:
-					if (bundle != null) {
-						bundle.uninstall();
-					}
-					break;
-
-				default:
-					// Default is to do nothing
-					break;
 				}
-			} catch (BundleException be) {
-				throw (RuntimeException) new IllegalStateException("cannot execute action " + action.name()
+				// Default is to do nothing
+
+			}
+			catch (BundleException be) {
+				throw (RuntimeException) new IllegalStateException("cannot execute action " + action.getLabel()
 						+ " on bundle " + OsgiStringUtils.nullSafeNameAndSymName(bundle)).initCause(be);
 			}
-		} finally {
+		}
+		finally {
 			if (pushBundleAsContextClassLoader) {
 				Thread.currentThread().setContextClassLoader(ccl);
 			}
@@ -227,7 +224,8 @@ public class BundleFactoryBean implements FactoryBean<Bundle>, BundleContextAwar
 			InputStream stream = null;
 			try {
 				stream = resource.getInputStream();
-			} catch (IOException ex) {
+			}
+			catch (IOException ex) {
 				// catch it since we fallback on normal install
 				installBasedOnLocation = true;
 			}
@@ -242,7 +240,8 @@ public class BundleFactoryBean implements FactoryBean<Bundle>, BundleContextAwar
 	}
 
 	/**
-	 * Find a bundle based on the configuration (don't apply any actions for it).
+	 * Find a bundle based on the configuration (don't apply any actions for
+	 * it).
 	 * 
 	 * @return a Bundle instance based on the configuration.
 	 */
@@ -258,7 +257,8 @@ public class BundleFactoryBean implements FactoryBean<Bundle>, BundleContextAwar
 	}
 
 	/**
-	 * Return the {@link Resource} object (if a {@link ResourceLoader} is available) from the given location (if any).
+	 * Return the {@link Resource} object (if a {@link ResourceLoader} is
+	 * available) from the given location (if any).
 	 * 
 	 * @return {@link Resource} object for the given location
 	 */
@@ -311,18 +311,8 @@ public class BundleFactoryBean implements FactoryBean<Bundle>, BundleContextAwar
 	 * Returns the action.
 	 * 
 	 * @return Returns the action
-	 * @deprecated As of Spring DM 2.0, replaced by {@link #getBundleAction()}
 	 */
 	public BundleAction getAction() {
-		return BundleAction.getBundleAction(action);
-	}
-
-	/**
-	 * Returns the bundle action.
-	 * 
-	 * @return the bundle action.
-	 */
-	public BundleActionEnum getBundleAction() {
 		return action;
 	}
 
@@ -330,18 +320,8 @@ public class BundleFactoryBean implements FactoryBean<Bundle>, BundleContextAwar
 	 * Action to execute at startup.
 	 * 
 	 * @param action action to execute at startup
-	 * @deprecated As of Spring DM 2.0, replaced by {@link #setBundleAction(BundleAction)}
 	 */
 	public void setAction(BundleAction action) {
-		this.action = action.getBundleActionEnum();
-	}
-
-	/**
-	 * Action to execute at startup.
-	 * 
-	 * @param action action to execute at startup
-	 */
-	public void setBundleAction(BundleActionEnum action) {
 		this.action = action;
 	}
 
@@ -349,17 +329,8 @@ public class BundleFactoryBean implements FactoryBean<Bundle>, BundleContextAwar
 	 * Returns the destroyAction.
 	 * 
 	 * @return Returns the destroyAction
-	 * @deprecated As of Spring DM 2.0, replaced by {@link #getBundleDestroyAction()}
 	 */
 	public BundleAction getDestroyAction() {
-		return BundleAction.getBundleAction(destroyAction);
-	}
-
-	/**
-	 * Returns the bundle destroy action.
-	 * @return
-	 */
-	public BundleActionEnum getBundleDestroyAction() {
 		return destroyAction;
 	}
 
@@ -367,18 +338,8 @@ public class BundleFactoryBean implements FactoryBean<Bundle>, BundleContextAwar
 	 * Action to execute at shutdown.
 	 * 
 	 * @param action action to execute at shutdown
-	 * @deprecated As of Spring DM 2.0, replaced by {@link #setBundleDestroyAction(BundleActionEnum)}
 	 */
 	public void setDestroyAction(BundleAction action) {
-		this.destroyAction = action.getBundleActionEnum();
-	}
-
-	/**
-	 * Action to execute at shutdown.
-	 * 
-	 * @param action action to execute at shutdown
-	 */
-	public void setBundleDestroyAction(BundleActionEnum action) {
 		this.destroyAction = action;
 	}
 
@@ -401,11 +362,12 @@ public class BundleFactoryBean implements FactoryBean<Bundle>, BundleContextAwar
 	}
 
 	/**
-	 * Determines whether invocations on the remote service should be performed in the context (thread context class
-	 * loader) of the target bundle's ClassLoader. The default is <code>false</code>.
+	 * Determines whether invocations on the remote service should be performed
+	 * in the context (thread context class loader) of the target bundle's
+	 * ClassLoader. The default is <code>false</code>.
 	 * 
-	 * @param pushBundleAsContextClassLoader true if the thread context class loader will be set to the target bundle or
-	 * false otherwise
+	 * @param pushBundleAsContextClassLoader true if the thread context class
+	 * loader will be set to the target bundle or false otherwise
 	 */
 	public void setPushBundleAsContextClassLoader(boolean pushBundleAsContextClassLoader) {
 		this.pushBundleAsContextClassLoader = pushBundleAsContextClassLoader;
@@ -444,11 +406,13 @@ public class BundleFactoryBean implements FactoryBean<Bundle>, BundleContextAwar
 	}
 
 	/**
-	 * Set the backing bundle used by this class. Allows programmatic configuration of already retrieved/created bundle.
+	 * Set the backing bundle used by this class. Allows programmatic
+	 * configuration of already retrieved/created bundle.
 	 * 
 	 * @param bundle The bundle to set
 	 */
 	public void setBundle(Bundle bundle) {
 		this.bundle = bundle;
 	}
+
 }

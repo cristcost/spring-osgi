@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,16 +25,21 @@ import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.osgi.config.internal.util.MethodUtils;
 import org.springframework.osgi.util.internal.ReflectionUtils;
 import org.springframework.util.Assert;
 
 /**
- * Adapter class that takes care of detecting and invoking a custom method for managed-service beans.
+ * Adapter class that takes care of detecting and invoking a custom method for
+ * managed-service beans.
  * 
  * The supported method formats are:
  * 
- * <pre> public void anyMethodName(Map properties) public void anyMethodName(Map&lt;String,?&gt; properties); // for
- * Java 5 public void anyMethodName(Dictionary properties); </pre>
+ * <pre>
+ * public void anyMethodName(Map properties)
+ * public void anyMethodName(Map&lt;String,?&gt; properties); // for Java 5
+ * public void anyMethodName(Dictionary properties);
+ * </pre>
  * 
  * @author Costin Leau
  * 
@@ -43,6 +48,7 @@ class UpdateMethodAdapter {
 
 	private static final Log log = LogFactory.getLog(UpdateMethodAdapter.class);
 
+
 	/**
 	 * Determines the update method.
 	 * 
@@ -50,7 +56,7 @@ class UpdateMethodAdapter {
 	 * @param methodName
 	 * @return
 	 */
-	static Map determineUpdateMethod(final Class<?> target, final String methodName) {
+	static Map determineUpdateMethod(final Class target, final String methodName) {
 		Assert.notNull(target);
 		Assert.notNull(methodName);
 
@@ -58,37 +64,38 @@ class UpdateMethodAdapter {
 		final boolean trace = log.isTraceEnabled();
 
 		org.springframework.util.ReflectionUtils.doWithMethods(target,
-				new org.springframework.util.ReflectionUtils.MethodCallback() {
+			new org.springframework.util.ReflectionUtils.MethodCallback() {
 
-					public void doWith(Method method) throws IllegalArgumentException, IllegalAccessException {
-						// consider filtering bridge non-void and non-public methods as well
-						if (!method.isBridge() && Modifier.isPublic(method.getModifiers())
-								&& (void.class.equals(method.getReturnType())) && methodName.equals(method.getName())) {
-							// check the argument types
-							Class<?>[] args = method.getParameterTypes();
+				public void doWith(Method method) throws IllegalArgumentException, IllegalAccessException {
+					// consider filtering bridge non-void and non-public methods as well
+					if (!MethodUtils.isBridge(method) && Modifier.isPublic(method.getModifiers())
+							&& (void.class.equals(method.getReturnType())) && methodName.equals(method.getName())) {
+						// check the argument types
+						Class[] args = method.getParameterTypes();
 
-							// Properties can be passed as Map or Dictionary
-							if (args != null && args.length == 1) {
-								Class<?> propertiesType = args[0];
-								if (propertiesType.isAssignableFrom(Map.class)
-										|| propertiesType.isAssignableFrom(Dictionary.class)) {
+						// Properties can be passed as Map or Dictionary
+						if (args != null && args.length == 1) {
+							Class propertiesType = args[0];
+							if (propertiesType.isAssignableFrom(Map.class)
+									|| propertiesType.isAssignableFrom(Dictionary.class)) {
 
+								if (trace)
+									log.trace("Discovered custom method [" + method.toString() + "] on " + target);
+								// see if there was a method already found
+								Method m = (Method) methods.get(propertiesType);
+
+								if (m != null) {
 									if (trace)
-										log.trace("Discovered custom method [" + method.toString() + "] on " + target);
-									// see if there was a method already found
-									Method m = (Method) methods.get(propertiesType);
-
-									if (m != null) {
-										if (trace)
-											log.trace("Type " + propertiesType + " already has an associated method ["
-													+ m.toString() + "];ignoring " + method);
-									} else
-										methods.put(propertiesType, method);
+										log.trace("Type " + propertiesType + " already has an associated method ["
+												+ m.toString() + "];ignoring " + method);
 								}
+								else
+									methods.put(propertiesType, method);
 							}
 						}
 					}
-				});
+				}
+			});
 
 		return methods;
 	}
@@ -117,7 +124,9 @@ class UpdateMethodAdapter {
 		}
 	}
 
+
 	private final Map methods;
+
 
 	/**
 	 * Constructs a new <code>UpdateMethodAdapter</code> instance.
@@ -125,7 +134,7 @@ class UpdateMethodAdapter {
 	 * @param methodName
 	 * @param type
 	 */
-	UpdateMethodAdapter(String methodName, Class<?> type) {
+	UpdateMethodAdapter(String methodName, Class type) {
 		this.methods = determineUpdateMethod(type, methodName);
 	}
 

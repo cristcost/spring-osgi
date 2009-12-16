@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,6 @@
 package org.springframework.osgi.compendium.config;
 
 import org.springframework.beans.factory.xml.NamespaceHandlerSupport;
-import org.springframework.osgi.compendium.config.internal.ConfigPropertiesDefinitionParser;
-import org.springframework.osgi.compendium.config.internal.ManagedPropertiesDefinitionParser;
-import org.springframework.osgi.compendium.config.internal.ManagedServiceFactoryDefinitionParser;
 
 /**
  * Namespace handler for OSGi Compendium definitions.

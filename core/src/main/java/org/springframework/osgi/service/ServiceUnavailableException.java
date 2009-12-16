@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,9 @@ import org.osgi.framework.ServiceReference;
 import org.springframework.osgi.util.OsgiServiceReferenceUtils;
 
 /**
- * Exception indicating that an OSGi service became unavailable/unregistered. Normally this exception is used to
- * indicate that no suitable replacement is found (in case service rebinding is actually performed).
+ * Exception indicating that an OSGi service became unavailable/unregistered.
+ * Normally this exception is used to indicate that no suitable replacement is
+ * found (in case service rebinding is actually performed).
  * 
  * @author Adrian Colyer
  * @author Costin Leau
@@ -30,6 +31,7 @@ import org.springframework.osgi.util.OsgiServiceReferenceUtils;
 public class ServiceUnavailableException extends ServiceException {
 
 	private static final long serialVersionUID = -3479837278220329490L;
+
 
 	/**
 	 * Constructs a new <code>ServiceUnavailableException</code> instance.
@@ -59,4 +61,5 @@ public class ServiceUnavailableException extends ServiceException {
 				+ (reference == null ? "null" : "" + OsgiServiceReferenceUtils.getServiceId(reference))
 				+ "] unavailable");
 	}
+
 }

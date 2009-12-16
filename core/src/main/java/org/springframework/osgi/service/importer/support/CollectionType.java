@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,7 +74,7 @@ public class CollectionType extends StaticLabeledEnum {
 	public static final CollectionType SORTED_SET = new CollectionType(5, "SORTED_SET", SortedSet.class);
 
 	/** collection type */
-	private final Class<?> collectionClass;
+	private final Class collectionClass;
 
 
 	/**
@@ -82,11 +82,11 @@ public class CollectionType extends StaticLabeledEnum {
 	 * 
 	 * @return collection class
 	 */
-	public Class<?> getCollectionClass() {
+	Class getCollectionClass() {
 		return collectionClass;
 	}
 
-	private CollectionType(int code, String label, Class<?> collectionClass) {
+	private CollectionType(int code, String label, Class collectionClass) {
 		super(code, label);
 		this.collectionClass = collectionClass;
 	}

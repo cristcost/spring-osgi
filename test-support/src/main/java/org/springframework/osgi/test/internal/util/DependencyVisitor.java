@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
  */
 package org.springframework.osgi.test.internal.util;
 
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -32,12 +32,14 @@ import org.objectweb.asm.signature.SignatureReader;
 import org.objectweb.asm.signature.SignatureVisitor;
 
 /**
- * ASM based class for determining a class imports. The code is heavily based on an Eugene Kuleshov's ASM <a
+ * ASM based class for determining a class imports. The code is heavily based on
+ * an Eugene Kuleshov's ASM <a
  * href="http://asm.objectweb.org/doc/tutorial-asm-2.0.html">tutorial</a>.
  * 
- * <p/>The main differences from the original source in the article are the 1.4 compatibility, the handling of class
- * objects not instantiated (MyClass.class.getName()) as these are specially handled by the compiler and analysis of
- * inner classes, including ones from different packages.
+ * <p/>The main differences from the original source in the article are the 1.4
+ * compatibility, the handling of class objects not instantiated
+ * (MyClass.class.getName()) as these are specially handled by the compiler and
+ * analysis of inner classes.
  * 
  * @author Eugene Kuleshov
  * @author Costin Leau
@@ -46,17 +48,13 @@ import org.objectweb.asm.signature.SignatureVisitor;
 public class DependencyVisitor implements AnnotationVisitor, SignatureVisitor, ClassVisitor, FieldVisitor,
 		MethodVisitor {
 
-	private Set packages = new LinkedHashSet();
+	private Set packages = new HashSet();
 
-	private Map groups = new LinkedHashMap();
+	private Map groups = new HashMap();
 
 	private Map current;
 
 	private String tempLdc;
-
-	private String ownerName;
-
-	private Set innerClasses = new LinkedHashSet(4);
 
 	private static final String CLASS_NAME = Class.class.getName();
 
@@ -68,25 +66,21 @@ public class DependencyVisitor implements AnnotationVisitor, SignatureVisitor, C
 		return packages;
 	}
 
-	public Set getInnerClasses() {
-		return innerClasses;
-	}
-
 	// ClassVisitor
 	public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
 		tempLdc = null;
-		this.ownerName = name;
 		String p = getGroupKey(name);
 		current = (Map) groups.get(p);
 		if (current == null) {
-			current = new LinkedHashMap();
+			current = new HashMap();
 			groups.put(p, current);
 		}
 
 		if (signature == null) {
 			addName(superName);
 			addNames(interfaces);
-		} else {
+		}
+		else {
 			addSignature(signature);
 		}
 	}
@@ -105,7 +99,8 @@ public class DependencyVisitor implements AnnotationVisitor, SignatureVisitor, C
 		tempLdc = null;
 		if (signature == null) {
 			addDesc(desc);
-		} else {
+		}
+		else {
 			addTypeSignature(signature);
 		}
 		if (value instanceof Type)
@@ -117,7 +112,8 @@ public class DependencyVisitor implements AnnotationVisitor, SignatureVisitor, C
 		tempLdc = null;
 		if (signature == null) {
 			addMethodDesc(desc);
-		} else {
+		}
+		else {
 			addSignature(signature);
 		}
 		addNames(exceptions);
@@ -130,17 +126,13 @@ public class DependencyVisitor implements AnnotationVisitor, SignatureVisitor, C
 
 	public void visitInnerClass(String name, String outerName, String innerName, int access) {
 		tempLdc = null;
-		addName(name);
-		addName(outerName);
-
-		if (!ownerName.equals(name)) {
-			innerClasses.add(name);
-		}
+		
+		// addName( outerName);
+		// addName( innerName);
 	}
 
 	public void visitOuterClass(String owner, String name, String desc) {
 		tempLdc = null;
-
 		// addName(owner);
 		// addMethodDesc(desc);
 	}
@@ -178,6 +170,7 @@ public class DependencyVisitor implements AnnotationVisitor, SignatureVisitor, C
 
 		addName(owner);
 		addMethodDesc(desc);
+
 	}
 
 	public void visitLdcInsn(Object cst) {
@@ -187,6 +180,7 @@ public class DependencyVisitor implements AnnotationVisitor, SignatureVisitor, C
 		else if (cst instanceof String) {
 			tempLdc = (String) cst;
 		}
+
 	}
 
 	public void visitMultiANewArrayInsn(String desc, int dims) {
@@ -372,7 +366,8 @@ public class DependencyVisitor implements AnnotationVisitor, SignatureVisitor, C
 		String p = getGroupKey(name);
 		if (current.containsKey(p)) {
 			current.put(p, new Integer(((Integer) current.get(p)).intValue() + 1));
-		} else {
+		}
+		else {
 			current.put(p, new Integer(1));
 		}
 	}
@@ -413,4 +408,5 @@ public class DependencyVisitor implements AnnotationVisitor, SignatureVisitor, C
 		if (signature != null)
 			new SignatureReader(signature).acceptType(this);
 	}
+
 }

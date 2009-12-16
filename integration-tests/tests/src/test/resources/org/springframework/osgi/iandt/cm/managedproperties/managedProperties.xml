@@ -13,8 +13,11 @@
 	<bean class="org.springframework.beans.factory.config.CustomEditorConfigurer">
 	  <property name="customEditors">
 	    <map>
-	      <entry key="org.springframework.osgi.iandt.cm.managedproperties.ExoticType" 
-	      	value="org.springframework.osgi.iandt.cm.managedproperties.ExoticTypeCustomEditor"/>
+	      <entry key="org.springframework.osgi.iandt.cm.managedproperties.ExoticType">
+	        <bean class="org.springframework.osgi.iandt.cm.managedproperties.ExoticTypeCustomEditor">
+	          <property name="format" value="upperCase"/>
+	        </bean>
+	      </entry>
 	    </map>
 	  </property>
 	</bean>
@@ -32,7 +35,6 @@
 	
 	<bean id="containerManaged" class="org.springframework.osgi.iandt.cm.managedproperties.TestBean">
 		<osgix:managed-properties persistent-id="containerManaged" update-strategy="container-managed"/>
-		<property name="clazz" value="java.lang.Object"/>
 	</bean>
 	
 	<bean id="beanManaged" class="org.springframework.osgi.iandt.cm.managedproperties.TestBean">

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,15 +39,15 @@ public class CollectionImporterTest extends BaseIntegrationTest {
 
 	private static final String SERVICE_SYM_NAME = "org.springframework.osgi.iandt.simpleservice";
 
+
 	protected String[] getConfigLocations() {
 		return new String[] { "org/springframework/osgi/iandt/servicedependency/multi-export-multi-collection-import.xml" };
 	}
 
 	protected String[] getTestBundlesNames() {
 		// load the tccl bundle, plus simple.service
-		return new String[] { "org.springframework.osgi.iandt,tccl.intf," + getSpringDMVersion(),
-				"org.springframework.osgi.iandt, tccl," + getSpringDMVersion(),
-				"org.springframework.osgi.iandt, simple.service," + getSpringDMVersion() };
+		return new String[] { "org.springframework.osgi.iandt, tccl," + getSpringDMVersion(),
+			"org.springframework.osgi.iandt, simple.service," + getSpringDMVersion() };
 	}
 
 	public void testExporterAWhenImporterAGoesDownAndUp() throws Exception {
@@ -91,7 +91,7 @@ public class CollectionImporterTest extends BaseIntegrationTest {
 		assertTrue("service A,B up -> exporterB up", isExporterBStarted());
 	}
 
-	private void checkAndTakeDownService(String beanName, Class<?> type, String bundleSymName) throws Exception {
+	private void checkAndTakeDownService(String beanName, Class type, String bundleSymName) throws Exception {
 		ServiceReference ref = bundleContext.getServiceReference(type.getName());
 		Object service = bundleContext.getService(ref);
 		Assert.isInstanceOf(type, service);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.springframework.osgi;
 
+import java.beans.PropertyEditor;
 import java.util.Dictionary;
 
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
@@ -26,6 +26,11 @@ public class DictionaryEditorTest extends AbstractDependencyInjectionSpringConte
 
 	private Dictionary dictionary;
 
+	
+	protected void prepareTestInstance() throws Exception {
+		setAutowireMode(AbstractDependencyInjectionSpringContextTests.AUTOWIRE_BY_NAME);
+		super.prepareTestInstance();
+	}
 
 	/**
 	 * @param dictionary The dictionary to set.
@@ -34,25 +39,28 @@ public class DictionaryEditorTest extends AbstractDependencyInjectionSpringConte
 		this.dictionary = property;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.springframework.test.AbstractSingleSpringContextTests#customizeBeanFactory(org.springframework.beans.factory
+	 * .support.DefaultListableBeanFactory)
+	 */
 	protected void customizeBeanFactory(DefaultListableBeanFactory beanFactory) {
+		// beanFactory.registerCustomEditor(Dictionary.class, new PropertiesEditor());
 		beanFactory.registerCustomEditor(Dictionary.class, PropertiesEditor.class);
 		super.customizeBeanFactory(beanFactory);
 	}
 
 	protected String[] getConfigLocations() {
-		//return new String[] { "/org/springframework/osgi/dict-editor.xml" };
-		return null;
+		return new String[] { "/org/springframework/osgi/dict-editor.xml" };
 	}
 
-	public void tstInjection() {
+	public void testInjection() {
 		assertNotNull(dictionary);
 	}
 
-	public void tstInjectedValue() {
+	public void testInjectedValue() {
 		assertSame(applicationContext.getBean("dictionary"), dictionary);
-	}
-
-	public void testSanity() throws Exception {
-		System.out.println(String[][].class);
 	}
 }

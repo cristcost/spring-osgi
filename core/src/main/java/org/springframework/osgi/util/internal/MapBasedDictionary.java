@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.springframework.osgi.util.internal;
 
 import java.util.Collection;
@@ -31,24 +30,21 @@ import org.springframework.util.Assert;
  * Dictionary implementation through Hashtable, the class itself is always
  * synchronized and does not maintain the internal order.
  * 
- * <p/>
- * This simple wrapper, accepts any type of Map as backing storage allowing more
- * options in choosing the appropriate implementation. By default, a
+ * <p/> This simple wrapper, accepts any type of Map as backing storage allowing
+ * more options in choosing the appropriate implementation. By default, a
  * {@link java.util.LinkedHashMap} is used, if no Map is specified.
  * 
- * <p/>
- * This implementation will enforce the Dictionary behaviour over the map when
- * it comes to handling null values. As opposed to a Map, the Dictionary always
- * throws {@link NullPointerException} if a given argument is null.
+ * <p/> This implementation will enforce the Dictionary behaviour over the map
+ * when it comes to handling null values. As opposed to a Map, the Dictionary
+ * always throws {@link NullPointerException} if a given argument is null.
  * 
  * @see java.util.Map
  * @see java.util.Dictionary
  * @author Costin Leau
  */
-public class MapBasedDictionary<K, V> extends Dictionary<K, V> implements Map<K, V> {
+public class MapBasedDictionary extends Dictionary implements Map {
 
-	private Map<K, V> map;
-
+	private Map map;
 
 	/**
 	 * Enumeration wrapper around an Iterator.
@@ -56,17 +52,16 @@ public class MapBasedDictionary<K, V> extends Dictionary<K, V> implements Map<K,
 	 * @author Costin Leau
 	 * 
 	 */
-	private static class IteratorBasedEnumeration<E> implements Enumeration<E> {
+	private static class IteratorBasedEnumeration implements Enumeration {
 
-		private Iterator<E> it;
+		private Iterator it;
 
-
-		public IteratorBasedEnumeration(Iterator<E> it) {
+		public IteratorBasedEnumeration(Iterator it) {
 			Assert.notNull(it);
 			this.it = it;
 		}
 
-		public IteratorBasedEnumeration(Collection<E> col) {
+		public IteratorBasedEnumeration(Collection col) {
 			this(col.iterator());
 		}
 
@@ -74,14 +69,14 @@ public class MapBasedDictionary<K, V> extends Dictionary<K, V> implements Map<K,
 			return it.hasNext();
 		}
 
-		public E nextElement() {
+		public Object nextElement() {
 			return it.next();
 		}
+
 	}
 
-
-	public MapBasedDictionary(Map<K, V> map) {
-		this.map = (map == null ? new LinkedHashMap<K, V>() : map);
+	public MapBasedDictionary(Map map) {
+		this.map = (map == null ? new LinkedHashMap() : map);
 	}
 
 	/**
@@ -89,11 +84,11 @@ public class MapBasedDictionary<K, V> extends Dictionary<K, V> implements Map<K,
 	 * 
 	 */
 	public MapBasedDictionary() {
-		this.map = new LinkedHashMap<K, V>();
+		this.map = new LinkedHashMap();
 	}
 
 	public MapBasedDictionary(int initialCapacity) {
-		this.map = new LinkedHashMap<K, V>(initialCapacity);
+		this.map = new LinkedHashMap(initialCapacity);
 	}
 
 	/**
@@ -102,11 +97,11 @@ public class MapBasedDictionary<K, V> extends Dictionary<K, V> implements Map<K,
 	 * 
 	 * @param dictionary
 	 */
-	public MapBasedDictionary(Dictionary<? extends K, ? extends V> dictionary) {
-		this(new LinkedHashMap<K, V>(), dictionary);
+	public MapBasedDictionary(Dictionary dictionary) {
+		this(new LinkedHashMap(), dictionary);
 	}
 
-	public MapBasedDictionary(Map<K, V> map, Dictionary<? extends K, ? extends V> dictionary) {
+	public MapBasedDictionary(Map map, Dictionary dictionary) {
 		this(map);
 		if (dictionary != null)
 			putAll(dictionary);
@@ -124,11 +119,11 @@ public class MapBasedDictionary<K, V> extends Dictionary<K, V> implements Map<K,
 		return map.containsValue(value);
 	}
 
-	public Set<Map.Entry<K, V>> entrySet() {
+	public Set entrySet() {
 		return map.entrySet();
 	}
 
-	public V get(Object key) {
+	public Object get(Object key) {
 		if (key == null)
 			throw new NullPointerException();
 		return map.get(key);
@@ -138,31 +133,31 @@ public class MapBasedDictionary<K, V> extends Dictionary<K, V> implements Map<K,
 		return map.isEmpty();
 	}
 
-	public Set<K> keySet() {
+	public Set keySet() {
 		return map.keySet();
 	}
-
-	public V put(K key, V value) {
+	
+	public Object put(Object key, Object value) {
 		if (key == null || value == null)
 			throw new NullPointerException();
 
 		return map.put(key, value);
 	}
 
-	public void putAll(Map<? extends K, ? extends V> t) {
+	public void putAll(Map t) {
 		map.putAll(t);
 	}
 
-	public <T extends K> void putAll(Dictionary<T, ? extends V> dictionary) {
+	public void putAll(Dictionary dictionary) {
 		if (dictionary != null)
 			// copy the dictionary
-			for (Enumeration<T> enm = dictionary.keys(); enm.hasMoreElements();) {
-				T key = enm.nextElement();
+			for (Enumeration enm = dictionary.keys(); enm.hasMoreElements();) {
+				Object key = enm.nextElement();
 				map.put(key, dictionary.get(key));
 			}
 	}
 
-	public V remove(Object key) {
+	public Object remove(Object key) {
 		if (key == null)
 			throw new NullPointerException();
 
@@ -173,16 +168,16 @@ public class MapBasedDictionary<K, V> extends Dictionary<K, V> implements Map<K,
 		return map.size();
 	}
 
-	public Collection<V> values() {
+	public Collection values() {
 		return map.values();
 	}
 
-	public Enumeration<V> elements() {
-		return new IteratorBasedEnumeration<V>(map.values());
+	public Enumeration elements() {
+		return new IteratorBasedEnumeration(map.values());
 	}
 
-	public Enumeration<K> keys() {
-		return new IteratorBasedEnumeration<K>(map.keySet());
+	public Enumeration keys() {
+		return new IteratorBasedEnumeration(map.keySet());
 	}
 
 	public String toString() {
@@ -198,4 +193,5 @@ public class MapBasedDictionary<K, V> extends Dictionary<K, V> implements Map<K,
 	public int hashCode() {
 		return map.hashCode();
 	}
+
 }

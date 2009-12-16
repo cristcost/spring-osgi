@@ -21,7 +21,10 @@ import java.io.IOException;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 
+import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceReference;
+import org.osgi.service.packageadmin.PackageAdmin;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.beans.factory.xml.DefaultNamespaceHandlerResolver;
@@ -57,8 +60,8 @@ import org.xml.sax.EntityResolver;
 public class OsgiBundleXmlApplicationContext extends AbstractDelegatedExecutionApplicationContext {
 
 	/** Default config location for the root context(s) */
-	public static final String DEFAULT_CONFIG_LOCATION =
-			OsgiBundleResource.BUNDLE_URL_PREFIX + "/META-INF/spring/*.xml";
+	public static final String DEFAULT_CONFIG_LOCATION = OsgiBundleResource.BUNDLE_URL_PREFIX
+			+ "/META-INF/spring/*.xml";
 
 	/**
 	 * 
@@ -107,31 +110,22 @@ public class OsgiBundleXmlApplicationContext extends AbstractDelegatedExecutionA
 		// Create a new XmlBeanDefinitionReader for the given BeanFactory.
 		XmlBeanDefinitionReader beanDefinitionReader = new XmlBeanDefinitionReader(beanFactory);
 
-		// Configure the bean definition reader with the context
+		// Configure the bean definition reader with this context's
 		// resource loading environment.
 		beanDefinitionReader.setResourceLoader(this);
 
-		// add a specialized DocumentLoader to load blueprint configs w/o a schema location
-		beanDefinitionReader.setDocumentLoader(new BlueprintDocumentLoader());
-
 		final Object[] resolvers = new Object[2];
 
-		final BundleContext ctx = getBundleContext();
+		AccessController.doPrivileged(new PrivilegedAction() {
 
-		if (System.getSecurityManager() != null) {
-			AccessController.doPrivileged(new PrivilegedAction<Object>() {
-				public Object run() {
-					String filter = BundleUtils.createNamespaceFilter(ctx);
-					resolvers[0] = createNamespaceHandlerResolver(ctx, filter, getClassLoader());
-					resolvers[1] = createEntityResolver(ctx, filter, getClassLoader());
-					return null;
-				}
-			});
-		} else {
-			String filter = BundleUtils.createNamespaceFilter(ctx);
-			resolvers[0] = createNamespaceHandlerResolver(ctx, filter, getClassLoader());
-			resolvers[1] = createEntityResolver(ctx, filter, getClassLoader());
-		}
+			public Object run() {
+				BundleContext ctx = getBundleContext();
+				String filter = BundleUtils.createNamespaceFilter(ctx);
+				resolvers[0] = createNamespaceHandlerResolver(ctx, filter, getClassLoader());
+				resolvers[1] = createEntityResolver(ctx, filter, getClassLoader());
+				return null;
+			}
+		});
 
 		beanDefinitionReader.setNamespaceHandlerResolver((NamespaceHandlerResolver) resolvers[0]);
 		beanDefinitionReader.setEntityResolver((EntityResolver) resolvers[1]);
@@ -151,12 +145,10 @@ public class OsgiBundleXmlApplicationContext extends AbstractDelegatedExecutionA
 	}
 
 	/**
-	 * Loads the bean definitions with the given <code>XmlBeanDefinitionReader</code>.
-	 * 
-	 * <p> The lifecycle of the bean factory is handled by the refreshBeanFactory method; therefore this method is just
-	 * supposed to load and/or register bean definitions.
-	 * 
-	 * <p> Delegates to a ResourcePatternResolver for resolving location patterns into Resource instances.
+	 * Loads the bean definitions with the given <code>XmlBeanDefinitionReader</code>. <p> The lifecycle of the bean
+	 * factory is handled by the refreshBeanFactory method; therefore this method is just supposed to load and/or
+	 * register bean definitions. <p> Delegates to a ResourcePatternResolver for resolving location patterns into
+	 * Resource instances.
 	 * 
 	 * @throws org.springframework.beans.BeansException in case of bean registration errors
 	 * @throws java.io.IOException if the required XML document isn't found
@@ -166,33 +158,12 @@ public class OsgiBundleXmlApplicationContext extends AbstractDelegatedExecutionA
 	 * @see #getResourcePatternResolver
 	 */
 	protected void loadBeanDefinitions(XmlBeanDefinitionReader reader) throws BeansException, IOException {
-		String[] configLocations = expandLocations(getConfigLocations());
+		String[] configLocations = getConfigLocations();
 		if (configLocations != null) {
 			for (int i = 0; i < configLocations.length; i++) {
 				reader.loadBeanDefinitions(configLocations[i]);
 			}
 		}
-	}
-
-	/**
-	 * Expands any folder entries supplied as configuration location. I.e. config/ becomes config/*.xml.
-	 * 
-	 * @param configLocations
-	 * @return
-	 */
-	private String[] expandLocations(String[] configLocations) {
-		String[] expanded = null;
-		if (configLocations != null) {
-			expanded = new String[configLocations.length];
-			for (int i = 0; i < configLocations.length; i++) {
-				String location = configLocations[i];
-				if (location.endsWith("/")) {
-					location = location + "*.xml";
-				}
-				expanded[i] = location;
-			}
-		}
-		return expanded;
 	}
 
 	/**
@@ -215,7 +186,7 @@ public class OsgiBundleXmlApplicationContext extends AbstractDelegatedExecutionA
 	 * priority over namespace provided by other bundles.
 	 * 
 	 * @param bundleContext the OSGi context of which the resolver should be aware of
-	 * @param filter OSGi service filter
+	 * @param filter
 	 * @param bundleClassLoader classloader for creating the OSGi namespace resolver proxy
 	 * @return a OSGi aware namespace handler resolver
 	 */
@@ -227,8 +198,8 @@ public class OsgiBundleXmlApplicationContext extends AbstractDelegatedExecutionA
 		NamespaceHandlerResolver localNamespaceResolver = new DefaultNamespaceHandlerResolver(bundleClassLoader);
 
 		// hook in OSGi namespace resolver
-		NamespaceHandlerResolver osgiServiceNamespaceResolver =
-				lookupNamespaceHandlerResolver(bundleContext, filter, localNamespaceResolver);
+		NamespaceHandlerResolver osgiServiceNamespaceResolver = lookupNamespaceHandlerResolver(bundleContext, filter,
+				localNamespaceResolver);
 
 		DelegatedNamespaceHandlerResolver delegate = new DelegatedNamespaceHandlerResolver();
 		delegate.addNamespaceHandler(localNamespaceResolver, "LocalNamespaceResolver for bundle "
@@ -239,12 +210,12 @@ public class OsgiBundleXmlApplicationContext extends AbstractDelegatedExecutionA
 	}
 
 	/**
-	 * Similar to {@link #createNamespaceHandlerResolver(BundleContext, ClassLoader, ClassLoader)} , this method creates
+	 * Similar to {@link #createNamespaceHandlerResolver(BundleContext, ClassLoader, ClassLoader)}, this method creates
 	 * a special OSGi entity resolver that considers the bundle class path first, falling back to the entity resolver
 	 * service provided by the Spring DM extender.
 	 * 
 	 * @param bundleContext the OSGi context of which the resolver should be aware of
-	 * @param filter OSGi service filter
+	 * @param filter
 	 * @param bundleClassLoader classloader for creating the OSGi namespace resolver proxy
 	 * @return a OSGi aware entity resolver
 	 */
@@ -253,10 +224,11 @@ public class OsgiBundleXmlApplicationContext extends AbstractDelegatedExecutionA
 		Assert.notNull(bundleContext, "bundleContext is required");
 		// create local namespace resolver
 		EntityResolver localEntityResolver = new DelegatingEntityResolver(bundleClassLoader);
+
 		// hook in OSGi namespace resolver
 		EntityResolver osgiServiceEntityResolver = lookupEntityResolver(bundleContext, filter, localEntityResolver);
 
-		ChainedEntityResolver delegate = new ChainedEntityResolver();
+		DelegatedEntityResolver delegate = new DelegatedEntityResolver();
 		delegate.addEntityResolver(localEntityResolver, "LocalEntityResolver for bundle "
 				+ OsgiStringUtils.nullSafeNameAndSymName(bundleContext.getBundle()));
 
@@ -268,13 +240,13 @@ public class OsgiBundleXmlApplicationContext extends AbstractDelegatedExecutionA
 
 	private NamespaceHandlerResolver lookupNamespaceHandlerResolver(final BundleContext bundleContext, String filter,
 			final Object fallbackObject) {
-		return (NamespaceHandlerResolver) TrackingUtil.getService(new Class<?>[] { NamespaceHandlerResolver.class },
+		return (NamespaceHandlerResolver) TrackingUtil.getService(new Class[] { NamespaceHandlerResolver.class },
 				filter, NamespaceHandlerResolver.class.getClassLoader(), bundleContext, fallbackObject);
 	}
 
 	private EntityResolver lookupEntityResolver(final BundleContext bundleContext, String filter,
 			final Object fallbackObject) {
-		return (EntityResolver) TrackingUtil.getService(new Class<?>[] { EntityResolver.class }, filter,
+		return (EntityResolver) TrackingUtil.getService(new Class[] { EntityResolver.class }, filter,
 				EntityResolver.class.getClassLoader(), bundleContext, fallbackObject);
 	}
 

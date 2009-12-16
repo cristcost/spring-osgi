@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ import java.util.WeakHashMap;
  * @author Costin Leau
  * 
  */
-public class DynamicCollection<E> extends AbstractCollection<E> {
+public class DynamicCollection extends AbstractCollection {
 
 	/**
 	 * Dynamic <strong>consistent</strong> iterator. This iterator is not
@@ -49,7 +49,7 @@ public class DynamicCollection<E> extends AbstractCollection<E> {
 	 * 
 	 * @author Costin Leau
 	 */
-	protected class DynamicIterator implements Iterator<E> {
+	protected class DynamicIterator implements Iterator {
 
 		/**
 		 * Cursor pointing to the element that has to be returned by
@@ -77,7 +77,7 @@ public class DynamicCollection<E> extends AbstractCollection<E> {
 		 * Thread-safety note: Since this object is affected by the storage
 		 * shrinking it needs to be synchronized.
 		 */
-		protected volatile E tailGhost = null;
+		protected volatile Object tailGhost = null;
 
 		/**
 		 * Lock protecting the cursor and tailGhost which might be affected by
@@ -127,7 +127,7 @@ public class DynamicCollection<E> extends AbstractCollection<E> {
 			return hasNext.booleanValue();
 		}
 
-		public E next() {
+		public Object next() {
 			try {
 				removalAllowed = true;
 				// no enforcement
@@ -206,7 +206,7 @@ public class DynamicCollection<E> extends AbstractCollection<E> {
 		 * @param index
 		 * @param o
 		 */
-		void removeObject(int index, E o) {
+		void removeObject(int index, Object o) {
 			synchronized (lock) {
 				tailGhost = o;
 			}
@@ -223,14 +223,14 @@ public class DynamicCollection<E> extends AbstractCollection<E> {
 
 	/** actual collection storage */
 	/** this list is not-synchronized by default */
-	protected final List<E> storage;
+	protected final List storage;
 
 	/** map of weak references to the list iterators */
 	/**
 	 * should have been a list but there is no 'WeakReference'-based
 	 * implementation in the JDK
 	 */
-	protected final Map<DynamicIterator, Object> iterators;
+	protected final Map iterators;
 
 
 	public DynamicCollection() {
@@ -238,17 +238,17 @@ public class DynamicCollection<E> extends AbstractCollection<E> {
 	}
 
 	public DynamicCollection(int size) {
-		storage = new ArrayList<E>(size);
-		iterators = new WeakHashMap<DynamicIterator, Object>(4);
+		storage = new ArrayList(size);
+		iterators = new WeakHashMap(4);
 	}
 
-	public DynamicCollection(Collection<? extends E> c) {
+	public DynamicCollection(Collection c) {
 		this(c.size());
 		addAll(c);
 	}
 
-	public Iterator<E> iterator() {
-		DynamicIterator iter = new DynamicIterator();
+	public Iterator iterator() {
+		Iterator iter = new DynamicIterator();
 
 		synchronized (iteratorsLock) {
 			iterators.put(iter, null);
@@ -269,13 +269,13 @@ public class DynamicCollection<E> extends AbstractCollection<E> {
 		}
 	}
 
-	public boolean add(E o) {
+	public boolean add(Object o) {
 		synchronized (storage) {
 			return storage.add(o);
 		}
 	}
 
-	public boolean addAll(Collection<? extends E> c) {
+	public boolean addAll(Collection c) {
 		synchronized (storage) {
 			return storage.addAll(c);
 		}
@@ -287,7 +287,7 @@ public class DynamicCollection<E> extends AbstractCollection<E> {
 		}
 	}
 
-	public boolean containsAll(Collection<?> c) {
+	public boolean containsAll(Collection c) {
 		synchronized (storage) {
 			return storage.containsAll(c);
 		}
@@ -314,8 +314,8 @@ public class DynamicCollection<E> extends AbstractCollection<E> {
 	// remove an object from the list using the given index
 	// this is required for cases where the underlying storage (a list) might
 	// contain duplicates.
-	protected E remove(int index) {
-		E o = null;
+	protected Object remove(int index) {
+		Object o = null;
 
 		// first acquire storage lock
 		synchronized (storage) {
@@ -326,9 +326,9 @@ public class DynamicCollection<E> extends AbstractCollection<E> {
 				o = storage.remove(index);
 
 				// update iterators
-				for (Iterator<Map.Entry<DynamicIterator, Object>> iter = iterators.entrySet().iterator(); iter.hasNext();) {
-					Map.Entry<DynamicIterator, Object> entry = iter.next();
-					DynamicIterator dynamicIterator = entry.getKey();
+				for (Iterator iter = iterators.entrySet().iterator(); iter.hasNext();) {
+					Map.Entry entry = (Map.Entry) iter.next();
+					DynamicIterator dynamicIterator = (DynamicIterator) entry.getKey();
 
 					synchronized (dynamicIterator.lock) {
 						if (index < dynamicIterator.cursor) {
@@ -349,7 +349,7 @@ public class DynamicCollection<E> extends AbstractCollection<E> {
 	// extra-collection method used by list or sorted set.
 	// adds an object to the indicated position forcing an update on the
 	// iterators.
-	protected void add(int index, E o) {
+	protected void add(int index, Object o) {
 		// update iterators (since items are not added at the end
 		// anymore)
 
@@ -359,9 +359,9 @@ public class DynamicCollection<E> extends AbstractCollection<E> {
 				// update storage
 				storage.add(index, o);
 
-				for (Iterator<Map.Entry<DynamicIterator, Object>> iter = iterators.entrySet().iterator(); iter.hasNext();) {
-					Map.Entry<DynamicIterator, Object> entry = iter.next();
-					DynamicIterator dynamicIterator = entry.getKey();
+				for (Iterator iter = iterators.entrySet().iterator(); iter.hasNext();) {
+					Map.Entry entry = (Map.Entry) iter.next();
+					DynamicIterator dynamicIterator = (DynamicIterator) entry.getKey();
 
 					synchronized (dynamicIterator.lock) {
 						if (index < dynamicIterator.cursor)
@@ -378,11 +378,9 @@ public class DynamicCollection<E> extends AbstractCollection<E> {
 		}
 	}
 
-	@Override
-	@SuppressWarnings("unchecked")
-	public <T> T[] toArray(T[] a) {
+	public Object[] toArray(Object[] array) {
 		synchronized (storage) {
-			return storage.toArray((T[]) new Object[storage.size()]);
+			return storage.toArray(array);
 		}
 	}
 

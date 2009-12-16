@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,8 @@ package org.springframework.osgi.config.internal.util;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
-import org.springframework.beans.factory.config.TypedStringValue;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
-import org.springframework.beans.factory.support.ManagedSet;
-import org.springframework.osgi.config.internal.adapter.ToStringClassAdapter;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.w3c.dom.Attr;
@@ -40,15 +36,15 @@ import org.w3c.dom.NamedNodeMap;
 public abstract class ParserUtils {
 
 	private static final AttributeCallback STANDARD_ATTRS_CALLBACK = new StandardAttributeCallback();
-	private static final AttributeCallback BLUEPRINT_ATTRS_CALLBACK = new BlueprintAttributeCallback();
+
 	private static final AttributeCallback PROPERTY_REF_ATTRS_CALLBACK = new PropertyRefAttributeCallback();
+
 	private static final AttributeCallback PROPERTY_CONV_ATTRS_CALLBACK = new ConventionsCallback();
 
-	public static final String REFERENCE_LISTENER_REF_ATTR =
-			"org.springframework.osgi.config.internal.reference.listener.ref.attr";
 
 	/**
-	 * Generic attribute callback. Will parse the given callback array, w/o any standard callback.
+	 * Generic attribute callback. Will parse the given callback array, w/o any
+	 * standard callback.
 	 * 
 	 * @param element XML element
 	 * @param builder current bean definition builder
@@ -71,9 +67,13 @@ public abstract class ParserUtils {
 
 	/**
 	 * Dedicated parsing method that uses the following stack:
+	 * <ol>
+	 * <li>user given {@link AttributeCallback}s</li>
+	 * <li>{@link StandardAttributeCallback}</li>
+	 * <li>{@link PropertyRefAttributeCallback}</li>
+	 * <li>{@link ConventionCallback}</li>
+	 * </ol>
 	 * 
-	 * <ol> <li>user given {@link AttributeCallback}s</li> <li>{@link StandardAttributeCallback}</li> <li>
-	 * {@link PropertyRefAttributeCallback}</li> <li>{@link ConventionCallback}</li> </ol> </pre>
 	 * 
 	 * @param element XML element
 	 * @param builder current bean definition builder
@@ -87,8 +87,9 @@ public abstract class ParserUtils {
 			CollectionUtils.mergeArrayIntoCollection(callbacks, list);
 		// add standard callback
 		list.add(STANDARD_ATTRS_CALLBACK);
-		list.add(BLUEPRINT_ATTRS_CALLBACK);
+		// add property ref
 		list.add(PROPERTY_REF_ATTRS_CALLBACK);
+		// add convention
 		list.add(PROPERTY_CONV_ATTRS_CALLBACK);
 
 		AttributeCallback[] cbacks = (AttributeCallback[]) list.toArray(new AttributeCallback[list.size()]);
@@ -105,8 +106,8 @@ public abstract class ParserUtils {
 	 * @param callback attribute callback, can be null
 	 */
 	public static void parseCustomAttributes(Element element, BeanDefinitionBuilder builder, AttributeCallback callback) {
-		AttributeCallback[] callbacks =
-				(callback == null ? new AttributeCallback[0] : new AttributeCallback[] { callback });
+		AttributeCallback[] callbacks = (callback == null ? new AttributeCallback[0]
+				: new AttributeCallback[] { callback });
 		parseCustomAttributes(element, builder, callbacks);
 	}
 
@@ -123,28 +124,5 @@ public abstract class ParserUtils {
 		System.arraycopy(callbacksA, 0, newCallbacks, 0, callbacksA.length);
 		System.arraycopy(callbacksB, 0, newCallbacks, callbacksA.length, callbacksB.length);
 		return newCallbacks;
-	}
-
-	/**
-	 * Utility method used for maintaining backwards compatibility by converting Class objects to String (using their
-	 * class names). Used by importer and exporter parsing to set the 'interfaces' property.
-	 * 
-	 * @param parsedClasses collection of parsed classes
-	 * @return a collection of converted (if necessary) metadata
-	 */
-	public static Set<?> convertClassesToStrings(Set<?> parsedClasses) {
-		Set<Object> interfaces = new ManagedSet<Object>(parsedClasses.size());
-
-		for (Object clazz : parsedClasses) {
-			if (clazz instanceof TypedStringValue || clazz instanceof String) {
-				interfaces.add(clazz);
-			} else {
-				// add adapter definition for bean references (which can be classes)
-				interfaces.add(BeanDefinitionBuilder.genericBeanDefinition(ToStringClassAdapter.class)
-						.addConstructorArgValue(clazz).getBeanDefinition());
-			}
-		}
-
-		return interfaces;
 	}
 }

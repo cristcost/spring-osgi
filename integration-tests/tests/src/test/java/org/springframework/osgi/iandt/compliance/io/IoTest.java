@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,12 @@ import java.net.URL;
 import java.util.Enumeration;
 
 import org.springframework.osgi.iandt.io.BaseIoTest;
-import org.springframework.osgi.test.platform.Platforms;
 import org.springframework.util.ObjectUtils;
 
 /**
- * Low level access API used for discovering the underlying platform capabilities since there are subtle yet major
- * differences between each implementation.
+ * Low level access API used for discovering the underlying platform
+ * capabilities since there are subtle yet major differences between each
+ * implementation.
  * 
  * @author Costin Leau
  * 
@@ -41,9 +41,8 @@ public class IoTest extends BaseIoTest {
 		return null;
 	}
 
-	// using /META-INF fails on KF 3.0.0.x
 	public void testGetResourceOnMetaInf() throws Exception {
-		URL url = bundle.getResource("/META-INF/");
+		URL url = bundle.getResource("/META-INF");
 		System.out.println(url);
 		assertNotNull(url);
 	}

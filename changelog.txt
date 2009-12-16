@@ -2,107 +2,39 @@ SPRING DYNAMIC MODULES FRAMEWORK CHANGELOG
 ==========================================
 http://www.springframework.org/osgi
 
-Changes in version 2.0.0 M2 (2010-mm-dd)
-----------------------------------------
+Changes in version 1.2.1 (2009-12-16)
+-------------------------------------
 
 General
-* upgraded to Felix 2.0.2
-* upgraded to Knopflerfish 3.0.0.beta3
-
-Package org.springframework.osgi.bundle
-* added sticky attribute to ServiceReference annotation
-
-Package org.springframework.osgi.test
-* added check for unresolved fragments during test startup
-
-Package org.springframework.osgi.web
-* added check to prevent deployed WARs from being redeployed (which can cause problems in some containers)
-
-
-Changes in version 2.0.0 M1 (2009-09-28)
-----------------------------------------
-
-General
-* JDK 5.0 required for both building and running; for JDK 1.4 support use 1.2.x branch
-* upgraded to Spring Framework 3.0
-* upgraded to Equinox 3.5.1
-* upgraded to Knopflerfish 3.0.0.alfa1
-* upgraded to Felix 1.8.1
-* generified classes (both public and internal)
-* updated archetype project to save locally the manifest generated during packaging
-* aligned artifacts versioning with Spring Framework by uppercasing the qualifier (m1 becomes M1)
-* added new elements to spring-osgi schema
-* align various features with the OSGi r4.2 Blueprint spec
-
-Package org.springframework.osgi.bundle
-* deprecated BundleAction in favour of the BundleActionEnum enum 
+* the archetype project now saves locally the manifest generated during packaging
+* upgraded to Spring 2.5.6.SEC01
+* improved samples behaviour under Felix 1.4 (with regards to fragment functionality)
 
 Package org.springframework.osgi.config
-* fixed race condition affecting configuration defaults in concurrent startups
 * improved further the definition of generated definitions to avoid IDE validation complains
-* added namespace tooling metadata
+* promoted nested reference beans are excluded from autowiring
 
 Package org.springframework.osgi.context
-* improved serviceability by using NamedThreadLocal
-* added class loader aware default Class/Class[] property editors
-* fixed cleanup of an internal input stream used for loading property editors
+* fixed incorrect logging message regarding context service during shutdown
 * added support for schema handler filtering
 * fixed incorrect transitive dependency between exporters and optional importers
-
-Package org.springframework.osgi.compendium
-* enhanced cm-properties to reflect Config Admin changes in the returned Properties object
-* added new custom destruction callback to managed service factory objects
+* fixed cleanup of an internal input stream used for loading property editors
+* added resolveContextualObject method to OsgiBundleScope (for usage with Spring 3.0 EL)
 
 Package org.springframework.osgi.extender
-* added JavaBean cache initialization for known types to reduce the number of class lookups during startup
-* improved importers detection by avoiding early initialization of lazy beans
-* align the bundles shutdown algorithm with the OSGi 4.2 Blueprint spec 
-* fixed delayed cancelation of bundles being stopped while waiting for mandatory services
 * added support for schema handler filtering
+* added filtering support for multiple versions of Spring DM namespaces
+* fixed delayed cancelation of bundles being stopped while waiting for mandatory services
 
 Package org.springframework.osgi.service
-* improved serviceability by using NamedInheritableThreadLocal
-* introduced support for dynamic service properties
-* introduced InterfaceDetector for custom auto export scenarios
-* deprecated AutoExport in favour of DefaultInterfaceDetector enum
-* deprecated Cardinality class in favour of Availability enum
-* improved laziness of the backing service retrieval
-* added 'sticky' option on single importers to prevent rebinds if higher ranking services appear while the backing
-  service is still alive
-* made single service imports 'sticky' by default
-* deprecated ExportContextClassLoader in favour of ExportContextClassLoaderEnum
-* deprecated ImportContextClassLoader in favour of ImportContextClassLoaderEnum
-* service collection can now contain service references instead of just service proxies
-* service exporter returns a 'safe' service registration that forbids unregistration
-* added new custom callback signature to service importer and exporter listeners
-* enforced precedence of framework defined properties over user defined ones
-* eliminated generated name property for inner/anonymous beans
-* fixed reference collection listener behaviour by invoking the callbacks before items are removed from the collection
-* fixed service registration listener behaviour by invoking the callbacks before the service gets unregistered
-* improved proxy class generation to avoid introspection problems in concurrent environments
-* changed behaviour for mandatory services to retrieve the backing service only when a method is being invoked
-* removed mandatory service check for service collection to allow status checks
-* added interface-less importers (useful for OSGi 4.2 remote services)
-* improved detection of transitive dependencies when traversing nested beans
-* added cleanup for services on destruction to avoid postponing bundle shutdown
-* improved static service importers by adding caching of the service to ease service cleanup
-* added 'cache target' option on service exporter for compatible behaviour with OSGi 4.2 Blueprint spec
-* added 'reference-listener' as alias for the 'listener' reference declaration
 * fixed exporter tccl management bug caused by garbaged collected proxies
-* added several internal improvements to the importer tccl management
 
 Package org.springframework.osgi.mock
-* added specific OSGi r4.2 methods
 * added case insensitive filter comparison to avoid different behaviours between OSGi platforms
-
-Package org.springframework.osgi.test
-* added small improvement for improving detection of inner classes
-
-Package org.springframework.osgi.util
-* improved fallback mechanism for OSGi r4.1 features running in OSGi r4.0 platforms
 
 Package org.springframework.osgi.web
 * improved encoding of nested context paths
+* added check to prevent deployed WARs from being redeployed (which can cause problems in some containers)
 
 
 Changes in version 1.2.0 final (2009-04-09)

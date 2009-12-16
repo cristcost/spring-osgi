@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import junit.framework.TestCase;
 
 import org.osgi.framework.Bundle;
 import org.springframework.osgi.TestUtils;
-import org.springframework.osgi.context.support.internal.classloader.ChainedClassLoader;
 
 /**
  * @author Costin Leau
@@ -38,7 +37,7 @@ public class ChainedClassLoaderTest extends TestCase {
 	protected void setUp() throws Exception {
 		emptyCL = new URLClassLoader(new URL[0], null) {
 
-			public Class<?> loadClass(String name) throws ClassNotFoundException {
+			public Class loadClass(String name) throws ClassNotFoundException {
 				throw new ClassNotFoundException(name);
 			}
 

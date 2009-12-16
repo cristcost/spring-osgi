@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,13 +28,13 @@ import java.util.Set;
  * @author Costin Leau
  * 
  */
-public class DynamicSet<E> extends DynamicCollection<E> implements Set<E> {
+public class DynamicSet extends DynamicCollection implements Set {
 
 	public DynamicSet() {
 		super();
 	}
 
-	public DynamicSet(Collection<? extends E> c) {
+	public DynamicSet(Collection c) {
 		super(c);
 	}
 
@@ -42,7 +42,7 @@ public class DynamicSet<E> extends DynamicCollection<E> implements Set<E> {
 		super(size);
 	}
 
-	public boolean add(E o) {
+	public boolean add(Object o) {
 		synchronized (storage) {
 			if (storage.contains(o))
 				return false;
@@ -51,12 +51,12 @@ public class DynamicSet<E> extends DynamicCollection<E> implements Set<E> {
 		return true;
 	}
 
-	public boolean addAll(Collection<? extends E> c) {
+	public boolean addAll(Collection c) {
 		if (c == null)
 			throw new NullPointerException();
 		boolean result = false;
 		synchronized (storage) {
-			for (Iterator<? extends E> iter = c.iterator(); iter.hasNext();) {
+			for (Iterator iter = c.iterator(); iter.hasNext();) {
 				result |= add(iter.next());
 			}
 		}

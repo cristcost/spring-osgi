@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.AbstractApplicationContext;
 import org.springframework.osgi.mock.MockBundleContext;
 import org.springframework.osgi.mock.MockServiceReference;
-import org.springframework.osgi.service.importer.support.ImportContextClassLoaderEnum;
+import org.springframework.osgi.service.importer.support.ImportContextClassLoader;
 import org.springframework.osgi.service.importer.support.OsgiServiceProxyFactoryBean;
 
 /**
@@ -47,10 +47,13 @@ public class OsgiSingleServiceProxyFactoryBeanTest extends TestCase {
 
 	private BundleContext bundleContext;
 
+
 	protected void setUp() throws Exception {
 		super.setUp();
 		this.serviceFactoryBean = new OsgiServiceProxyFactoryBean();
 		this.serviceFactoryBean.setBeanClassLoader(getClass().getClassLoader());
+		// this.serviceFactoryBean.setApplicationContext(new
+		// GenericApplicationContext());
 		this.mockControl = MockControl.createControl(BundleContext.class);
 		this.bundleContext = (BundleContext) this.mockControl.getMock();
 	}
@@ -59,7 +62,8 @@ public class OsgiSingleServiceProxyFactoryBeanTest extends TestCase {
 		try {
 			this.serviceFactoryBean.afterPropertiesSet();
 			fail("should have throw IllegalArgumentException since bundle context was not set");
-		} catch (IllegalArgumentException ex) {
+		}
+		catch (IllegalArgumentException ex) {
 			// expected
 		}
 	}
@@ -69,7 +73,8 @@ public class OsgiSingleServiceProxyFactoryBeanTest extends TestCase {
 		try {
 			this.serviceFactoryBean.afterPropertiesSet();
 			fail("should have throw IllegalArgumentException since classLoader was not set");
-		} catch (IllegalArgumentException ex) {
+		}
+		catch (IllegalArgumentException ex) {
 			// expected
 		}
 	}
@@ -79,44 +84,37 @@ public class OsgiSingleServiceProxyFactoryBeanTest extends TestCase {
 		try {
 			this.serviceFactoryBean.afterPropertiesSet();
 			fail("should have throw IllegalArgumentException since service type was not set");
-		} catch (IllegalArgumentException ex) {
+		}
+		catch (IllegalArgumentException ex) {
 			// expected
 		}
 	}
 
 	public void testAfterPropertiesSetBadFilter() throws Exception {
 		this.serviceFactoryBean.setBundleContext(this.bundleContext);
-		this.serviceFactoryBean.setInterfaces(new Class<?>[] { ApplicationContext.class });
+		this.serviceFactoryBean.setInterfaces(new Class[] { ApplicationContext.class });
 		this.serviceFactoryBean.setFilter("this is not a valid filter expression");
 		try {
 			this.serviceFactoryBean.afterPropertiesSet();
 			fail("should have throw IllegalArgumentException since filter has invalid syntax");
-		} catch (IllegalArgumentException ex) {
+		}
+		catch (IllegalArgumentException ex) {
 			// expected
 		}
 	}
 
 	public void testGetObjectTypeCompositeInterface() {
-		this.serviceFactoryBean.setInterfaces(new Class<?>[] { ApplicationContext.class });
-		this.serviceFactoryBean.setBundleContext(this.bundleContext);
-		this.serviceFactoryBean.afterPropertiesSet();
-		assertTrue("composite interface not properly created", ApplicationContext.class
-				.isAssignableFrom(this.serviceFactoryBean.getObjectType()));
-		assertTrue("mixing interface not introduced", ImportedOsgiServiceProxy.class
-				.isAssignableFrom(this.serviceFactoryBean.getObjectType()));
+		this.serviceFactoryBean.setInterfaces(new Class[] { ApplicationContext.class });
+		assertTrue("composite interface not properly created",
+			ApplicationContext.class.isAssignableFrom(this.serviceFactoryBean.getObjectType()));
+		assertTrue("mixing interface not introduced",
+			ImportedOsgiServiceProxy.class.isAssignableFrom(this.serviceFactoryBean.getObjectType()));
 	}
 
 	public void testObjectTypeWOCompositeInterface() {
-		this.serviceFactoryBean.setInterfaces(new Class<?>[] { AbstractApplicationContext.class });
-		this.serviceFactoryBean.setBundleContext(this.bundleContext);
-		this.serviceFactoryBean.afterPropertiesSet();
-
-		try {
-			this.serviceFactoryBean.getObjectType();
-			fail("should not be able to create composite interface when a class is specified since CGLIB is not in the classpath");
-		} catch (Exception ex) {
-
-		}
+		this.serviceFactoryBean.setInterfaces(new Class[] { AbstractApplicationContext.class });
+		assertNull("should not be able to create composite interface when a class is specified",
+			this.serviceFactoryBean.getObjectType());
 	}
 
 	// OsgiServiceUtils are tested independently in error cases, here we
@@ -126,7 +124,7 @@ public class OsgiSingleServiceProxyFactoryBeanTest extends TestCase {
 	// finds the service.
 	public void testGetObjectWithFilterOnly() throws Exception {
 		this.serviceFactoryBean.setBundleContext(new MockBundleContext());
-		this.serviceFactoryBean.setInterfaces(new Class<?>[] { Serializable.class });
+		this.serviceFactoryBean.setInterfaces(new Class[] { Serializable.class });
 		String filter = "(beanName=myBean)";
 		this.serviceFactoryBean.setFilter(filter);
 
@@ -144,17 +142,9 @@ public class OsgiSingleServiceProxyFactoryBeanTest extends TestCase {
 	}
 
 	public void testClassLoadingOptionsConstant() throws Exception {
-		serviceFactoryBean.setImportContextClassLoader(ImportContextClassLoaderEnum.CLIENT);
-		serviceFactoryBean.setImportContextClassLoader(ImportContextClassLoaderEnum.SERVICE_PROVIDER);
-		serviceFactoryBean.setImportContextClassLoader(ImportContextClassLoaderEnum.UNMANAGED);
+		serviceFactoryBean.setContextClassLoader(ImportContextClassLoader.CLIENT);
+		serviceFactoryBean.setContextClassLoader(ImportContextClassLoader.SERVICE_PROVIDER);
+		serviceFactoryBean.setContextClassLoader(ImportContextClassLoader.UNMANAGED);
 	}
-	
-	public void testNoInterfaceSpecified() throws Exception {
-		serviceFactoryBean.setBundleContext(new MockBundleContext());
-		serviceFactoryBean.setInterfaces(null);
-		serviceFactoryBean.setFilter(null);
-		serviceFactoryBean.setServiceBeanName("foo");
-		serviceFactoryBean.afterPropertiesSet();
-		serviceFactoryBean.getObject();
-	}
+
 }

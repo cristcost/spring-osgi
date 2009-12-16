@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import java.beans.PropertyEditorSupport;
  */
 public class ExoticTypeCustomEditor extends PropertyEditorSupport {
 
-	private String format = "upperCase";
+	private String format;
 
 
 	public void setFormat(String format) {

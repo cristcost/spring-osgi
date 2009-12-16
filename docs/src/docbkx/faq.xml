@@ -472,40 +472,13 @@
      	<literal>org.springframework.bundle.osgi.extender</literal> to <literal>org.springframework.osgi.extender</literal> 
 		(notice the missing <literal>bundle</literal> word).
 		To fix this problem, change the reference to the old symbolic name (usually inside the fragments manifests or LDAP filters) to the new one.</para>
-     </section>
-     <section id="linkage-error">
-     	<title>I get a <literal>java.lang.LinkageError: loader constraint violation</literal> if I use Spring DM. Things work fine with vanilla OSGi. 
-     	What's wrong?</title>
-     	
-     	<para>Most likely the bundle imports do not identify all the transitive packages dependencies (through the <emphasis>uses</emphasis> directive). Packages
-     	imported from a bundle, can in turn, depend on other packages from other bundles - these are sometime called transitive or indirect dependencies. If
-     	these are not properly identified, the OSGi platform cannot validate the wiring and allows multiple versions of the same class to be available inside the
-     	same class space. This problem appears whether Spring DM is used or not. However, due to the usage of proxies inside Spring DM (which forces eager class loading
-     	for the classes proxies), the class graph is evaluated at runtime causing the problem to occur early. With vanilla OSGi, the loading occurs lazy which means
-     	the problem is going to occur at runtime rather then at startup.
-     	To fix the problem, add the relevant transitive packages to the list of exported packages, either manually or automatically through tools such as  
-     	<ulink url="http://www.springsource.org/bundlor">Bundlor</ulink> or <ulink url="http://www.aqute.biz/Code/Bnd">Bnd</ulink>.
-     	For more information on the <literal>uses</literal> directive please see the OSGi spec, 
-     	section	3.6.4 or <ulink url="http://blog.springsource.com/2008/10/20/understanding-the-osgi-uses-directive/">this</ulink> SpringSource blog entry.
-     	</para>
-     </section>
-     
-     <section id="blueprint">
-     	<title>What can I use Spring DM with the Blueprint Container spec? What's the relationship between the two? Are the they compatible?
-     	Are there any differences?</title>
-     	
-     	<para>Spring DM 2.0 is the Reference Implementation for OSGi 4.2 Blueprint Container specification. Simply deploy your Blueprint bundles in a platform
-     	where Spring DM is already activated and you should be done. For more information about Blueprint and Spring DM, please see the 
-     	<emphasis>Blueprint Container</emphasis> chapter in the reference documentation.</para>
-     </section>
-     
+     </section>       
      <section id="kf-2.3-boot-delegation">
      	<title>I'm using Knopflerfish 2.3.x and I have a lot of visibility exception. How can I fix this?</title>
      	
      	<para>Since 2.3.0, Knopflerfish changed the way it does bootpath delegation which causes classes to be loaded from inside and outside OSGi. Set
      	the system property <literal>org.knopflerfish.framework.strictbootclassloading</literal> to <literal>true</literal> before starting up the Knopflerfish
-     	platform to prevent this from happening. See Knopflerfish 2.3.x release <ulink url="http://www.knopflerfish.org/release_notes_2.3.html">notes</ulink> for more
-     	information.</para>
+     	platform to prevent this from happening. See Knopflerfish 2.3.x release <ulink url="http://www.knopflerfish.org/release_notes_2.3.html">notes</ulink> for more information.</para>
      </section>     
     </chapter>
 </book>

@@ -5,7 +5,7 @@
     <parent>
         <artifactId>spring-osgi-integration-test-bundles</artifactId>
         <groupId>org.springframework.osgi.iandt</groupId>
-        <version>2.0.0.M2-SNAPSHOT</version>
+        <version>1.2.1</version>
     </parent>
     
     <modelVersion>4.0.0</modelVersion>
@@ -16,6 +16,14 @@
     <description>An OSGi bundle for JDK proxy testing</description>
     <url>http://www.springframework.org/osgi</url>
 
-
+	<dependencies>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>jcl104-over-slf4j</artifactId>
+      <version>${slf4j.version}</version>
+      <scope>provided</scope>
+    </dependency>
+	</dependencies>
+	
 </project>
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,30 +21,25 @@ package org.springframework.osgi.service.exporter;
 import java.util.Map;
 
 /**
- * An OsgiServicePropertiesResolver is responsible for providing the properties that a bean exposed as a service will be
- * published with.
+ * An OsgiServicePropertiesResolver is responsible for providing the properties
+ * that a bean exposed as a service will be published with.
  * 
  * @author Adrian Colyer
- * @author Costin Leau
  * 
  * @see org.springframework.osgi.service.exporter.support.OsgiServiceFactoryBean
  */
 public interface OsgiServicePropertiesResolver {
 
 	/**
-	 * Predefined property indicating the bean name of an exported Spring managed object.
+	 * Predefined property indicating the bean name of an exported Spring
+	 * managed object.
 	 */
 	String BEAN_NAME_PROPERTY_KEY = "org.springframework.osgi.bean.name";
 
-	/**
-	 * OSGi 4.2 Blueprint specification predefined property indicating the name of the component exported as a service.
-	 * Equivalent to Spring DM {@link #BEAN_NAME_PROPERTY_KEY}.
-	 */
-	String BLUEPRINT_COMP_NAME = "osgi.service.blueprint.compname";
 
 	/**
-	 * Returns a map containing the service properties associated with the given Spring managed bean identified by its
-	 * name. The name can be null (for example if nested beans are exported).
+	 * Returns a map containing the service properties associated with the given
+	 * Spring managed bean identified by its name.
 	 * 
 	 * @param beanName Spring managed bean name
 	 * @return map containing the service properties

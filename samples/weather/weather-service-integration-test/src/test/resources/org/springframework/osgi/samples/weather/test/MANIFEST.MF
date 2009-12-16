@@ -11,4 +11,3 @@ Import-Package: junit.framework,
  org.springframework.osgi.test,
  org.springframework.osgi.test.platform
 DynamicImport-Package: org.springframework.osgi.samples.weather.service
-

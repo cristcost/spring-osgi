@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ class BeanManagedUpdate implements UpdateCallback {
 	 */
 	private UpdateMethodAdapter getUpdateMethod(Object instance) {
 		UpdateMethodAdapter adapter;
-		Class<?> type = instance.getClass();
+		Class type = instance.getClass();
 
 		WeakReference adapterReference = (WeakReference) classCache.get(type);
 		if (adapterReference != null) {

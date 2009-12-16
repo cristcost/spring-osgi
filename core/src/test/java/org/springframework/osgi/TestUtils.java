@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,8 +52,8 @@ public abstract class TestUtils {
 		return fld[0];
 	}
 
-	private static Object invokeMethod(final Object target, final Class<?> targetClass, String methodName, Object[] args) {
-		Class<?>[] types = null;
+	private static Object invokeMethod(final Object target, final Class targetClass, String methodName, Object[] args) {
+		Class[] types = null;
 		if (ObjectUtils.isEmpty(args)) {
 			types = new Class[0];
 		}
@@ -73,7 +73,7 @@ public abstract class TestUtils {
 		return invokeMethod(target, target.getClass(), methodName, args);
 	}
 
-	public static Object invokeStaticMethod(final Class<?> target, String methodName, Object[] args) {
+	public static Object invokeStaticMethod(final Class target, String methodName, Object[] args) {
 		return invokeMethod(null, target, methodName, args);
 	}
 }

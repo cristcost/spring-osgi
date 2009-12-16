@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,7 @@ public class OsgiServiceCollectionProxiesTest extends TestCase {
 
 	private ServiceProxyCreator proxyCreator;
 
+
 	protected void setUp() throws Exception {
 		services = new LinkedHashMap();
 
@@ -66,9 +67,8 @@ public class OsgiServiceCollectionProxiesTest extends TestCase {
 		};
 
 		ClassLoader cl = getClass().getClassLoader();
-		proxyCreator =
-				new StaticServiceProxyCreator(new Class<?>[] { Cloneable.class }, cl, cl, ctx,
-						ImportContextClassLoaderEnum.UNMANAGED, false, false);
+		proxyCreator = new StaticServiceProxyCreator(new Class[] { Cloneable.class }, cl, cl, ctx,
+			ImportContextClassLoader.UNMANAGED, false);
 	}
 
 	protected void tearDown() throws Exception {

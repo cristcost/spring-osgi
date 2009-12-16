@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 package org.springframework.osgi.iandt.bundleScope;
 
-import java.security.AllPermission;
 import java.util.List;
 import java.util.Properties;
 
@@ -184,8 +183,9 @@ public class ScopingTest extends BaseIntegrationTest {
 	 */
 	protected List getTestPermissions() {
 		List perms = super.getTestPermissions();
-		perms.add(new AdminPermission("(name=org.springframework.osgi.iandt.scope.a)", "*"));
-		perms.add(new AllPermission());
+		perms.add(new AdminPermission("(name=org.springframework.osgi.iandt.scope.a)", AdminPermission.RESOURCE));
+		perms.add(new AdminPermission("(name=org.springframework.osgi.iandt.scope.a)", AdminPermission.METADATA));
+		perms.add(new AdminPermission("(name=org.springframework.osgi.iandt.scope.a)", AdminPermission.CLASS));
 		return perms;
 	}
 }

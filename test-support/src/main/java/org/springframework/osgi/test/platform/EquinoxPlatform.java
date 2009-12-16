@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,6 +52,8 @@ public class EquinoxPlatform extends AbstractOsgiPlatform {
 		props.setProperty("osgi.instance.area", "eclipse_config");
 		props.setProperty("osgi.user.area", "eclipse_config");
 
+		// props.setProperty("osgi.java.profile.bootdelegation", "ignore");
+
 		// props.setProperty("eclipse.consoleLog", "true");
 		// props.setProperty("osgi.debug", "");
 
@@ -74,7 +76,8 @@ public class EquinoxPlatform extends AbstractOsgiPlatform {
 
 			final Field field = EclipseStarter.class.getDeclaredField("context");
 
-			AccessController.doPrivileged(new PrivilegedAction<Object>() {
+			AccessController.doPrivileged(new PrivilegedAction() {
+
 				public Object run() {
 					field.setAccessible(true);
 					return null;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,7 +83,7 @@ public abstract class DebugUtils {
 	 * @param classes (optional) array of classes that will be used for loading
 	 * the problematic class
 	 */
-	public static void debugClassLoadingThrowable(Throwable loadingThrowable, Bundle bundle, Class<?>[] classes) {
+	public static void debugClassLoadingThrowable(Throwable loadingThrowable, Bundle bundle, Class[] classes) {
 
 		String className = null;
 		// NoClassDefFoundError
@@ -105,7 +105,7 @@ public abstract class DebugUtils {
 			debugClassLoading(bundle, className, null);
 
 			if (!ObjectUtils.isEmpty(classes) && log.isDebugEnabled()) {
-				StringBuilder message = new StringBuilder();
+				StringBuffer message = new StringBuffer();
 
 				// Check out all the classes.
 				for (int i = 0; i < classes.length; i++) {
@@ -247,7 +247,7 @@ public abstract class DebugUtils {
 			if (hasExport != null) {
 				log.trace("Bundle [" + OsgiStringUtils.nullSafeNameAndSymName(bundle) + "] contains resource [" + cname
 						+ "] and it is correctly exported as version [" + hasExport + "]");
-				Class<?> c = null;
+				Class c = null;
 				try {
 					c = bundle.loadClass(name);
 				}
@@ -414,7 +414,7 @@ public abstract class DebugUtils {
 		// spit the statement into packages but consider "
 		List pkgs = new ArrayList(2);
 
-		StringBuilder pkg = new StringBuilder();
+		StringBuffer pkg = new StringBuffer();
 		boolean ignoreComma = false;
 		for (int stringIndex = 0; stringIndex < stmt.length(); stringIndex++) {
 			char currentChar = stmt.charAt(stringIndex);
@@ -424,7 +424,7 @@ public abstract class DebugUtils {
 				}
 				else {
 					pkgs.add(pkg.toString());
-					pkg = new StringBuilder();
+					pkg = new StringBuffer();
 					ignoreComma = false;
 				}
 			}

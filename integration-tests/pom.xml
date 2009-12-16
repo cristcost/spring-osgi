@@ -3,7 +3,7 @@
   <parent>
     <artifactId>spring-osgi</artifactId>
     <groupId>org.springframework.osgi</groupId>
-    <version>2.0.0.M2-SNAPSHOT</version>
+    <version>1.2.1</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.springframework.osgi.iandt</groupId>
@@ -14,7 +14,7 @@
   
   <properties>
 	<clover.skip>true</clover.skip>
-	<bundlor.enabled>false</bundlor.enabled>
+	<bundlor.enabled>true</bundlor.enabled>
   </properties>
   
   <modules>
@@ -33,4 +33,16 @@
 	  </plugins>
   </build>
   
+  <profiles>
+    <profile>
+      <id>jdk-1.5+</id>
+        <activation>
+          <jdk>!1.4</jdk>
+        </activation>
+        <modules>
+          <module>tests-tiger</module>
+        </modules>
+    </profile>
+  </profiles>
+
 </project>

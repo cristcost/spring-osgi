@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,9 @@
 
 package org.springframework.osgi.extender.internal.dependencies.startup;
 
-import java.security.AccessController;
-import java.security.PrivilegedAction;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.osgi.framework.Bundle;
-import org.osgi.framework.Filter;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContextException;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -35,13 +27,16 @@ import org.springframework.osgi.context.DelegatedExecutionOsgiBundleApplicationC
 import org.springframework.osgi.context.OsgiBundleApplicationContextExecutor;
 import org.springframework.osgi.context.event.OsgiBundleApplicationContextEventMulticaster;
 import org.springframework.osgi.context.event.OsgiBundleContextFailedEvent;
-import org.springframework.osgi.extender.OsgiServiceDependencyFactory;
-import org.springframework.osgi.extender.event.BootstrappingDependenciesFailedEvent;
 import org.springframework.osgi.extender.internal.util.concurrent.Counter;
-import org.springframework.osgi.service.importer.event.OsgiServiceDependencyEvent;
-import org.springframework.osgi.util.OsgiFilterUtils;
 import org.springframework.osgi.util.OsgiStringUtils;
 import org.springframework.util.Assert;
+
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * Dependency waiter executor that breaks the 'traditional' {@link ConfigurableApplicationContext#refresh()} in two
@@ -53,7 +48,7 @@ import org.springframework.util.Assert;
  * @author Costin Leau
  */
 public class DependencyWaiterApplicationContextExecutor implements OsgiBundleApplicationContextExecutor,
-		ContextExecutorAccessor {
+		ContextExecutorStateAccessor {
 
 	private static final Log log = LogFactory.getLog(DependencyWaiterApplicationContextExecutor.class);
 
@@ -97,7 +92,7 @@ public class DependencyWaiterApplicationContextExecutor implements OsgiBundleApp
 	/** delegated multicaster */
 	private OsgiBundleApplicationContextEventMulticaster delegatedMulticaster;
 
-	private List<OsgiServiceDependencyFactory> dependencyFactories;
+	private List dependencyFactories;
 
 	/**
 	 * The task for the watch dog.
@@ -134,11 +129,7 @@ public class DependencyWaiterApplicationContextExecutor implements OsgiBundleApp
 			}
 
 			// Continue with the refresh process...
-			try {
-				delegateContext.completeRefresh();
-			} catch (Throwable th) {
-				fail(th, true);
-			}
+			delegateContext.completeRefresh();
 
 			// Once we are done, tell the world
 			synchronized (monitor) {
@@ -152,7 +143,7 @@ public class DependencyWaiterApplicationContextExecutor implements OsgiBundleApp
 	}
 
 	public DependencyWaiterApplicationContextExecutor(DelegatedExecutionOsgiBundleApplicationContext delegateContext,
-			boolean syncWait, List<OsgiServiceDependencyFactory> dependencyFactories) {
+			boolean syncWait, List dependencyFactories) {
 		this.delegateContext = delegateContext;
 		this.delegateContext.setExecutor(this);
 		this.synchronousWait = syncWait;
@@ -205,8 +196,6 @@ public class DependencyWaiterApplicationContextExecutor implements OsgiBundleApp
 
 		boolean debug = log.isDebugEnabled();
 
-		boolean skipExceptionEvent = true;
-
 		try {
 			if (debug)
 				log.debug("Calling preRefresh on " + getDisplayName());
@@ -246,18 +235,16 @@ public class DependencyWaiterApplicationContextExecutor implements OsgiBundleApp
 					}
 				};
 
-			skipExceptionEvent = false;
-
 			DependencyServiceManager dl = createDependencyServiceListener(task);
 			dl.findServiceDependencies();
-
-			skipExceptionEvent = true;
 
 			// all dependencies are met, just go with stageTwo
 			if (dl.isSatisfied()) {
 				log.info("No outstanding OSGi service dependencies, completing initialization for " + getDisplayName());
 				stageTwo();
-			} else {
+			}
+
+			else {
 				// there are dependencies not met
 				// register a listener to look for them
 				synchronized (monitor) {
@@ -285,7 +272,7 @@ public class DependencyWaiterApplicationContextExecutor implements OsgiBundleApp
 				}
 			}
 		} catch (Throwable e) {
-			fail(e, skipExceptionEvent);
+			fail(e);
 		}
 
 	}
@@ -321,7 +308,7 @@ public class DependencyWaiterApplicationContextExecutor implements OsgiBundleApp
 
 		boolean normalShutdown = false;
 		stopWatchDog();
-		
+
 		synchronized (monitor) {
 
 			// no need for cleanup
@@ -335,19 +322,21 @@ public class DependencyWaiterApplicationContextExecutor implements OsgiBundleApp
 
 			// It's possible for the delegateContext to already be in startRefresh() or completeRefresh().
 			// If this is the case then its important to wait for these tasks to complete and then close normally
-			// If we simply exit then the bundle may suddenly become invalid under our feet, e.g. if this
-			// was triggered by a Bundle update or uninstall.
+			// If we simply exit then the bundle may suddnely become invalid under our feet, e.g. if this
+			// was triggered by a Bundle update or uininstall.
 
 			// Context is in stageOne(), wait until stageOne() is complete
 			// and destroy singletons
 			if (state == ContextState.RESOLVING_DEPENDENCIES) {
 				if (debug)
 					log.debug("Cleaning up appCtx " + getDisplayName());
-				if (delegateContext.isActive()) {
-					try {
-						delegateContext.getBeanFactory().destroySingletons();
-					} catch (Exception ex) {
-						log.trace("Caught exception while interrupting context refresh ", ex);
+				synchronized (delegateContext.getMonitor()) {
+					if (delegateContext.isActive()) {
+						try {
+							delegateContext.getBeanFactory().destroySingletons();
+						} catch (Exception ex) {
+							log.trace("Caught exception while interrupting context refresh ", ex);
+						}
 					}
 					state = ContextState.INTERRUPTED;
 				}
@@ -357,8 +346,10 @@ public class DependencyWaiterApplicationContextExecutor implements OsgiBundleApp
 			else if (state == ContextState.DEPENDENCIES_RESOLVED) {
 				if (debug)
 					log.debug("Shutting down appCtx " + getDisplayName() + " once stageTwo() is complete");
-				state = ContextState.STOPPED;
-				normalShutdown = true;
+				synchronized (delegateContext.getMonitor()) {
+					state = ContextState.STOPPED;
+					normalShutdown = true;
+				}
 			}
 			// Context is running, shut it down
 			else if (state == ContextState.STARTED) {
@@ -390,63 +381,51 @@ public class DependencyWaiterApplicationContextExecutor implements OsgiBundleApp
 
 	}
 
-	public void fail(Throwable t) {
-		fail(t, false);
-	}
-
 	/**
 	 * Fail creating the context. Figure out unsatisfied dependencies and provide a very nice log message before closing
-	 * the appContext.
-	 * 
-	 * <p/> Normally this method is called when an exception is caught.
+	 * the appContext. <p/> Normally this method is called when an exception is caught.
 	 * 
 	 * @param t - the offending Throwable which caused our demise
 	 */
-	private void fail(Throwable t, boolean skipEvent) {
+	private void fail(Throwable t) {
 
 		// this will not thrown any exceptions (it just logs them)
 		close();
 
-		StringBuilder buf = new StringBuilder();
+		StringBuffer buf = new StringBuffer();
 
 		synchronized (monitor) {
 			if (dependencyDetector == null || dependencyDetector.getUnsatisfiedDependencies().isEmpty()) {
 				buf.append("none");
 			} else {
-				for (Iterator<MandatoryServiceDependency> iterator =
-						dependencyDetector.getUnsatisfiedDependencies().keySet().iterator(); iterator.hasNext();) {
-					MandatoryServiceDependency dependency = iterator.next();
+				for (Iterator dependencies = dependencyDetector.getUnsatisfiedDependencies().keySet().iterator(); dependencies
+						.hasNext();) {
+					MandatoryServiceDependency dependency = (MandatoryServiceDependency) dependencies.next();
 					buf.append(dependency.toString());
-					if (iterator.hasNext()) {
+					if (dependencies.hasNext()) {
 						buf.append(", ");
 					}
 				}
 			}
 		}
 
-		final StringBuilder message = new StringBuilder();
+		final StringBuffer message = new StringBuffer();
 		message.append("Unable to create application context for [");
-		if (System.getSecurityManager() != null) {
-			AccessController.doPrivileged(new PrivilegedAction<Object>() {
-				public Object run() {
-					message.append(OsgiStringUtils.nullSafeSymbolicName(getBundle()));
-					return null;
-				}
-			});
-		} else {
-			message.append(OsgiStringUtils.nullSafeSymbolicName(getBundle()));
-		}
+		AccessController.doPrivileged(new PrivilegedAction() {
 
+			public Object run() {
+				message.append(OsgiStringUtils.nullSafeSymbolicName(getBundle()));
+				return null;
+			}
+		});
 		message.append("], unsatisfied dependencies: ");
 		message.append(buf.toString());
 
 		log.error(message.toString(), t);
 
 		// send notification
-		if (!skipEvent) {
-			delegatedMulticaster.multicastEvent(new OsgiBundleContextFailedEvent(delegateContext, delegateContext
-					.getBundle(), t));
-		}
+		delegatedMulticaster.multicastEvent(new OsgiBundleContextFailedEvent(delegateContext, delegateContext
+				.getBundle(), t));
 	}
 
 	/**
@@ -454,46 +433,26 @@ public class DependencyWaiterApplicationContextExecutor implements OsgiBundleApp
 	 */
 	private void timeout() {
 		ApplicationContextException e;
-		List<OsgiServiceDependencyEvent> events = null;
-		String filterAsString = null;
-
 		synchronized (monitor) {
 			// deregister listener to get an accurate snapshot of the
 			// unsatisfied dependencies.
 
 			if (dependencyDetector != null) {
 				dependencyDetector.deregister();
-				events = dependencyDetector.getUnsatisfiedDependenciesAsEvents();
-				filterAsString = dependencyDetector.createUnsatisfiedDependencyFilter();
 			}
 		}
 
-		Filter filter = (filterAsString != null ? OsgiFilterUtils.createFilter(filterAsString) : null);
-
 		log.warn("Timeout occurred before finding service dependencies for [" + delegateContext.getDisplayName() + "]");
 
-		String bundleName = null;
-		if (System.getSecurityManager() != null) {
-			bundleName = AccessController.doPrivileged(new PrivilegedAction<String>() {
-				public String run() {
-					return OsgiStringUtils.nullSafeSymbolicName(getBundle());
-				}
-			});
-		} else {
-			bundleName = OsgiStringUtils.nullSafeSymbolicName(getBundle());
-		}
+		e = new ApplicationContextException("Application context initialization for '"
+				+ (String) AccessController.doPrivileged(new PrivilegedAction() {
 
-		// generate exception
-		e =
-				new ApplicationContextException("Application context " + "initialization for '" + bundleName
-						+ "' has timed out waiting for " + filterAsString);
+					public Object run() {
+						return OsgiStringUtils.nullSafeSymbolicName(getBundle());
+					}
+				}) + "' has timed out");
 		e.fillInStackTrace();
-
-		// send notification
-		delegatedMulticaster.multicastEvent(new BootstrappingDependenciesFailedEvent(delegateContext, delegateContext
-				.getBundle(), e, events, filter));
-
-		fail(e, true);
+		fail(e);
 	}
 
 	protected DependencyServiceManager createDependencyServiceListener(Runnable task) {

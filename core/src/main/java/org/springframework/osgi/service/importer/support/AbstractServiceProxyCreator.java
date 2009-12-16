@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,10 +35,11 @@ import org.springframework.osgi.util.OsgiStringUtils;
 import org.springframework.util.Assert;
 
 /**
- * Internal (package visible) class used for handling common aspects in creating a proxy over OSGi services.
+ * Internal (package visible) class used for handling common aspects in creating
+ * a proxy over OSGi services.
  * 
- * Notably, this class creates common aspects such as publishing the bundleContext on a thread-local or handling of
- * thread context classloader.
+ * Notably, this class creates common aspects such as publishing the
+ * bundleContext on a thread-local or handling of thread context classloader.
  * 
  * @author Costin Leau
  */
@@ -56,15 +57,16 @@ abstract class AbstractServiceProxyCreator implements ServiceProxyCreator {
 	protected final ClassLoader classLoader;
 
 	/** proxy classes (for static generation) */
-	protected final Class<?>[] classes;
+	protected final Class[] classes;
 
 	/** client bundle context */
 	protected final BundleContext bundleContext;
 
-	private final ImportContextClassLoaderEnum iccl;
+	private final ImportContextClassLoader iccl;
 
-	AbstractServiceProxyCreator(Class<?>[] classes, ClassLoader aopClassLoader, ClassLoader bundleClassLoader,
-			BundleContext bundleContext, ImportContextClassLoaderEnum iccl) {
+
+	AbstractServiceProxyCreator(Class[] classes, ClassLoader aopClassLoader, ClassLoader bundleClassLoader,
+			BundleContext bundleContext, ImportContextClassLoader iccl) {
 		Assert.notNull(bundleContext);
 		Assert.notNull(aopClassLoader);
 
@@ -73,9 +75,7 @@ abstract class AbstractServiceProxyCreator implements ServiceProxyCreator {
 		this.classLoader = aopClassLoader;
 		this.iccl = iccl;
 
-		clientTCCLAdvice =
-				(ImportContextClassLoaderEnum.CLIENT.equals(iccl) ? new ServiceTCCLInterceptor(bundleClassLoader)
-						: null);
+		clientTCCLAdvice = new ServiceTCCLInterceptor(bundleClassLoader);
 		invokerBundleContextAdvice = new LocalBundleContextAdvice(bundleContext);
 	}
 
@@ -105,38 +105,38 @@ abstract class AbstractServiceProxyCreator implements ServiceProxyCreator {
 		advices.add(dispatcherInterceptor);
 
 		return new ProxyPlusCallback(ProxyUtils.createProxy(getInterfaces(reference), null, classLoader, bundleContext,
-				advices), dispatcherInterceptor);
+			advices), dispatcherInterceptor);
 	}
 
 	private Advice determineTCCLAdvice(ServiceReference reference) {
 		try {
-
-			switch (iccl) {
-			case CLIENT:
+			if (ImportContextClassLoader.CLIENT == iccl) {
 				return clientTCCLAdvice;
-			case SERVICE_PROVIDER:
+			}
+			else if (ImportContextClassLoader.SERVICE_PROVIDER == iccl) {
 				return createServiceProviderTCCLAdvice(reference);
-			case UNMANAGED:
+			}
+			else if (ImportContextClassLoader.UNMANAGED == iccl) {
 				// do nothing
 				return null;
-			default:
-				return null;
 			}
+			return null;
 
-		} finally {
+		}
+		finally {
 			if (log.isTraceEnabled()) {
 				log.trace(iccl + " TCCL used for invoking " + OsgiStringUtils.nullSafeToString(reference));
 			}
 		}
 	}
 
-	Class<?>[] getInterfaces(ServiceReference reference) {
+	Class[] getInterfaces(ServiceReference reference) {
 		return classes;
 	}
 
 	/**
-	 * Create service provider TCCL advice. Subclasses should extend this based on their configuration (i.e. is a static
-	 * proxy or is it dynamic).
+	 * Create service provider TCCL advice. Subclasses should extend this based
+	 * on their configuration (i.e. is a static proxy or is it dynamic).
 	 * 
 	 * @param reference service reference
 	 * @return AOP advice
@@ -144,7 +144,8 @@ abstract class AbstractServiceProxyCreator implements ServiceProxyCreator {
 	abstract Advice createServiceProviderTCCLAdvice(ServiceReference reference);
 
 	/**
-	 * Create a dispatcher interceptor that actually execute the call on the target service.
+	 * Create a dispatcher interceptor that actually execute the call on the
+	 * target service.
 	 * 
 	 * @param reference service reference
 	 * @return AOP advice

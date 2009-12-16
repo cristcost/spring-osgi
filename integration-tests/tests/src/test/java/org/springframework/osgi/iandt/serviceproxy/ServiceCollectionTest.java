@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,17 +43,17 @@ abstract class ServiceCollectionTest extends BaseIntegrationTest {
 	}
 
 	protected Collection createCollection() {
-		BundleDelegatingClassLoader classLoader =
-				BundleDelegatingClassLoader.createBundleClassLoaderFor(bundleContext.getBundle());
+		BundleDelegatingClassLoader classLoader = BundleDelegatingClassLoader.createBundleClassLoaderFor(bundleContext.getBundle());
 
-		OsgiServiceCollection collection = new OsgiServiceCollection(null, bundleContext, classLoader, null, false);
+		OsgiServiceCollection collection = new OsgiServiceCollection(null, bundleContext, classLoader, null);
 		ClassLoader tccl = Thread.currentThread().getContextClassLoader();
 		try {
 			Thread.currentThread().setContextClassLoader(classLoader);
 			collection.setRequiredAtStartup(false);
-			// collection.setInterfaces(new Class<?>[] { Date.class });
+			// collection.setInterfaces(new Class[] { Date.class });
 			collection.afterPropertiesSet();
-		} finally {
+		}
+		finally {
 			Thread.currentThread().setContextClassLoader(tccl);
 		}
 
@@ -73,7 +73,8 @@ abstract class ServiceCollectionTest extends BaseIntegrationTest {
 		ServiceRegistration reg = publishService(date);
 		try {
 			assertEquals(size + 1, collection.size());
-		} finally {
+		}
+		finally {
 			reg.unregister();
 		}
 
@@ -103,10 +104,12 @@ abstract class ServiceCollectionTest extends BaseIntegrationTest {
 			// be sure to use classes loaded by the same CL
 			assertTrue(myService instanceof Date);
 			assertEquals(time, ((Date) myService).getTime());
-		} finally {
+		}
+		finally {
 			reg.unregister();
 		}
 
 		assertEquals(size, collection.size());
 	}
+
 }

@@ -3,7 +3,7 @@
     <parent>
         <artifactId>spring-osgi</artifactId>
         <groupId>org.springframework.osgi</groupId>
-        <version>2.0.0.M2-SNAPSHOT</version>
+        <version>1.2.1</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.springframework.osgi</groupId>
@@ -11,12 +11,9 @@
     <packaging>jar</packaging>
     <name>Spring OSGi Integration Tests</name>
     <url>http://www.springframework.org/osgi</url>
-
-    <properties>
-       <bundlor.enabled>false</bundlor.enabled>
-    </properties>
   
     <dependencies>
+
         <!-- config admin (from Felix) -->
         <dependency>
 		   <groupId>org.apache.felix</groupId>
@@ -53,24 +50,6 @@
 		   </exclusions>
 		</dependency>
   
-  
-        <dependency>
-		   <groupId>org.apache.felix</groupId>
-		   <artifactId>org.apache.felix.eventadmin</artifactId>
-		   <version>1.0.0</version>
-		   <scope>provided</scope>
-		   <exclusions>
-            <exclusion>
-  			  <groupId>org.apache.felix</groupId>
-			  <artifactId>org.osgi.core</artifactId>
-            </exclusion>          
-            <exclusion>
-  			  <groupId>org.apache.felix</groupId>
-			  <artifactId>org.osgi.compendium</artifactId>
-            </exclusion>          
-		   </exclusions>
-		</dependency>
-		
 	    <dependency>
             <groupId>net.sourceforge.cglib</groupId>
             <artifactId>com.springsource.net.sf.cglib</artifactId>
@@ -94,12 +73,6 @@
             <artifactId>spring-osgi-test</artifactId>
             <scope>provided</scope>
         </dependency> 
-
-        <dependency>
-            <groupId>org.springframework.osgi</groupId>
-            <artifactId>spring-osgi-annotation</artifactId>
-            <scope>provided</scope>
-        </dependency>
     	
     	<dependency>
       		<groupId>org.aopalliance</groupId>
@@ -177,14 +150,7 @@
         
         <dependency>
             <groupId>org.springframework.osgi.iandt</groupId>
-            <artifactId>tccl.intf</artifactId>
-            <version>${project.parent.version}</version>
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.osgi.iandt</groupId>
-            <artifactId>proxy.listener</artifactId>
+            <artifactId>tccl</artifactId>
             <version>${project.parent.version}</version>
             <scope>provided</scope>
         </dependency>
@@ -270,32 +236,28 @@
 		  <groupId>org.springframework.osgi</groupId>
 		  <artifactId>spring-osgi-web</artifactId>
 		  <scope>test</scope>
-		</dependency>
-
-        <dependency>
-           <groupId>org.springframework.osgi.iandt</groupId>
-           <artifactId>annotation.proxy</artifactId>
-           <version>${project.parent.version}</version>                    
-           <scope>provided</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.osgi.iandt</groupId>
-            <artifactId>annotation.proxy</artifactId>
-            <version>${project.parent.version}</version>
-            <scope>compile</scope>
-        </dependency>
-        
-        <dependency>
-            <groupId>org.springframework.osgi.iandt</groupId>
-            <artifactId>component.scan.bundle</artifactId>
-            <version>${project.parent.version}</version>
-            <scope>compile</scope>
-        </dependency>
-			
+		</dependency>	
+		
     </dependencies>
 
 
+
+    <profiles>
+        <profile>
+            <id>jdk-1.5+</id>
+            <activation>
+                <jdk>!1.4</jdk>
+            </activation>
+            <dependencies>
+                <dependency>
+                    <groupId>org.springframework.osgi.iandt</groupId>
+                    <artifactId>annotation.proxy</artifactId>
+					<version>${project.parent.version}</version>                    
+                    <scope>provided</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+    </profiles>
 
     <build>
         <plugins>

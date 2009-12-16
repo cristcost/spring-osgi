@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import org.apache.commons.logging.LogFactory;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
-import org.springframework.osgi.context.support.internal.classloader.ClassLoaderFactory;
+import org.springframework.osgi.context.internal.classloader.ClassLoaderFactory;
 import org.springframework.osgi.service.importer.support.internal.aop.ServiceInvoker;
 import org.springframework.osgi.service.importer.support.internal.aop.ServiceStaticInterceptor;
 import org.springframework.osgi.service.util.internal.aop.ServiceTCCLInterceptor;
@@ -46,8 +46,7 @@ class StaticServiceProxyCreator extends AbstractServiceProxyCreator {
 	private final boolean greedyProxying;
 	/** should greedy proxying consider just interfaces ? */
 	private final boolean interfacesOnlyProxying;
-	/** use SpringDM or Blueprint exceptions ? */
-	private final boolean useBlueprintExceptions;
+
 
 	/**
 	 * Constructs a new <code>StaticServiceProxyCreator</code> instance.
@@ -58,12 +57,10 @@ class StaticServiceProxyCreator extends AbstractServiceProxyCreator {
 	 * @param iccl
 	 * @param greedyProxying
 	 */
-	StaticServiceProxyCreator(Class<?>[] classes, ClassLoader aopClassLoader, ClassLoader bundleClassLoader,
-			BundleContext bundleContext, ImportContextClassLoaderEnum iccl, boolean greedyProxying,
-			boolean useBlueprintExceptions) {
+	StaticServiceProxyCreator(Class[] classes, ClassLoader aopClassLoader, ClassLoader bundleClassLoader,
+			BundleContext bundleContext, ImportContextClassLoader iccl, boolean greedyProxying) {
 		super(classes, aopClassLoader, bundleClassLoader, bundleContext, iccl);
 		this.greedyProxying = greedyProxying;
-		this.useBlueprintExceptions = useBlueprintExceptions;
 
 		boolean onlyInterfaces = true;
 
@@ -82,9 +79,7 @@ class StaticServiceProxyCreator extends AbstractServiceProxyCreator {
 	}
 
 	ServiceInvoker createDispatcherInterceptor(ServiceReference reference) {
-		ServiceStaticInterceptor interceptor = new ServiceStaticInterceptor(bundleContext, reference);
-		interceptor.setUseBlueprintExceptions(useBlueprintExceptions);
-		return interceptor;
+		return new ServiceStaticInterceptor(bundleContext, reference);
 	}
 
 	Advice createServiceProviderTCCLAdvice(ServiceReference reference) {
@@ -103,7 +98,7 @@ class StaticServiceProxyCreator extends AbstractServiceProxyCreator {
 	 * @param ref
 	 * @return
 	 */
-	Class<?>[] discoverProxyClasses(ServiceReference ref) {
+	Class[] discoverProxyClasses(ServiceReference ref) {
 		boolean trace = log.isTraceEnabled();
 
 		if (trace)
@@ -115,7 +110,7 @@ class StaticServiceProxyCreator extends AbstractServiceProxyCreator {
 			log.trace("Discovered raw classes " + ObjectUtils.nullSafeToString(classNames));
 
 		// try to get as many classes as possible
-		Class<?>[] classes = ClassUtils.loadClassesIfPossible(classNames, classLoader);
+		Class[] classes = ClassUtils.loadClasses(classNames, classLoader);
 
 		if (trace)
 			log.trace("Visible classes are " + ObjectUtils.nullSafeToString(classes));
@@ -128,9 +123,9 @@ class StaticServiceProxyCreator extends AbstractServiceProxyCreator {
 
 		// remove classes if needed
 		if (interfacesOnlyProxying) {
-			Set<Class<?>> clazzes = new LinkedHashSet<Class<?>>(classes.length);
+			Set clazzes = new LinkedHashSet(classes.length);
 			for (int classIndex = 0; classIndex < classes.length; classIndex++) {
-				Class<?> clazz = classes[classIndex];
+				Class clazz = classes[classIndex];
 				if (clazz.isInterface())
 					clazzes.add(clazz);
 			}
@@ -149,9 +144,9 @@ class StaticServiceProxyCreator extends AbstractServiceProxyCreator {
 		return classes;
 	}
 
-	Class<?>[] getInterfaces(ServiceReference reference) {
+	Class[] getInterfaces(ServiceReference reference) {
 		if (greedyProxying) {
-			Class<?>[] clazzes = discoverProxyClasses(reference);
+			Class[] clazzes = discoverProxyClasses(reference);
 			if (log.isTraceEnabled())
 				log.trace("generating 'greedy' service proxy using classes " + ObjectUtils.nullSafeToString(clazzes)
 						+ " over " + ObjectUtils.nullSafeToString(this.classes));

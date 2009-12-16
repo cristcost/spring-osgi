@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,17 +32,17 @@ import org.springframework.osgi.util.OsgiFilterUtils;
 import org.springframework.osgi.util.internal.ClassUtils;
 import org.springframework.util.Assert;
 import org.springframework.util.ObjectUtils;
-import org.springframework.util.StringUtils;
 
 /**
- * Base class for importing OSGi services. Provides the common properties and contracts between importers.
+ * Base class for importing OSGi services. Provides the common properties and
+ * contracts between importers.
  * 
  * @author Costin Leau
  * @author Adrian Colyer
  * @author Hal Hildebrand
  */
-public abstract class AbstractOsgiServiceImportFactoryBean implements FactoryBean<Object>, InitializingBean,
-		DisposableBean, BundleContextAware, BeanClassLoaderAware, BeanNameAware {
+public abstract class AbstractOsgiServiceImportFactoryBean implements FactoryBean, InitializingBean, DisposableBean,
+		BundleContextAware, BeanClassLoaderAware, BeanNameAware {
 
 	private static final Log log = LogFactory.getLog(AbstractOsgiServiceImportFactoryBean.class);
 
@@ -51,10 +51,10 @@ public abstract class AbstractOsgiServiceImportFactoryBean implements FactoryBea
 
 	private BundleContext bundleContext;
 
-	private ImportContextClassLoaderEnum contextClassLoader = ImportContextClassLoaderEnum.CLIENT;
+	private ImportContextClassLoader contextClassLoader = ImportContextClassLoader.CLIENT;
 
 	// not required to be an interface, but usually should be...
-	private Class<?>[] interfaces;
+	private Class[] interfaces;
 
 	// filter used to narrow service matches, may be null
 	private String filter;
@@ -69,36 +69,31 @@ public abstract class AbstractOsgiServiceImportFactoryBean implements FactoryBea
 	/** Service Bean property of the OSGi service * */
 	private String serviceBeanName;
 
-	private Availability availability = Availability.MANDATORY;
+	private Cardinality cardinality;
 
 	/** bean name */
 	private String beanName = "";
 
+
 	public void afterPropertiesSet() {
 		Assert.notNull(this.bundleContext, "Required 'bundleContext' property was not set.");
 		Assert.notNull(classLoader, "Required 'classLoader' property was not set.");
-		Assert.isTrue(!ObjectUtils.isEmpty(interfaces) || StringUtils.hasText(filter)
-				|| StringUtils.hasText(serviceBeanName),
-				"At least the interface or filter or service name needs to be defined to import an OSGi service");
-		if (ObjectUtils.isEmpty(interfaces)) {
-			log.warn("OSGi importer [" + beanName + "] definition contains no interfaces: "
-					+ "all invocations will be executed on the proxy and not on the backing service");
-		}
+		Assert.notEmpty(interfaces, "Required 'interfaces' property was not set.");
+		Assert.noNullElements(interfaces, "Null 'interfaces' entries not allowed.");
 
 		// validate specified classes
 		Assert.isTrue(!ClassUtils.containsUnrelatedClasses(interfaces),
-				"More then one concrete class specified; cannot create proxy.");
+			"more then one concrete class specified; cannot create proxy.");
 
 		this.listeners = (listeners == null ? new OsgiServiceLifecycleListener[0] : listeners);
-		this.interfaces = (interfaces == null ? new Class<?>[0] : interfaces);
-		this.filter = (StringUtils.hasText(filter) ? filter : "");
 
 		getUnifiedFilter(); // eager initialization of the cache to catch filter errors
 	}
 
 	/**
-	 * Assembles the configuration properties into one unified OSGi filter. Note that this implementation creates the
-	 * filter on the first call and caches it afterwards.
+	 * Assembles the configuration properties into one unified OSGi filter. Note
+	 * that this implementation creates the filter on the first call and caches
+	 * it afterwards.
 	 * 
 	 * @return unified filter based on this factory bean configuration
 	 */
@@ -107,40 +102,16 @@ public abstract class AbstractOsgiServiceImportFactoryBean implements FactoryBea
 			return unifiedFilter;
 		}
 
-		String filterWithClasses =
-				(!ObjectUtils.isEmpty(interfaces) ? OsgiFilterUtils.unifyFilter(interfaces, filter) : filter);
+		String filterWithClasses = OsgiFilterUtils.unifyFilter(interfaces, filter);
 
 		boolean trace = log.isTraceEnabled();
 		if (trace)
 			log.trace("Unified classes=" + ObjectUtils.nullSafeToString(interfaces) + " and filter=[" + filter
 					+ "]  in=[" + filterWithClasses + "]");
 
-		// add the serviceBeanName/Blueprint component name constraint
-		String nameFilter;
-		if (StringUtils.hasText(serviceBeanName)) {
-			StringBuilder nsFilter = new StringBuilder("(|(");
-			nsFilter.append(OsgiServicePropertiesResolver.BEAN_NAME_PROPERTY_KEY);
-			nsFilter.append("=");
-			nsFilter.append(serviceBeanName);
-			nsFilter.append(")(");
-			nsFilter.append(OsgiServicePropertiesResolver.BLUEPRINT_COMP_NAME);
-			nsFilter.append("=");
-			nsFilter.append(serviceBeanName);
-			nsFilter.append("))");
-			nameFilter = nsFilter.toString();
-		} else {
-			nameFilter = null;
-		}
-
-		String filterWithServiceBeanName = filterWithClasses;
-		if (nameFilter != null) {
-			StringBuilder finalFilter = new StringBuilder();
-			finalFilter.append("(&");
-			finalFilter.append(filterWithClasses);
-			finalFilter.append(nameFilter);
-			finalFilter.append(")");
-			filterWithServiceBeanName = finalFilter.toString();
-		}
+		// add the serviceBeanName constraint
+		String filterWithServiceBeanName = OsgiFilterUtils.unifyFilter(
+			OsgiServicePropertiesResolver.BEAN_NAME_PROPERTY_KEY, new String[] { serviceBeanName }, filterWithClasses);
 
 		if (trace)
 			log.trace("Unified serviceBeanName [" + ObjectUtils.nullSafeToString(serviceBeanName) + "] and filter=["
@@ -157,31 +128,19 @@ public abstract class AbstractOsgiServiceImportFactoryBean implements FactoryBea
 	 * 
 	 * @param interfaces array of advertised classes.
 	 */
-	public void setInterfaces(Class<?>[] interfaces) {
+	public void setInterfaces(Class[] interfaces) {
 		this.interfaces = interfaces;
 	}
 
 	/**
-	 * Sets the thread context class loader management strategy to use for services imported by this service. By default
+	 * Sets the thread context class loader management strategy to use for
+	 * services imported by this service. By default
 	 * {@link ImportContextClassLoader#CLIENT} is used.
 	 * 
 	 * @param contextClassLoader import context class loader management strategy
 	 * @see ImportContextClassLoader
-	 * @deprecated As of Spring DM 2.0, replaced by {@link #setImportContextClassLoader(ImportContextClassLoaderEnum))}
 	 */
 	public void setContextClassLoader(ImportContextClassLoader contextClassLoader) {
-		Assert.notNull(contextClassLoader);
-		this.contextClassLoader = contextClassLoader.getImportContextClassLoaderEnum();
-	}
-
-	/**
-	 * Sets the thread context class loader management strategy to use for services imported by this service. By default
-	 * {@link ImportContextClassLoaderEnum#CLIENT} is used.
-	 * 
-	 * @param contextClassLoader import context class loader management strategy
-	 * @see ImportContextClassLoader
-	 */
-	public void setImportContextClassLoader(ImportContextClassLoaderEnum contextClassLoader) {
 		Assert.notNull(contextClassLoader);
 		this.contextClassLoader = contextClassLoader;
 	}
@@ -191,8 +150,9 @@ public abstract class AbstractOsgiServiceImportFactoryBean implements FactoryBea
 	}
 
 	/**
-	 * Sets the OSGi service filter. The filter will be concatenated with the rest of the configuration properties
-	 * specified (such as interfaces) so there is no need to include them in the filter.
+	 * Sets the OSGi service filter. The filter will be concatenated with the
+	 * rest of the configuration properties specified (such as interfaces) so
+	 * there is no need to include them in the filter.
 	 * 
 	 * @param filter OSGi filter describing the importing OSGi service
 	 */
@@ -201,7 +161,8 @@ public abstract class AbstractOsgiServiceImportFactoryBean implements FactoryBea
 	}
 
 	/**
-	 * Sets the lifecycle listeners interested in receiving events for this importer.
+	 * Sets the lifecycle listeners interested in receiving events for this
+	 * importer.
 	 * 
 	 * @param listeners importer listeners
 	 */
@@ -210,9 +171,10 @@ public abstract class AbstractOsgiServiceImportFactoryBean implements FactoryBea
 	}
 
 	/**
-	 * Sets the OSGi service bean name. This setting should be normally used when the imported service has been exported
-	 * by Spring DM exporter. You may specify additional filtering criteria if needed (using the filter property) but
-	 * this is not required.
+	 * Sets the OSGi service bean name. This setting should be normally used
+	 * when the imported service has been exported by Spring DM exporter. You
+	 * may specify additional filtering criteria if needed (using the filter
+	 * property) but this is not required.
 	 * 
 	 * @param serviceBeanName importer service bean name
 	 */
@@ -252,7 +214,7 @@ public abstract class AbstractOsgiServiceImportFactoryBean implements FactoryBea
 	 * 
 	 * @return interfaces advertised by services in the OSGi space
 	 */
-	public Class<?>[] getInterfaces() {
+	public Class[] getInterfaces() {
 		return interfaces;
 	}
 
@@ -278,18 +240,8 @@ public abstract class AbstractOsgiServiceImportFactoryBean implements FactoryBea
 	 * Returns the context class loader management strategy.
 	 * 
 	 * @return the context class loader management strategy
-	 * @deprecated As of Spring DM 2.0, replaced by {@link #getImportContextClassLoader()}
 	 */
 	public ImportContextClassLoader getContextClassLoader() {
-		return ImportContextClassLoader.getImportContextClassLoader(contextClassLoader);
-	}
-
-	/**
-	 * Returns the context class loader management strategy.
-	 * 
-	 * @return the context class loader management strategy
-	 */
-	public ImportContextClassLoaderEnum getImportContextClassLoader() {
 		return contextClassLoader;
 	}
 
@@ -297,40 +249,25 @@ public abstract class AbstractOsgiServiceImportFactoryBean implements FactoryBea
 	 * Returns the cardinality used by this importer.
 	 * 
 	 * @return importer cardinality
-	 * @deprecated As of Spring DM 2.0, replaced by {@link #getAvailability()}
 	 */
 	public Cardinality getCardinality() {
-		return getInternalCardinality();
-	}
-
-	abstract Cardinality getInternalCardinality();
-
-	public Availability getAvailability() {
-		return availability;
+		return cardinality;
 	}
 
 	/**
-	 * Sets the importer cardinality (0..1, 1..1, 0..N, or 1..N). Default is 1..X.
+	 * Sets the importer cardinality (0..1, 1..1, 0..N, or 1..N). Default is
+	 * 1..X.
 	 * 
 	 * @param cardinality importer cardinality.
-	 * @deprecated As of Spring DM 2.0, replaced by {@link #setAvailability(Availability)}
 	 */
 	public void setCardinality(Cardinality cardinality) {
 		Assert.notNull(cardinality);
-		this.availability = cardinality.getAvailability();
+		this.cardinality = cardinality;
 	}
 
 	/**
-	 * Sets the importer availability. Default is mandatory ({@link Availability#MANDATORY}
-	 * @param availability
-	 */
-	public void setAvailability(Availability availability) {
-		Assert.notNull(availability);
-		this.availability = availability;
-	}
-
-	/**
-	 * Returns the bean name associated with the instance of this class (when running inside the Spring container).
+	 * Returns the bean name associated with the instance of this class (when
+	 * running inside the Spring container).
 	 * 
 	 * @return component bean name
 	 */

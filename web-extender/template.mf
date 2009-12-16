@@ -11,4 +11,3 @@ Import-Template:
  org.springframework.*;version=${spring.version.range},
  *;resolution:=optional
 Unversioned-Imports: 
-Bundle-Activator: org.springframework.osgi.web.extender.internal.activator.WarLoaderListener

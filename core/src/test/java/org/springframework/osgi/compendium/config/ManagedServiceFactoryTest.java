@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,8 +36,8 @@ import org.springframework.osgi.compendium.internal.cm.ManagedServiceFactoryFact
 import org.springframework.osgi.compendium.internal.cm.UpdateStrategy;
 import org.springframework.osgi.context.support.BundleContextAwareProcessor;
 import org.springframework.osgi.mock.MockBundleContext;
-import org.springframework.osgi.service.exporter.support.DefaultInterfaceDetector;
-import org.springframework.osgi.service.exporter.support.ExportContextClassLoaderEnum;
+import org.springframework.osgi.service.exporter.support.AutoExport;
+import org.springframework.osgi.service.exporter.support.ExportContextClassLoader;
 
 /**
  * Parsing test for ManagedServiceFactory/<managed-service-factory/>
@@ -47,6 +47,7 @@ import org.springframework.osgi.service.exporter.support.ExportContextClassLoade
 public class ManagedServiceFactoryTest extends TestCase {
 
 	private GenericApplicationContext appContext;
+
 
 	protected void setUp() throws Exception {
 
@@ -90,21 +91,21 @@ public class ManagedServiceFactoryTest extends TestCase {
 	public void testBasicExportAttributes() throws Exception {
 		Object factory = appContext.getBean("&simple");
 		Object intfs = TestUtils.getFieldValue(factory, "interfaces");
-		assertTrue(Arrays.equals((Object[]) intfs, new Class<?>[] { Object.class }));
-		Object autoExport = TestUtils.getFieldValue(factory, "detector");
-		assertEquals(DefaultInterfaceDetector.ALL_CLASSES, autoExport);
+		assertTrue(Arrays.equals((Object[]) intfs, new Class[] { Object.class }));
+		Object autoExport = TestUtils.getFieldValue(factory, "autoExport");
+		assertEquals(AutoExport.ALL_CLASSES, autoExport);
 	}
 
 	public void testNestedInterfaceElement() throws Exception {
 		Object factory = appContext.getBean("&ccl");
 		Object intfs = TestUtils.getFieldValue(factory, "interfaces");
-		assertTrue(Arrays.equals((Object[]) intfs, new Class<?>[] { Map.class, Serializable.class }));
+		assertTrue(Arrays.equals((Object[]) intfs, new Class[] { Map.class, Serializable.class }));
 	}
 
 	public void testCCLAttribute() throws Exception {
 		Object factory = appContext.getBean("&ccl");
 		Object ccl = TestUtils.getFieldValue(factory, "ccl");
-		assertEquals(ExportContextClassLoaderEnum.SERVICE_PROVIDER, ccl);
+		assertEquals(ExportContextClassLoader.SERVICE_PROVIDER, ccl);
 	}
 
 	public void testContainerUpdateAttr() throws Exception {

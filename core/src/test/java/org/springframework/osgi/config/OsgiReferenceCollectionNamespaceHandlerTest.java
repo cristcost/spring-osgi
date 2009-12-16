@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ import org.springframework.osgi.service.importer.support.internal.collection.Osg
 import org.springframework.osgi.service.importer.support.internal.collection.OsgiServiceSet;
 import org.springframework.osgi.service.importer.support.internal.collection.OsgiServiceSortedList;
 import org.springframework.osgi.service.importer.support.internal.collection.OsgiServiceSortedSet;
-import org.springframework.osgi.service.importer.support.internal.util.ServiceReferenceComparator;
+import org.springframework.osgi.service.importer.support.internal.collection.comparator.ServiceReferenceComparator;
 
 /**
  * @author Costin Leau
@@ -151,8 +151,8 @@ public class OsgiReferenceCollectionNamespaceHandlerTest extends TestCase {
 		assertFalse(bean instanceof OsgiServiceSortedList);
 		assertTrue(bean instanceof List);
 
-		Class<?>[] intfs = getInterfaces(factoryBean);
-		assertTrue(Arrays.equals(new Class<?>[] { Serializable.class }, intfs));
+		Class[] intfs = getInterfaces(factoryBean);
+		assertTrue(Arrays.equals(new Class[] { Serializable.class }, intfs));
 	}
 
 	public void testSimpleSortedSet() {
@@ -163,8 +163,8 @@ public class OsgiReferenceCollectionNamespaceHandlerTest extends TestCase {
 		assertFalse(bean instanceof OsgiServiceSortedSet);
 		assertTrue(bean instanceof SortedSet);
 
-		Class<?>[] intfs = getInterfaces(factoryBean);
-		assertTrue(Arrays.equals(new Class<?>[] { Externalizable.class }, intfs));
+		Class[] intfs = getInterfaces(factoryBean);
+		assertTrue(Arrays.equals(new Class[] { Externalizable.class }, intfs));
 	}
 
 	public void testSortedSetWithNaturalOrderingOnRefs() throws Exception {
@@ -176,8 +176,8 @@ public class OsgiReferenceCollectionNamespaceHandlerTest extends TestCase {
 		assertNotNull(comp);
 		assertSame(ServiceReferenceComparator.class, comp.getClass());
 
-		Class<?>[] intfs = getInterfaces(factoryBean);
-		assertTrue(Arrays.equals(new Class<?>[] { Externalizable.class }, intfs));
+		Class[] intfs = getInterfaces(factoryBean);
+		assertTrue(Arrays.equals(new Class[] { Externalizable.class }, intfs));
 
 		OsgiServiceLifecycleListener[] listeners = getListeners(factoryBean);
 		assertEquals(2, listeners.length);
@@ -198,11 +198,11 @@ public class OsgiReferenceCollectionNamespaceHandlerTest extends TestCase {
 		assertFalse(bean instanceof OsgiServiceSortedList);
 		assertTrue(bean instanceof List);
 
-		Class<?>[] intfs = getInterfaces(factoryBean);
-		assertTrue(Arrays.equals(new Class<?>[] { Externalizable.class }, intfs));
+		Class[] intfs = getInterfaces(factoryBean);
+		assertTrue(Arrays.equals(new Class[] { Externalizable.class }, intfs));
 	}
 
-	private Class<?>[] getInterfaces(Object proxy) {
+	private Class[] getInterfaces(Object proxy) {
 		return (Class[]) TestUtils.getFieldValue(proxy, "interfaces");
 	}
 
@@ -213,6 +213,4 @@ public class OsgiReferenceCollectionNamespaceHandlerTest extends TestCase {
 	private OsgiServiceLifecycleListener[] getListeners(Object proxy) {
 		return (OsgiServiceLifecycleListener[]) TestUtils.getFieldValue(proxy, "listeners");
 	}
-	
-	
 }

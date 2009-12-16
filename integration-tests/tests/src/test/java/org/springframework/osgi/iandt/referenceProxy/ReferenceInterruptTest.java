@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ public class ReferenceInterruptTest extends BaseIntegrationTest {
 		proxyFactory.setBundleContext(bundleContext);
 		proxyFactory.setCardinality(Cardinality.C_0__1);
 		proxyFactory.setContextClassLoader(ImportContextClassLoader.UNMANAGED);
-		proxyFactory.setInterfaces(new Class<?>[] { Shape.class });
+		proxyFactory.setInterfaces(new Class[] { Shape.class });
 		proxyFactory.setTimeout(initialWait);
 		proxyFactory.afterPropertiesSet();
 

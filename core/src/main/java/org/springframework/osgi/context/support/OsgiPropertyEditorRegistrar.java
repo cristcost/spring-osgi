@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,7 @@ package org.springframework.osgi.context.support;
 import java.beans.PropertyEditor;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Dictionary;
-import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -30,10 +29,6 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.PropertyEditorRegistrar;
 import org.springframework.beans.PropertyEditorRegistry;
-import org.springframework.beans.propertyeditors.ClassArrayEditor;
-import org.springframework.beans.propertyeditors.ClassEditor;
-import org.springframework.beans.propertyeditors.CustomMapEditor;
-import org.springframework.beans.propertyeditors.PropertiesEditor;
 import org.springframework.osgi.context.BundleContextAware;
 import org.springframework.util.Assert;
 
@@ -49,18 +44,19 @@ class OsgiPropertyEditorRegistrar implements PropertyEditorRegistrar {
 
 	private static final Log log = LogFactory.getLog(OsgiPropertyEditorRegistrar.class);
 
-	private static final String PROPERTIES_FILE =
-			"/org/springframework/osgi/context/support/internal/default-property-editors.properties";
+	private static final String PROPERTIES_FILE = "/org/springframework/osgi/context/support/internal/default-property-editors.properties";
 
-	private final Map<Class<?>, Class<? extends PropertyEditor>> editors;
-	private final ClassLoader userClassLoader;
+	private final Map editors;
 
-	OsgiPropertyEditorRegistrar(ClassLoader userClassLoader) {
-		this.userClassLoader = userClassLoader;
+	OsgiPropertyEditorRegistrar() {
+		this(OsgiPropertyEditorRegistrar.class.getClassLoader());
+	}
 
+	OsgiPropertyEditorRegistrar(ClassLoader classLoader) {
 		// load properties
 		Properties editorsConfig = new Properties();
 		InputStream stream = null;
+
 		try {
 			stream = getClass().getResourceAsStream(PROPERTIES_FILE);
 			editorsConfig.load(stream);
@@ -78,23 +74,21 @@ class OsgiPropertyEditorRegistrar implements PropertyEditorRegistrar {
 
 		if (log.isTraceEnabled())
 			log.trace("Loaded property editors configuration " + editorsConfig);
-		editors = new LinkedHashMap<Class<?>, Class<? extends PropertyEditor>>(editorsConfig.size());
+		editors = new LinkedHashMap(editorsConfig.size());
 
-		createEditors(editorsConfig);
+		createEditors(classLoader, editorsConfig);
 	}
 
-	@SuppressWarnings("unchecked")
-	private void createEditors(Properties configuration) {
+	private void createEditors(ClassLoader classLoader, Properties configuration) {
 
 		boolean trace = log.isTraceEnabled();
-		// load properties using this class class loader
-		ClassLoader classLoader = getClass().getClassLoader();
 
-		for (Map.Entry<Object, Object> entry : configuration.entrySet()) {
+		for (Iterator iterator = configuration.entrySet().iterator(); iterator.hasNext();) {
+			Map.Entry entry = (Map.Entry) iterator.next();
 			// key represents type
-			Class<?> key;
+			Class key;
 			// value represents property editor
-			Class<?> editorClass;
+			Class editorClass;
 			try {
 				key = classLoader.loadClass((String) entry.getKey());
 				editorClass = classLoader.loadClass((String) entry.getValue());
@@ -106,22 +100,17 @@ class OsgiPropertyEditorRegistrar implements PropertyEditorRegistrar {
 
 			if (trace)
 				log.trace("Adding property editor[" + editorClass + "] for type[" + key + "]");
-			editors.put(key, (Class<? extends PropertyEditor>) editorClass);
+			editors.put(key, editorClass);
 		}
 	}
 
 	public void registerCustomEditors(PropertyEditorRegistry registry) {
-		for (Map.Entry<Class<?>, Class<? extends PropertyEditor>> entry : editors.entrySet()) {
-			Class<?> type = entry.getKey();
+		for (Iterator iterator = editors.entrySet().iterator(); iterator.hasNext();) {
+			Map.Entry editor = (Map.Entry) iterator.next();
+			Class type = (Class) editor.getKey();
 			PropertyEditor editorInstance;
-			editorInstance = BeanUtils.instantiate(entry.getValue());
+			editorInstance = (PropertyEditor) BeanUtils.instantiateClass(((Class) editor.getValue()));
 			registry.registerCustomEditor(type, editorInstance);
 		}
-
-		// register non-externalized types
-		registry.registerCustomEditor(Dictionary.class, new CustomMapEditor(Hashtable.class));
-		registry.registerCustomEditor(Properties.class, new PropertiesEditor());
-		registry.registerCustomEditor(Class.class, new ClassEditor(userClassLoader));
-		registry.registerCustomEditor(Class[].class, new ClassArrayEditor(userClassLoader));
 	}
 }

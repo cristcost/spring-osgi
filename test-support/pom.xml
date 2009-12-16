@@ -2,12 +2,12 @@
   <parent>
     <artifactId>spring-osgi</artifactId>
     <groupId>org.springframework.osgi</groupId>
-    <version>2.0.0.M2-SNAPSHOT</version>
+    <version>1.2.1</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.springframework.osgi</groupId>
   <artifactId>spring-osgi-test</artifactId>
-  <packaging>jar</packaging>
+  <packaging>bundle</packaging>
   <name>Spring OSGi Testing Framework</name>
   <url>http://www.springframework.org/osgi</url>
   <description>
@@ -18,12 +18,23 @@
   <properties>
     <javadoc.loc>${basedir}/../docs/src/javadoc</javadoc.loc>
   
+    <spring.osgi.export>
+      !org.springframework.osgi.test.*internal*,
+      org.springframework.osgi.test*;version=${spring.osgi.export.version}
+    </spring.osgi.export>
+    <spring.osgi.private.pkg>
+		org.springframework.osgi.test.*internal*,
+		org.springframework.osgi.extender.internal.util*,
+		org.springframework.osgi.extender.support.internal*
+	</spring.osgi.private.pkg>
+	<spring.osgi.import.pkg>
+	  org.objectweb.asm*;version="[2,3)";resolution:=optional,
+	  javax.swing.*;resolution:=optional,
+	  org.eclipse.*;resolution:=optional,
+	  org.knopflerfish*;resolution:=optional,
+	  org.apache.felix.*;resolution:=optional
+	</spring.osgi.import.pkg>
 	<spring.osgi.symbolic.name>${symName.prefix}.test</spring.osgi.symbolic.name>
-	
-	<jarjar.run>on</jarjar.run>
-	<jarjar.keep>org.springframework.osgi.test.**</jarjar.keep>
-    <jarjar.dep>${maven.dependency.org.springframework.osgi.spring-osgi-extender..jar.path}</jarjar.dep>
-	
   </properties>
   
   <dependencies>
@@ -68,8 +79,7 @@
       <groupId>org.springframework.osgi</groupId>
       <artifactId>spring-osgi-extender</artifactId>
       <version>${project.parent.version}</version>
-      <classifier></classifier>
-      <optional>true</optional>
+	  <optional>true</optional>
     </dependency>
 
     <dependency>

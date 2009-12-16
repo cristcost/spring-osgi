@@ -3,7 +3,7 @@
   <parent>
     <artifactId>spring-osgi</artifactId>
     <groupId>org.springframework.osgi</groupId>
-    <version>2.0.0.M2-SNAPSHOT</version>
+    <version>1.2.1</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <artifactId>spring-osgi-integration-test-bundles</artifactId>
@@ -18,7 +18,6 @@
 	<spring.osgi.import.pkg>!org.springframework.osgi.iandt, *</spring.osgi.import.pkg>
 	<spring.osgi.export.pkg>${pom.artifactId}*</spring.osgi.export.pkg>
   	<clover.skip>true</clover.skip>
-    <bundlor.enabled>false</bundlor.enabled>  	
   </properties>
   
   <!-- shared dependencies -->
@@ -55,7 +54,6 @@
     <module>configuration.test.bundle</module>
     <module>extender.version.bundle</module>
     <module>config.bundle</module>
-    <module>tccl.intf.bundle</module>    
     <module>tccl.bundle</module>
     <module>config.file.with.dots.bundle</module>
     <module>proxy.creator.bundle</module>
@@ -63,19 +61,21 @@
     <module>jdk.proxy.bundle</module>
     <module>extender.listener.bundle</module>
     <module>namespace.own.consumer.bundle</module>
-    <module>proxy.listener</module>
     <module>export.import.dependency.bundle</module>
     <module>web.bundles</module>
-    <module>jdk5</module>
-    <!-- lazy bundles -->
-    <module>lazy.companion.bundle</module>
-    <module>lazy.basic</module>
-    <module>lazy.export.no.import</module>
-    <module>lazy.export.import</module>
-    <!-- blueprint bundles -->
-    <module>blueprint</module>
-    
   </modules>
+
+  <profiles>
+    <profile>
+      <id>jdk-1.5+</id>
+      <activation>
+        <jdk>!1.4</jdk>
+      </activation>
+      <modules>
+       <module>jdk5</module>
+	  </modules>
+   </profile>
+  </profiles>
 
  <build>
     <plugins>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,12 +61,7 @@ public @interface ServiceReference {
      * Whether or not to proxy greedily in collection references.
      */
     boolean greedyProxying() default false;
-    
-    /**
-     * Whether or not to create a 'sticky' (singular) service reference.
-     */
-    boolean sticky() default true;
-    
+
     /**
 	 * filter used to narrow service matches, may be null
 	 */

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.springframework.osgi.iandt.configopt;
 
 import java.awt.Shape;
 
-import org.springframework.osgi.iandt.BaseIntegrationTest;
 import org.springframework.osgi.test.AbstractConfigurableBundleCreatorTests;
 
 /**
@@ -27,10 +25,11 @@ import org.springframework.osgi.test.AbstractConfigurableBundleCreatorTests;
  * @author Costin Leau
  * 
  */
-public class ConfigFileWithDotsTest extends BaseIntegrationTest {
+public class ConfigFileWithDotsTest extends AbstractConfigurableBundleCreatorTests {
 
 	protected String[] getTestBundlesNames() {
-		return new String[] { "org.springframework.osgi.iandt, config-with-dots.bundle," + getSpringDMVersion() };
+		return new String[] { "org.springframework.osgi.iandt, config-with-dots.bundle,"
+				+ getSpringDMVersion() };
 	}
 
 	public void testShapeServicePublished() throws Exception {

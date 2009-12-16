@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,14 @@
 
 package org.springframework.osgi.service.importer.support.internal.aop;
 
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.Constants;
 import org.osgi.framework.Filter;
 import org.osgi.framework.ServiceEvent;
 import org.osgi.framework.ServiceListener;
@@ -40,11 +40,12 @@ import org.springframework.osgi.service.importer.ServiceProxyDestroyedException;
 import org.springframework.osgi.service.importer.event.OsgiServiceDependencyWaitEndedEvent;
 import org.springframework.osgi.service.importer.event.OsgiServiceDependencyWaitStartingEvent;
 import org.springframework.osgi.service.importer.event.OsgiServiceDependencyWaitTimedOutEvent;
+import org.springframework.osgi.service.importer.support.OsgiServiceProxyFactoryBean;
 import org.springframework.osgi.service.importer.support.internal.dependency.ImporterStateListener;
-import org.springframework.osgi.service.importer.support.internal.exception.BlueprintExceptionFactory;
 import org.springframework.osgi.service.importer.support.internal.support.DefaultRetryCallback;
 import org.springframework.osgi.service.importer.support.internal.support.RetryCallback;
 import org.springframework.osgi.service.importer.support.internal.support.RetryTemplate;
+import org.springframework.osgi.service.importer.support.internal.support.ServiceWrapper;
 import org.springframework.osgi.service.importer.support.internal.util.OsgiServiceBindingUtils;
 import org.springframework.osgi.util.OsgiListenerUtils;
 import org.springframework.osgi.util.OsgiServiceReferenceUtils;
@@ -52,13 +53,14 @@ import org.springframework.util.Assert;
 import org.springframework.util.ObjectUtils;
 
 /**
- * Interceptor adding dynamic behaviour for unary service (..1 cardinality). It will look for a service using the given
- * filter, retrying if the service is down or unavailable. Will dynamically rebound a new service, if one is available
- * with a higher service ranking and the interceptor is non sticky.
+ * Interceptor adding dynamic behaviour for unary service (..1 cardinality). It
+ * will look for a service using the given filter, retrying if the service is
+ * down or unavailable. Will dynamically rebound a new service, if one is
+ * available with a higher service ranking. <p/> <p/> In case no service is
+ * available, it will throw an exception.
  * 
- * <p/> In case no service is available, it will throw an exception.
- * 
- * <p/> <strong>Note</strong>: this is a stateful interceptor and should not be shared.
+ * <p/> <strong>Note</strong>: this is a stateful interceptor and should not be
+ * shared.
  * 
  * @author Costin Leau
  */
@@ -90,32 +92,19 @@ public class ServiceDynamicInterceptor extends ServiceInvoker implements Initial
 		}
 
 		protected void onMissingTarget() {
-			// send event
+			//send event
 			publishEvent(new OsgiServiceDependencyWaitStartingEvent(eventSource, dependency, this.getWaitTime()));
 		}
 	}
 
-	private class ServiceLookUpCallback extends DefaultRetryCallback<Object> {
+	private class ServiceLookUpCallback extends DefaultRetryCallback {
 
 		public Object doWithRetry() {
 			// before checking for a service, check whether the proxy is still valid
-			if (destroyed && !isDuringDestruction) {
+			if (destroyed && !isDuringDestruction)
 				throw new ServiceProxyDestroyedException();
-			}
 
-			return (holder != null ? holder.getService() : null);
-		}
-	}
-
-	private class ServiceReferenceLookUpCallback extends DefaultRetryCallback<ServiceReference> {
-
-		public ServiceReference doWithRetry() {
-			// before checking for a service, check whether the proxy is still valid
-			if (destroyed && !isDuringDestruction) {
-				throw new ServiceProxyDestroyedException();
-			}
-
-			return (holder != null ? holder.getReference() : null);
+			return (wrapper != null) ? wrapper.getService() : null;
 		}
 	}
 
@@ -131,139 +120,146 @@ public class ServiceDynamicInterceptor extends ServiceInvoker implements Initial
 	private class Listener implements ServiceListener {
 
 		public void serviceChanged(ServiceEvent event) {
-			boolean hasSecurity = (System.getSecurityManager() != null);
-			ClassLoader tccl = null;
-			if (hasSecurity) {
-				tccl = AccessController.doPrivileged(new PrivilegedAction<ClassLoader>() {
-					public ClassLoader run() {
-						ClassLoader cl = Thread.currentThread().getContextClassLoader();
-						Thread.currentThread().setContextClassLoader(classLoader);
-						return cl;
-					}
-				});
-			} else {
-				tccl = Thread.currentThread().getContextClassLoader();
-				Thread.currentThread().setContextClassLoader(classLoader);
-			}
+			ClassLoader tccl = Thread.currentThread().getContextClassLoader();
 			try {
+				Thread.currentThread().setContextClassLoader(classLoader);
 				ServiceReference ref = event.getServiceReference();
+
+				// service id
+				long serviceId = ((Long) ref.getProperty(Constants.SERVICE_ID)).longValue();
+				// service ranking
+				Integer rank = (Integer) ref.getProperty(Constants.SERVICE_RANKING);
+				int ranking = (rank == null ? 0 : rank.intValue());
 
 				boolean debug = log.isDebugEnabled();
 				boolean publicDebug = PUBLIC_LOGGER.isDebugEnabled();
 
 				switch (event.getType()) {
 
-				case (ServiceEvent.REGISTERED):
-					// same as ServiceEvent.REGISTERED
-				case (ServiceEvent.MODIFIED): {
-					// flag indicating if the service is bound or rebound
-					boolean servicePresent = (holder != null);
+					case (ServiceEvent.REGISTERED):
+						// same as ServiceEvent.REGISTERED
+					case (ServiceEvent.MODIFIED): {
+						// flag indicating if the service is bound or rebound
+						boolean servicePresent = false;
 
-					if (updateWrapperIfNecessary(ref)) {
-						// inform listeners
-						OsgiServiceBindingUtils.callListenersBind(proxy, ref, listeners);
-						// we have a bind
-						if (!servicePresent) {
-							notifySatisfiedStateListeners();
+						synchronized (lock) {
+							servicePresent = (wrapper != null && wrapper.isServiceAlive());
 						}
-					}
 
-					break;
-				}
-				case (ServiceEvent.UNREGISTERING): {
+						if (updateWrapperIfNecessary(ref, serviceId, ranking)) {
+							// inform listeners
+							OsgiServiceBindingUtils.callListenersBind(bundleContext, proxy, ref, listeners);
 
-					boolean serviceRemoved = false;
-					//
-					// used if the service goes down and there is no replacement
-					//
-					// since the listeners will require a valid proxy, the invalidation has to happen *after* calling
-					// the listeners
-					//
-					ReferenceHolder oldHolder = holder;
-
-					// remove service
-					if (holder != null && holder.equals(ref)) {
-						serviceRemoved = true;
-						holder = null;
-					}
-
-					ServiceReference newReference = null;
-
-					boolean isDestroyed = destroyed;
-
-					// discover a new reference only if we are still running
-					if (!isDestroyed) {
-						newReference =
-								OsgiServiceReferenceUtils.getServiceReference(bundleContext, filterClassName,
-										(filter == null ? null : filter.toString()));
-
-						// we have a rebind (a new service was bound)
-						// so another candidate has to be searched from the existing candidates
-						// - as they are alive already, we have to send an event for them ourselves
-						// MODIFIED will be used for clarity
-						if (newReference != null) {
-							// update the listeners (through a MODIFIED event
-							serviceChanged(new ServiceEvent(ServiceEvent.MODIFIED, newReference));
-						}
-					}
-
-					// if no new reference was found and the service was indeed removed (it was bound to the
-					// interceptor) then do an unbind
-					if (newReference == null && serviceRemoved) {
-						// reuse the old service until the listeners are notified
-						holder = oldHolder;
-
-						// inform listeners
-						OsgiServiceBindingUtils.callListenersUnbind(proxy, ref, listeners);
-
-						holder = null;
-
-						if (debug || publicDebug) {
-							String message = "Service reference [" + ref + "] was unregistered";
-							if (serviceRemoved) {
-								message += " and unbound from the service proxy";
-							} else {
-								message += " but did not affect the service proxy";
+							if (!servicePresent) {
+								notifySatisfiedStateListeners();
 							}
-							if (debug)
-								log.debug(message);
-							if (publicDebug)
-								PUBLIC_LOGGER.debug(message);
 						}
 
-						// update internal state listeners (unsatisfied event)
-						notifyUnsatisfiedStateListeners();
+						break;
 					}
+					case (ServiceEvent.UNREGISTERING): {
 
-					break;
+						boolean serviceRemoved = false;
+						/**
+						 * used if the service goes down and there is no
+						 * replacement
+						 */
+						/**
+						 * since the listeners will require a valid proxy, the
+						 * invalidation has to happen *after* calling the
+						 * listeners
+						 */
+						ServiceWrapper oldWrapper = wrapper;
+
+						synchronized (lock) {
+							// remove service
+							if (wrapper != null) {
+								if (serviceId == wrapper.getServiceId()) {
+									serviceRemoved = true;
+									wrapper = null;
+
+								}
+							}
+						}
+
+						ServiceReference newReference = null;
+
+						boolean isDestroyed = false;
+
+						synchronized (lock) {
+							isDestroyed = destroyed;
+						}
+
+						// discover a new reference only if we are still running
+						if (!isDestroyed) {
+							newReference = OsgiServiceReferenceUtils.getServiceReference(bundleContext,
+								filterClassName, (filter == null ? null : filter.toString()));
+
+							// we have a rebind (a new service was bound)
+							// so another candidate has to be searched from the existing candidates
+							// - as they are alive already, we have to send an event for them ourselves
+							// MODIFIED will be used for clarity
+							if (newReference != null) {
+								// update the listeners (through a MODIFIED event
+								serviceChanged(new ServiceEvent(ServiceEvent.MODIFIED, newReference));
+							}
+						}
+
+						// if no new reference was found and the service was indeed removed (it was bound to the interceptor)
+						// then do an unbind
+						if (newReference == null && serviceRemoved) {
+
+							// reuse the old service for the time being
+							synchronized (lock) {
+								wrapper = oldWrapper;
+							}
+
+							// inform listeners
+							OsgiServiceBindingUtils.callListenersUnbind(bundleContext, proxy, ref, listeners);
+
+							// clean up wrapper
+							synchronized (lock) {
+								wrapper = null;
+							}
+
+							if (debug || publicDebug) {
+								String message = "Service reference [" + ref + "] was unregistered";
+								if (serviceRemoved) {
+									message += " and unbound from the service proxy";
+								}
+								else {
+									message += " but did not affect the service proxy";
+								}
+								if (debug)
+									log.debug(message);
+								if (publicDebug)
+									PUBLIC_LOGGER.debug(message);
+							}
+
+							// update internal state listeners (unsatisfied event)
+							notifyUnsatisfiedStateListeners();
+						}
+
+						break;
+					}
+					default:
+						throw new IllegalArgumentException("unsupported event type");
 				}
-				default:
-					throw new IllegalArgumentException("unsupported event type");
-				}
-			} catch (Throwable e) {
+			}
+			catch (Throwable e) {
 				// The framework will swallow these exceptions without logging,
 				// so log them here
 				log.fatal("Exception during service event handling", e);
-			} finally {
-				final ClassLoader finalTccl = tccl;
-				if (hasSecurity) {
-					AccessController.doPrivileged(new PrivilegedAction<Object>() {
-						public Object run() {
-							Thread.currentThread().setContextClassLoader(finalTccl);
-							return null;
-						}
-					});
-				}
-				else {
-					Thread.currentThread().setContextClassLoader(finalTccl);
-				}
-
+			}
+			finally {
+				Thread.currentThread().setContextClassLoader(tccl);
 			}
 		}
 
 		private void notifySatisfiedStateListeners() {
 			synchronized (stateListeners) {
-				for (ImporterStateListener stateListener : stateListeners) {
+				for (Iterator iterator = stateListeners.iterator(); iterator.hasNext();) {
+					ImporterStateListener stateListener = (ImporterStateListener) iterator.next();
 					stateListener.importerSatisfied(eventSource, dependency);
 				}
 			}
@@ -271,24 +267,43 @@ public class ServiceDynamicInterceptor extends ServiceInvoker implements Initial
 
 		private void notifyUnsatisfiedStateListeners() {
 			synchronized (stateListeners) {
-				for (ImporterStateListener stateListener : stateListeners) {
+				for (Iterator iterator = stateListeners.iterator(); iterator.hasNext();) {
+					ImporterStateListener stateListener = (ImporterStateListener) iterator.next();
 					stateListener.importerUnsatisfied(eventSource, dependency);
 				}
 			}
 		}
 
-		private boolean updateWrapperIfNecessary(ServiceReference ref) {
+		private boolean updateWrapperIfNecessary(ServiceReference ref, long serviceId, int serviceRanking) {
 			boolean updated = false;
 			try {
-				if (holder == null || (!sticky && holder.isWorseThen(ref))) {
-					updated = true;
-					updateReferenceHolders(ref);
-				}
 				synchronized (lock) {
+					if (wrapper != null && wrapper.isServiceAlive()) {
+						// if there is a higher rank service
+						if (serviceRanking > wrapper.getServiceRanking()) {
+							updated = true;
+							updateReferenceHolders(ref);
+						}
+						// if equality, use the service id
+						if (serviceRanking == wrapper.getServiceRanking()) {
+							if (serviceId < wrapper.getServiceId()) {
+								updated = true;
+								updateReferenceHolders(ref);
+							}
+						}
+					}
+					// we don't have any valid services bounded yet so just bind
+					// the new
+					// one
+					else {
+						updated = true;
+						updateReferenceHolders(ref);
+					}
 					lock.notifyAll();
+					return updated;
 				}
-				return updated;
-			} finally {
+			}
+			finally {
 				boolean debug = log.isDebugEnabled();
 				boolean publicDebug = PUBLIC_LOGGER.isDebugEnabled();
 
@@ -312,16 +327,17 @@ public class ServiceDynamicInterceptor extends ServiceInvoker implements Initial
 		 * @param ref
 		 */
 		private void updateReferenceHolders(ServiceReference ref) {
-			holder = new ReferenceHolder(ref, bundleContext);
+			// no need for a lock since this method is called from a synchronized block
+			wrapper = new ServiceWrapper(ref, bundleContext);
 			referenceDelegate.swapDelegates(ref);
 		}
 	}
 
+
 	private static final int hashCode = ServiceDynamicInterceptor.class.hashCode() * 13;
 
 	/** public logger */
-	private static final Log PUBLIC_LOGGER =
-			LogFactory.getLog("org.springframework.osgi.service.importer.support.OsgiServiceProxyFactoryBean");
+	private static final Log PUBLIC_LOGGER = LogFactory.getLog(OsgiServiceProxyFactoryBean.class);
 
 	private final BundleContext bundleContext;
 
@@ -338,29 +354,29 @@ public class ServiceDynamicInterceptor extends ServiceInvoker implements Initial
 	private final ServiceListener listener;
 
 	/** mandatory flag */
-	private boolean mandatoryService = true;
+	private boolean serviceRequiredAtStartup = true;
 
 	/** flag indicating whether the destruction has started or not */
 	private boolean isDuringDestruction = false;
 
 	/** flag indicating whether the proxy is already destroyed or not */
-	private volatile boolean destroyed = false;
+	private boolean destroyed = false;
 
 	/** private lock */
 	/**
-	 * used for reading/setting property and sending notifications between the event listener and any threads waiting
-	 * for an OSGi service to appear
+	 * used for reading/setting property and sending notifications between the
+	 * event listener and any threads waiting for an OSGi service to appear
 	 */
 	private final Object lock = new Object();
 
-	/** service reference/service holder */
-	private volatile ReferenceHolder holder;
+	/** utility service wrapper */
+	private ServiceWrapper wrapper;
 
 	/** retry template */
 	private final RetryTemplate retryTemplate = new EventSenderRetryTemplate();
 
 	/** retry callback */
-	private final RetryCallback<Object> retryCallback = new ServiceLookUpCallback();
+	private final RetryCallback retryCallback = new ServiceLookUpCallback();
 
 	/** dependable service importer */
 	private Object eventSource;
@@ -381,11 +397,8 @@ public class ServiceDynamicInterceptor extends ServiceInvoker implements Initial
 	private OsgiServiceDependency dependency;
 
 	/** internal state listeners */
-	private List<ImporterStateListener> stateListeners = Collections.emptyList();
-	/** standard exception flag */
-	private boolean useBlueprintExceptions = false;
+	private List stateListeners = Collections.EMPTY_LIST;
 
-	private boolean sticky = false;
 
 	public ServiceDynamicInterceptor(BundleContext context, String filterClassName, Filter filter,
 			ClassLoader classLoader) {
@@ -403,41 +416,18 @@ public class ServiceDynamicInterceptor extends ServiceInvoker implements Initial
 
 		// nothing found
 		if (target == null) {
-			throw (useBlueprintExceptions ? BlueprintExceptionFactory.createServiceUnavailableException(filter)
-					: new ServiceUnavailableException(filter));
+			throw new ServiceUnavailableException(filter);
 		}
 		return target;
 	}
 
-	public ServiceReference getTargetReference() {
-		ServiceReference reference = lookupServiceReference();
-
-		// nothing found
-		if (reference == null) {
-			throw (useBlueprintExceptions ? BlueprintExceptionFactory.createServiceUnavailableException(filter)
-					: new ServiceUnavailableException(filter));
-		}
-		return reference;
-	}
-
 	/**
-	 * Looks the service by waiting the service to appear. Note this method should use the same lock as the listener
-	 * handling the service reference.
+	 * Look the service by waiting the service to appear. Note this method
+	 * should use the same lock as the listener handling the service reference.
 	 */
 	private Object lookupService() {
 		synchronized (lock) {
-			return retryTemplate.execute(retryCallback);
-		}
-	}
-
-	/**
-	 * Looks for the service reference to appear.
-	 * 
-	 * @return
-	 */
-	private ServiceReference lookupServiceReference() {
-		synchronized (lock) {
-			return retryTemplate.execute(new ServiceReferenceLookUpCallback());
+			return (Object) retryTemplate.execute(retryCallback);
 		}
 	}
 
@@ -447,12 +437,17 @@ public class ServiceDynamicInterceptor extends ServiceInvoker implements Initial
 				log.trace("Publishing event through publisher " + applicationEventPublisher);
 			try {
 				applicationEventPublisher.publishEvent(event);
-			} catch (IllegalStateException ise) {
-				log.debug("Event " + event + " not published as the publisher is not initialized - "
-						+ "usually this is caused by eager initialization of the importers by post processing", ise);
+			}
+			catch (IllegalStateException ise) {
+				log.debug(
+					"Event "
+							+ event
+							+ " not published as the publisher is not initialized - usually this is caused by eager initialization of the importers by post processing",
+					ise);
 			}
 
-		} else if (log.isTraceEnabled())
+		}
+		else if (log.isTraceEnabled())
 			log.trace("No application event publisher set; no events will be published");
 	}
 
@@ -462,54 +457,52 @@ public class ServiceDynamicInterceptor extends ServiceInvoker implements Initial
 
 		boolean debug = log.isDebugEnabled();
 
-		dependency = new DefaultOsgiServiceDependency(sourceName, filter, mandatoryService);
+		dependency = new DefaultOsgiServiceDependency(sourceName, filter, serviceRequiredAtStartup);
 
 		if (debug)
 			log.debug("Adding OSGi mandatoryListeners for services matching [" + filter + "]");
 		OsgiListenerUtils.addSingleServiceListener(bundleContext, listener, filter);
 
-		// inform listeners (in case no service is available)
-		synchronized (lock) {
-			if (referenceDelegate.getTargetServiceReference() == null) {
-				OsgiServiceBindingUtils.callListenersUnbind(null, null, listeners);
-			}
+		if (serviceRequiredAtStartup) {
+			if (debug)
+				log.debug("1..x cardinality - looking for service [" + filter + "] at startup...");
+
+			PUBLIC_LOGGER.info("Looking for mandatory OSGi service dependency for bean [" + sourceName
+					+ "] matching filter " + filter);
+			Object target = getTarget();
+			if (debug)
+				log.debug("Service retrieved " + target);
+
+			PUBLIC_LOGGER.info("Found mandatory OSGi service for bean [" + sourceName + "]");
 		}
 	}
 
 	public void destroy() {
 		OsgiListenerUtils.removeServiceListener(bundleContext, listener);
-		ServiceReference ref = null;
 		synchronized (lock) {
 			// set this flag first to make sure no rebind is done
 			destroyed = true;
 			isDuringDestruction = true;
-			if (holder != null) {
-				ref = holder.getReference();
-				// send unregistration event to the listener
-				listener.serviceChanged(new ServiceEvent(ServiceEvent.UNREGISTERING, ref));
+			if (wrapper != null) {
+				ServiceReference ref = wrapper.getReference();
+				if (ref != null) {
+					// send unregistration event to the listener
+					listener.serviceChanged(new ServiceEvent(ServiceEvent.UNREGISTERING, ref));
+				}
 			}
 			/** destruction process has ended */
 			isDuringDestruction = false;
 			// notify also any proxies that still wait on the service
 			lock.notifyAll();
 		}
-
-		// unget the service (help sorting out the bundles during shutdown)
-		if (ref != null) {
-			try {
-				bundleContext.ungetService(ref);
-			} catch (IllegalStateException ex) {
-				// it's okay if the context is invalid
-			}
-		}
-
 	}
 
 	/**
 	 * {@inheritDoc}
 	 * 
-	 * This particular interceptor returns a delegated service reference so that callers can keep the reference even if
-	 * the underlying target service reference changes in time.
+	 * This particular interceptor returns a delegated service reference so that
+	 * callers can keep the reference even if the underlying target service
+	 * reference changes in time.
 	 */
 	public ServiceReference getServiceReference() {
 		return referenceDelegate;
@@ -539,8 +532,8 @@ public class ServiceDynamicInterceptor extends ServiceInvoker implements Initial
 		this.sourceName = name;
 	}
 
-	public void setMandatoryService(boolean mandatoryService) {
-		this.mandatoryService = mandatoryService;
+	public void setRequiredAtStartup(boolean requiredAtStartup) {
+		this.serviceRequiredAtStartup = requiredAtStartup;
 	}
 
 	public void setProxy(Object proxy) {
@@ -556,23 +549,17 @@ public class ServiceDynamicInterceptor extends ServiceInvoker implements Initial
 		this.stateListeners = stateListeners;
 	}
 
-	public void setUseBlueprintExceptions(boolean useBlueprintExceptions) {
-		this.useBlueprintExceptions = useBlueprintExceptions;
-	}
-
-	public void setSticky(boolean sticky) {
-		this.sticky = sticky;
-	}
-
 	public boolean equals(Object other) {
 		if (this == other)
 			return true;
 		if (other instanceof ServiceDynamicInterceptor) {
 			ServiceDynamicInterceptor oth = (ServiceDynamicInterceptor) other;
-			return (mandatoryService == oth.mandatoryService && ObjectUtils.nullSafeEquals(holder, oth.holder)
+			return (serviceRequiredAtStartup == oth.serviceRequiredAtStartup
+					&& ObjectUtils.nullSafeEquals(wrapper, oth.wrapper)
 					&& ObjectUtils.nullSafeEquals(filter, oth.filter) && ObjectUtils.nullSafeEquals(retryTemplate,
-					oth.retryTemplate));
-		} else
+				oth.retryTemplate));
+		}
+		else
 			return false;
 	}
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,12 +22,15 @@ import org.osgi.framework.BundleContext;
 import org.osgi.framework.Filter;
 import org.springframework.osgi.service.importer.support.internal.aop.ServiceProxyCreator;
 
+
 /**
- * OSGi service dynamic collection - allows iterating while the underlying storage is being shrunk/expanded. This
- * collection is read-only - its content is being retrieved dynamically from the OSGi platform.
+ * OSGi service dynamic collection - allows iterating while the underlying
+ * storage is being shrunk/expanded. This collection is read-only - its content
+ * is being retrieved dynamically from the OSGi platform.
  * 
- * <p/> This collection and its iterators are thread-safe. That is, multiple threads can access the collection. However,
- * since the collection is read-only, it cannot be modified by the client.
+ * <p/> This collection and its iterators are thread-safe. That is, multiple
+ * threads can access the collection. However, since the collection is
+ * read-only, it cannot be modified by the client.
  * 
  * @author Costin Leau
  * 
@@ -42,13 +45,13 @@ public class OsgiServiceSortedSet extends OsgiServiceSet implements SortedSet {
 	private final Comparator comparator;
 
 	public OsgiServiceSortedSet(Filter filter, BundleContext context, ClassLoader classLoader,
-			ServiceProxyCreator proxyCreator, boolean useServiceReferences) {
-		this(filter, context, classLoader, null, proxyCreator, useServiceReferences);
+			ServiceProxyCreator proxyCreator) {
+		this(filter, context, classLoader, null, proxyCreator);
 	}
 
 	public OsgiServiceSortedSet(Filter filter, BundleContext context, ClassLoader classLoader, Comparator comparator,
-			ServiceProxyCreator proxyCreator, boolean useServiceReferences) {
-		super(filter, context, classLoader, proxyCreator, useServiceReferences);
+			ServiceProxyCreator proxyCreator) {
+		super(filter, context, classLoader, proxyCreator);
 		this.comparator = comparator;
 	}
 
@@ -62,22 +65,27 @@ public class OsgiServiceSortedSet extends OsgiServiceSet implements SortedSet {
 	}
 
 	public Object first() {
+		mandatoryServiceCheck();
 		return storage.first();
 	}
 
 	public Object last() {
+		mandatoryServiceCheck();
 		return storage.last();
 	}
 
 	public SortedSet tailSet(Object fromElement) {
+		mandatoryServiceCheck();
 		return storage.tailSet(fromElement);
 	}
 
 	public SortedSet headSet(Object toElement) {
+		mandatoryServiceCheck();
 		return storage.headSet(toElement);
 	}
 
 	public SortedSet subSet(Object fromElement, Object toElement) {
+		mandatoryServiceCheck();
 		return storage.subSet(fromElement, toElement);
 	}
 }

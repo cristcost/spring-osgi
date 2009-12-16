@@ -96,8 +96,8 @@
       <literal>META-INF/spring</literal> folder to be a valid Spring
       configuration file, and all directives (see below) take on their default
       values.</para>
-	
-	  <tip id="app-deploy:headers:xml:tip"><para>An application context is constructed from this set of files. A
+
+      <para>An application context is constructed from this set of files. A
       suggested practice is to split the application context configuration
       into at least two files, named by convention
       <emphasis>modulename</emphasis>-context.xml and
@@ -108,7 +108,6 @@
       definitions for importing and exporting OSGi services. It may (but is
       not required to) use the Spring Dynamic Modules OSGi schema as the
       top-level namespace instead of the Spring 'beans' namespace.</para>
-	  </tip>
 
       <para>The <literal>Spring-Context</literal> manifest header may be used
       to specify an alternate set of configuration files. The resource paths
@@ -220,114 +219,11 @@ context ::= path ( ';' path ) * (';' directive) *
       <programlisting><![CDATA[Spring-Context: *;publish-context:=false
 ]]></programlisting>
 
-      <para>If there is no <literal>Spring-Context</literal> manifest entry, or no value is
+      <para>If there is no Spring-Context manifest entry, or no value is
       specified for a given directive in that entry, then the directive takes
       on its default value.</para>
         </listitem>
       </itemizedlist>
-      
-    </section>
-
-	<section id="app-deploy:headers:blueprint">
-		<title>Blueprint Manifest Configuration Comparison</title>
-
-		<para>The table below summarizes the differences between the manifest configuration options in Spring DM and Blueprint Container:</para>
-
-		  <table id="sdm-vs-blueprint-config-attr" pgwide="1">
-	          <title>Configuration Setting Differences</title>
-	          <tgroup cols="3">
-	            <thead>
-	              <row>
-	                <entry>Option</entry>
-	                <entry>Spring DM</entry>
-	                <entry>Blueprint</entry>
-	              </row>
-	            </thead>
-	            <tbody>
-	              <row>
-	                <entry>Default Configuration Location</entry>
-	                <entry><literal>META-INF/spring</literal></entry>
-	                <entry><literal>OSGI-INF/blueprint</literal></entry>
-	              </row>
-	              <row>
-	                <entry>Custom Locations Header</entry>
-	                <entry><literal>Spring-Context</literal></entry>
-	                <entry><literal>Bundle-Blueprint</literal></entry>
-	              </row>
-	              <row>
-	                <entry>Attribute Header</entry>
-	                <entry><literal>Spring-Context</literal></entry>
-	                <entry><literal>Bundle-SymbolicName</literal></entry>
-	              </row>
-	              <row>
-	                <entry>Asynchronous Creation Attribute</entry>
-	                <entry><literal>create-asynchronously</literal></entry>
-	                <entry><literal>-</literal></entry>
-	              </row>
-	              <row>
-	                <entry>Startup Mandatory Dependencies Attribute</entry>
-	                <entry><literal>wait-for-dependencies</literal></entry>
-	                <entry><literal>blueprint.graceperiod</literal></entry>
-	              </row>
-	              <row>
-	                <entry>Startup Mandatory Timeout Attribute</entry>
-	                <entry><literal>timeout</literal> (in s)</entry>
-	                <entry><literal>blueprint.timeout</literal> (in ms)</entry>
-	              </row>
-	              <row>
-	                <entry>Container API Service Publication Attribute</entry>
-	                <entry><literal>publish-context</literal></entry>
-	                <entry><literal>-</literal></entry>
-	              </row>
-	            </tbody>
-	          </tgroup>
-	      </table>
-		  
-		  <para>The manifests below are equivalent in terms of settings:</para>
-
-		<programlistingco>
-		  <areaspec>
-			<area id="blueprint:vs:mf:attr:sdm" coords="2 72"/>
-			<area id="blueprint:vs:mf:timeout:s" coords="4 72"/>
-  		  </areaspec>
-		  <programlisting><![CDATA[Bundle-SymbolicName: org.example.account.bundle
-Spring-Context: config/account-data-context.xml, config/osgi-*.xml;
- wait-for-dependencies:=true;
- timeout:=10
-]]></programlisting>
-		  <calloutlist>
-			<callout arearefs="blueprint:vs:mf:attr:sdm">
-				<para>All Spring DM specific attributes are grouped under <literal>Spring-Context</literal> header.</para>
-			</callout>
-			<callout arearefs="blueprint:vs:mf:timeout:s">
-				<para>Timeout specified in <emphasis>seconds</emphasis>.</para>
-			</callout>
-		  </calloutlist>
-		</programlistingco>
-
-		<programlistingco>
-		  <areaspec>
-			<areaset id="blueprint:vs:mf:attr:bp" coords="">
-				<area id="blueprint:vs:mf:attr:bp.1" coords="1 72"/>
-				<area id="blueprint:vs:mf:attr:bp.2" coords="4 72"/>
-			</areaset>
-			<area id="blueprint:vs:mf:timeout:ms" coords="3 72"/>
-  		  </areaspec>
-		  <programlisting><![CDATA[Bundle-SymbolicName: org.example.account.bundle;
- blueprint.graceperiod:=true;
- blueprint.timeout:=10000
-Blueprint-Bundle: config/account-data-context.xml, config/osgi-*.xml
-]]></programlisting>
-		  <calloutlist>
-			<callout arearefs="blueprint:vs:mf:attr:bp">
-				<para>Blueprint settings are spread between <literal>Bundle-SymbolicName</literal> and <literal>Blueprint-Bundle</literal>.</para>
-			</callout>
-			<callout arearefs="blueprint:vs:mf:timeout:ms">
-				<para>Timeout specified in <emphasis>milliseconds</emphasis>.</para>
-			</callout>
-		  </calloutlist>
-	  	</programlistingco>
-
     </section>
     
     <section id="app-deploy:extender-configuration">
@@ -565,43 +461,32 @@ Blueprint-Bundle: config/account-data-context.xml, config/osgi-*.xml
         </listitem>
       </itemizedlist>
 
-      <para>In addition, the Spring Framework provides a number of bundles that
-      are required to be installed as dependencies. As of release 2.5 of the 
-      Spring Framework, the Spring jars included in the Spring distribution are valid OSGi
+      <para>In addition the Spring Framework provides a number of bundles that
+      are required to be installed. As of release 2.5 of the Spring Framework,
+      the Spring jars included in the Spring distribution are valid OSGi
       bundles and can be installed directly into an OSGi platform. The minimum
       required set of bundles is:</para>
 
       <itemizedlist>
         <listitem>
-          <para>org.springframework.aop.jar (bundle symbolic name
-          <literal>org.springframework.aop</literal>)</para>
-        </listitem>
-
-        <listitem>
-          <para>org.springframework.asm.jar (bundle symbolic name
-          <literal>org.springframework.asm</literal>)</para>
-        </listitem>
-
-        <listitem>
-          <para>org.springframework.beans.jar (bundle symbolic name
-          <literal>org.springframework.beans</literal>)</para>
-        </listitem>
-      
-        <listitem>
-          <para>org.springframework.core.jar (bundle symbolic name
+          <para>spring-core.jar (bundle symbolic name
           <literal>org.springframework.core</literal>)</para>
         </listitem>
 
         <listitem>
-          <para>org.springframework.context.jar (bundle symbolic name
+          <para>spring-context.jar (bundle symbolic name
           <literal>org.springframework.context</literal>)</para>
         </listitem>
 
         <listitem>
-          <para>org.springframework.expression.jar (bundle symbolic name
-          <literal>org.springframework.expression</literal>)</para>
+          <para>spring-beans.jar (bundle symbolic name
+          <literal>org.springframework.beans</literal>)</para>
         </listitem>
 
+        <listitem>
+          <para>spring-aop.jar (bundle symbolic name
+          <literal>org.springframework.aop</literal>)</para>
+        </listitem>
       </itemizedlist>
 
       <para>In additional the following supporting library bundles are
@@ -614,9 +499,14 @@ Blueprint-Bundle: config/account-data-context.xml, config/osgi-*.xml
         </listitem>
 
         <listitem>
+          <para>backport-util (when running on JDK 1.4)</para>
+        </listitem>
+
+        <listitem>
           <para>cglib-nodep (when proxying classes rather then
           interfaces, needed in most cases)</para>
         </listitem>
+
         <listitem>
           <para>commons-logging API (<ulink url="http://www.slf4j.org/">SLF4J</ulink> version <emphasis>highly</emphasis> recommended:</para>
           <itemizedlist>
@@ -631,6 +521,7 @@ Blueprint-Bundle: config/account-data-context.xml, config/osgi-*.xml
             </listitem>
             
           </itemizedlist>
+          <para>)</para>
         </listitem>
         
         <listitem>
@@ -656,7 +547,7 @@ Blueprint-Bundle: config/account-data-context.xml, config/osgi-*.xml
     	Bundles that embedded inside their classpath libraries that provide custom schemas will use these over those available in the OSGi space. However,
     	the namespaces of the embedded libraries will not shared with other bundles, that is, they will not be seen by any other bundle.</para>
     	<para>
-    	In short, when using Spring DM, custom Spring namespaces are supported transparently without any additional work. Embedded namespace providers will
+    	In short, with using Spring DM, custom Spring namespaces are supported transparently without any additional work. Embedded namespace providers will
     	have priority but will not be shared, as opposed to providers deployed as bundles which will be seen (and used) by others.</para>
     </section>
 
@@ -671,13 +562,6 @@ Blueprint-Bundle: config/account-data-context.xml, config/osgi-*.xml
       need access to, you will need <literal>Export-Package</literal> entries
       for every package that should be available from outside of the
       bundle.</para>
-      
-      <important>Both <literal>Export</literal> and <literal>Import-Package</literal> have a crucial role in defining a bundle class space. If used incorrectly,
-      the bundle might not be able to load certain classes or resources, load incorrect versions or even load multiple versions at the same time which usually 
-      result in <literal>ClassCastException</literal>, <literal>NoClassDefFoundError</literal> or <literal>LinkageError</literal>. We strongly
-      recommend that you get familiar with the basics and, at least for starters, use tools 
-      (such as <ulink url="http://www.springsource.org/bundlor">Bundlor</ulink> or <ulink url="http://www.aqute.biz/Code/Bnd">BND</ulink>) for creating proper 
-      OSGi manifests.</important>
     </section>
 
     <section id="app-deploy:ext-libs">
@@ -748,10 +632,8 @@ Blueprint-Bundle: config/account-data-context.xml, config/osgi-*.xml
       through which you can determine which bundles are installed and their
       states, the packages and services exported by bundles, find out why a
       bundle has failed to resolve, and drive bundles through the
-      lifecycle. All the OSGi platform tested, provide their own logging, which
-      can be enabled and customized through dedicated settings. For more information,
-      please refer to OSGi platforms documentation.</para>
-      
+      lifecycle.</para>
+
       <para>In addition, Spring itself and the Spring Dynamic Modules bundles
       contain extensive logging instrumentation that can help you diagnose
       problems. The recommended approach is to deploy the Simple Logging
@@ -760,11 +642,6 @@ Blueprint-Bundle: config/account-data-context.xml, config/osgi-*.xml
       by the project are valid OSGi bundles). Then you simply need to create a
       <literal>log4j.properties</literal> file in the root of your bundle
       classpath.</para>
-      
-      <para>Managed, OSGi-aware runtime environments such as 
-      <ulink url="http://www.springsource.com/products/dmserver">dmServer</ulink>
-      provide additional logging and insight not just for the bundle at hand, but also
-      regarding the application context and the VM among other things.</para>
       
       <para>Note that Spring Dynamic Modules uses commons-logging API internally
       which means that its logging implementation is fully pluggable. Please see

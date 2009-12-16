@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,7 +83,7 @@ public class OsgiReferenceNamespaceHandlerTest extends TestCase {
 		assertTrue(factoryBean instanceof OsgiServiceProxyFactoryBean);
 		OsgiServiceProxyFactoryBean proxyFactory = (OsgiServiceProxyFactoryBean) factoryBean;
 
-		Class<?>[] intfs = (Class[]) TestUtils.getFieldValue(proxyFactory, "interfaces");
+		Class[] intfs = (Class[]) TestUtils.getFieldValue(proxyFactory, "interfaces");
 
 		assertEquals(1, intfs.length);
 		assertSame(Serializable.class, intfs[0]);
@@ -134,11 +134,11 @@ public class OsgiReferenceNamespaceHandlerTest extends TestCase {
 
 	public void testMultipleInterfaces() throws Exception {
 		OsgiServiceProxyFactoryBean factory = (OsgiServiceProxyFactoryBean) appContext.getBean("&multi-interfaces");
-		Class<?>[] intfs = (Class[]) TestUtils.getFieldValue(factory, "interfaces");
+		Class[] intfs = (Class[]) TestUtils.getFieldValue(factory, "interfaces");
 		assertNotNull(intfs);
 		assertEquals(2, intfs.length);
 
-		assertTrue(Arrays.equals(new Class<?>[] { Serializable.class, Externalizable.class }, intfs));
+		assertTrue(Arrays.equals(new Class[] { Serializable.class, Externalizable.class }, intfs));
 	}
 
 	public void testBeanNameAttrToServiceBeanNameProperty() throws Exception {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 package org.springframework.osgi.util.internal;
 
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -34,54 +33,55 @@ import org.springframework.util.Assert;
 public abstract class BeanFactoryUtils {
 
 	/**
-	 * Return all beans depending directly or indirectly (transitively), on the bean identified by the beanName. When
-	 * dealing with a FactoryBean, the factory itself can be returned or its product. Additional filtering can be
-	 * executed through the type parameter. If no filtering is required, then null can be passed.
+	 * Return all beans depending directly or indirectly (transitively), on the
+	 * bean identified by the beanName. When dealing with a FactoryBean, the
+	 * factory itself can be returned or its product. Additional filtering can
+	 * be executed through the type parameter. If no filtering is required, then
+	 * null can be passed.
 	 * 
-	 * Note that depending on #rawFactoryBeans parameter, the type of the factory or its product can be used when doing
-	 * the filtering.
+	 * Note that depending on #rawFactoryBeans parameter, the type of the
+	 * factory or its product can be used when doing the filtering.
 	 * 
 	 * @param beanFactory beans bean factory
 	 * @param beanName root bean name
-	 * @param rawFactoryBeans consider the factory bean itself or the its product
+	 * @param rawFactoryBeans consider the factory bean itself or the its
+	 * product
 	 * @param type type of the beans returned (null to return all beans)
 	 * @return bean names
 	 */
 	public static String[] getTransitiveDependenciesForBean(ConfigurableListableBeanFactory beanFactory,
-			String beanName, boolean rawFactoryBeans, Class<?> type) {
+			String beanName, boolean rawFactoryBeans, Class type) {
 		Assert.notNull(beanFactory);
 		Assert.hasText(beanName);
 
 		Assert.isTrue(beanFactory.containsBean(beanName), "no bean by name [" + beanName + "] can be found");
 
-		Set<String> beans = new LinkedHashSet<String>(8);
-		// used to break cycles between nested beans
-		Set<String> innerBeans = new LinkedHashSet<String>(4);
+		Set beans = new LinkedHashSet();
 
-		getTransitiveBeans(beanFactory, beanName, rawFactoryBeans, beans, innerBeans);
+		getTransitiveBeans(beanFactory, beanName, rawFactoryBeans, beans);
 
 		if (type != null) {
 			// filter by type
-			for (Iterator<String> iter = beans.iterator(); iter.hasNext();) {
-				String bean = iter.next();
+			for (Iterator iter = beans.iterator(); iter.hasNext();) {
+				String bean = (String) iter.next();
 				if (!beanFactory.isTypeMatch(bean, type)) {
 					iter.remove();
 				}
 			}
 		}
 
-		return beans.toArray(new String[beans.size()]);
+		return (String[]) beans.toArray(new String[beans.size()]);
 	}
 
 	private static void getTransitiveBeans(ConfigurableListableBeanFactory beanFactory, String beanName,
-			boolean rawFactoryBeans, Set<String> beanNames, Set<String> innerBeans) {
+			boolean rawFactoryBeans, Set beanNames) {
 		String transformedBeanName = org.springframework.beans.factory.BeanFactoryUtils.transformedBeanName(beanName);
 		// strip out '&' just in case
 		String[] beans = beanFactory.getDependenciesForBean(transformedBeanName);
 
 		for (int i = 0; i < beans.length; i++) {
 			String bean = beans[i];
-			// top-level beans
+			// named nested beans are considered as well, filter them out
 			if (beanFactory.containsBean(bean)) {
 				// & if needed
 				if (rawFactoryBeans && beanFactory.isFactoryBean(bean))
@@ -89,14 +89,7 @@ public abstract class BeanFactoryUtils {
 
 				if (!beanNames.contains(bean)) {
 					beanNames.add(bean);
-					getTransitiveBeans(beanFactory, bean, rawFactoryBeans, beanNames, innerBeans);
-				}
-			}
-			// nested-beans are discarded from the main list but are tracked for dependencies to
-			// top-level beans
-			else {
-				if (innerBeans.add(bean)) {
-					getTransitiveBeans(beanFactory, bean, rawFactoryBeans, beanNames, innerBeans);
+					getTransitiveBeans(beanFactory, bean, rawFactoryBeans, beanNames);
 				}
 			}
 		}

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -115,7 +115,7 @@ public class OsgiServiceDynamicInterceptorTest extends TestCase {
 	private void createInterceptor(Filter filter) {
 		interceptor = new ServiceDynamicInterceptor(ctx, null, filter, getClass().getClassLoader());
 
-		interceptor.setMandatoryService(false);
+		interceptor.setRequiredAtStartup(false);
 
 		interceptor.setRetryTimeout(1);
 		interceptor.setProxy(new Object());

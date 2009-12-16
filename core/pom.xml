@@ -3,12 +3,12 @@
   <parent>
     <artifactId>spring-osgi</artifactId>
     <groupId>org.springframework.osgi</groupId>
-    <version>2.0.0.M2-SNAPSHOT</version>
+    <version>1.2.1</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.springframework.osgi</groupId>
   <artifactId>spring-osgi-core</artifactId>
-  <packaging>jar</packaging>
+  <packaging>bundle</packaging>
   <url>http://www.springframework.org/osgi</url>
   <name>Spring OSGi Core</name>
   <description>
@@ -20,8 +20,27 @@
     
     <javadoc.loc>${basedir}/../docs/src/javadoc</javadoc.loc>
 
-	<spring.osgi.symbolic.name>${symName.prefix}.core</spring.osgi.symbolic.name>
+  	<spring.osgi.export>
+  	    !org.springframework.osgi.io*,
+  	    !org.springframework.osgi*internal*,
+  	    org.springframework.osgi*;version=${spring.osgi.export.version}
+  	</spring.osgi.export>
+
+	<!-- import property editors which are loaded reflectively -->
+	<spring.osgi.import.pkg>
+		org.aopalliance*;version="0.0.0",
+		org.springframework.aop;version=${spring.base.version},
+		org.springframework.beans.propertyeditors;version=${spring.base.version},
+		org.osgi.service.cm;version=1.2;resolution:=optional,
+		org.osgi.service.startlevel;version=1.0;resolution:=optional,
+	</spring.osgi.import.pkg>
 	
+	<spring.osgi.private.pkg>
+		!org.springframework.osgi.io*,
+  	    org.springframework.osgi*internal*
+	</spring.osgi.private.pkg>
+			
+	<spring.osgi.symbolic.name>${symName.prefix}.core</spring.osgi.symbolic.name>
   </properties>
   
   <dependencies>
@@ -55,6 +74,7 @@
       <artifactId>org.springframework.test</artifactId>
       <scope>provided</scope>
     </dependency>
+
     <dependency>
       <groupId>org.aopalliance</groupId>
       <artifactId>com.springsource.org.aopalliance</artifactId>
@@ -66,10 +86,17 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
+      <groupId>edu.emory.mathcs.backport</groupId>
+      <artifactId>com.springsource.edu.emory.mathcs.backport</artifactId>
+      <version>3.1.0</version>
+      <scope>provided</scope>
+    </dependency> 
+    <dependency>
         <groupId>multithreadedtc</groupId>
         <artifactId>multithreadedtc</artifactId>
         <version>1.01</version>
         <scope>test</scope>
+        <classifier>${jdk-classifier}</classifier>
         <exclusions>      
       	 <exclusion>
           <groupId>backport-util-concurrent</groupId>
@@ -77,6 +104,18 @@
       	 </exclusion>
         </exclusions> 
     </dependency>
+	<dependency>
+		<groupId>net.sf.retrotranslator</groupId>
+		<artifactId>retrotranslator-runtime</artifactId>
+		<version>1.2.3</version>
+		<scope>test</scope>
+		<exclusions>      
+      	 <exclusion>
+          <groupId>backport-util-concurrent</groupId>
+	      <artifactId>backport-util-concurrent</artifactId>
+      	 </exclusion>
+		</exclusions> 
+	</dependency> 
+    
   </dependencies>
-  
 </project>

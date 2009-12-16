@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import junit.framework.TestCase;
 import org.osgi.framework.Constants;
 import org.osgi.framework.ServiceReference;
 import org.springframework.osgi.mock.MockServiceReference;
-import org.springframework.osgi.service.importer.support.internal.util.ServiceReferenceComparator;
+import org.springframework.osgi.service.importer.support.internal.collection.comparator.ServiceReferenceComparator;
 
 /**
  * @author Costin Leau

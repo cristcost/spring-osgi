@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -128,7 +128,7 @@ public class RetryTemplateTest extends TestCase {
 	private Object monitor;
 
 
-	private static class CountingCallback implements RetryCallback<Object> {
+	private static class CountingCallback implements RetryCallback {
 
 		private int count = 0;
 		public final static int WAKES_THRESHOLD = 7;
@@ -151,7 +151,7 @@ public class RetryTemplateTest extends TestCase {
 		}
 	}
 
-	private static class FailingCallback implements RetryCallback<Object> {
+	private static class FailingCallback implements RetryCallback {
 
 		private static Object VALUE = new Object();
 
@@ -169,7 +169,7 @@ public class RetryTemplateTest extends TestCase {
 
 	protected void setUp() throws Exception {
 		monitor = new Object();
-		callback = new DefaultRetryCallback<Object>() {
+		callback = new DefaultRetryCallback() {
 
 			public Object doWithRetry() {
 				return null;

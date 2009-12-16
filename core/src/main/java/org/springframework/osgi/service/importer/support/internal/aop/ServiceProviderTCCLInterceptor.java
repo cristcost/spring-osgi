@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,18 +21,19 @@ import java.util.Map;
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
 import org.osgi.framework.Bundle;
-import org.springframework.osgi.context.support.internal.classloader.ClassLoaderFactory;
+import org.springframework.osgi.context.internal.classloader.ClassLoaderFactory;
 import org.springframework.osgi.service.importer.ImportedOsgiServiceProxy;
 import org.springframework.osgi.service.importer.OsgiServiceLifecycleListener;
 import org.springframework.osgi.util.internal.PrivilegedUtils;
 import org.springframework.util.ObjectUtils;
 
 /**
- * Special Thread Context ClassLoading handling interceptor dealing with "service-provided" case, in which the backing
- * service reference can be updated which requires update of the classloader used as TCCL.
+ * Special Thread Context ClassLoading handling interceptor dealing with
+ * "service-provided" case, in which the backing service reference can be
+ * updated which requires update of the classloader used as TCCL.
  * 
- * This interceptor requires registration of a dedicated {@link OsgiServiceLifecycleListener} which updates the
- * classloader used.
+ * This interceptor requires registration of a dedicated
+ * {@link OsgiServiceLifecycleListener} which updates the classloader used.
  * 
  * @author Costin Leau
  * 
@@ -56,6 +57,7 @@ public class ServiceProviderTCCLInterceptor implements MethodInterceptor {
 		}
 	}
 
+
 	private static final int hashCode = ServiceProviderTCCLInterceptor.class.hashCode() * 13;
 
 	/** internal lock used for synchronized access to the serviceBundle */
@@ -65,23 +67,25 @@ public class ServiceProviderTCCLInterceptor implements MethodInterceptor {
 
 	private ClassLoader serviceClassLoader;
 
+
 	public Object invoke(MethodInvocation invocation) throws Throwable {
 
 		if (System.getSecurityManager() != null) {
 			return invokePrivileged(invocation);
-		} else {
+		}
+		else {
 			return invokeUnprivileged(invocation);
 		}
 	}
 
 	private Object invokePrivileged(final MethodInvocation invocation) throws Throwable {
 		return PrivilegedUtils.executeWithCustomTCCL(getServiceProvidedClassLoader(),
-				new PrivilegedUtils.UnprivilegedThrowableExecution() {
+			new PrivilegedUtils.UnprivilegedThrowableExecution() {
 
-					public Object run() throws Throwable {
-						return invocation.proceed();
-					}
-				});
+				public Object run() throws Throwable {
+					return invocation.proceed();
+				}
+			});
 	}
 
 	private Object invokeUnprivileged(MethodInvocation invocation) throws Throwable {
@@ -91,7 +95,8 @@ public class ServiceProviderTCCLInterceptor implements MethodInterceptor {
 		try {
 			Thread.currentThread().setContextClassLoader(current);
 			return invocation.proceed();
-		} finally {
+		}
+		finally {
 			Thread.currentThread().setContextClassLoader(previous);
 		}
 	}
@@ -107,7 +112,8 @@ public class ServiceProviderTCCLInterceptor implements MethodInterceptor {
 			this.serviceBundle = serviceBundle;
 			if (serviceBundle != null) {
 				serviceClassLoader = ClassLoaderFactory.getBundleClassLoaderFor(serviceBundle);
-			} else
+			}
+			else
 				serviceClassLoader = null;
 		}
 	}
@@ -125,4 +131,5 @@ public class ServiceProviderTCCLInterceptor implements MethodInterceptor {
 	public int hashCode() {
 		return hashCode;
 	}
+
 }

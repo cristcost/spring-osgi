@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors. Licensed under the Apache
+ * Copyright 2006-2008 the original author or authors. Licensed under the Apache
  * License, Version 2.0 (the "License"); you may not use this file except in
  * compliance with the License. You may obtain a copy of the License at
  * http://www.apache.org/licenses/LICENSE-2.0 Unless required by applicable law
@@ -67,6 +67,18 @@ public interface DelegatedExecutionOsgiBundleApplicationContext extends Configur
 	 *        <code>refresh</code> method is delegated to
 	 */
 	void setExecutor(OsgiBundleApplicationContextExecutor executor);
+
+	/**
+	 * Synchronization monitor for this
+	 * {@link org.springframework.context.ApplicationContext} in case multiple
+	 * threads can work with the application context lifecycle.
+	 * 
+	 * @return monitor for this application context
+	 * @deprecated any synchronization should be performed internally by the
+	 *             application context. This method will be removed w/o a
+	 *             replacement in future releases.
+	 */
+	Object getMonitor();
 
 	/**
 	 * Allows a delegated {@link OsgiBundleApplicationContextEventMulticaster},

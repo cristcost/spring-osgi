@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import org.springframework.osgi.TestUtils;
 import org.springframework.osgi.context.support.BundleContextAwareProcessor;
 import org.springframework.osgi.mock.MockBundleContext;
 import org.springframework.osgi.mock.MockServiceReference;
-import org.springframework.osgi.service.importer.support.Availability;
+import org.springframework.osgi.service.importer.support.Cardinality;
 import org.springframework.osgi.service.importer.support.OsgiServiceCollectionProxyFactoryBean;
 import org.springframework.osgi.service.importer.support.OsgiServiceProxyFactoryBean;
 import org.springframework.osgi.service.importer.support.internal.support.RetryTemplate;
@@ -70,14 +70,13 @@ public class OsgiDefaultsTests extends TestCase {
 	}
 
 	public void testLocalDefinitionForCardinalityOnMultiImporter() throws Exception {
-		OsgiServiceCollectionProxyFactoryBean fb =
-				(OsgiServiceCollectionProxyFactoryBean) appContext.getBean("&colWLocalConfig");
-		assertEquals(Availability.MANDATORY, getCardinality(fb));
+		OsgiServiceCollectionProxyFactoryBean fb = (OsgiServiceCollectionProxyFactoryBean) appContext.getBean("&colWLocalConfig");
+		assertEquals(Cardinality.C_1__N, getCardinality(fb));
 	}
 
 	public void testLocalDefinitionForCardinalityOnSingleImporter() throws Exception {
 		OsgiServiceProxyFactoryBean fb = (OsgiServiceProxyFactoryBean) appContext.getBean("&refWLocalConfig");
-		assertEquals(Availability.MANDATORY, getCardinality(fb));
+		assertEquals(Cardinality.C_1__1, getCardinality(fb));
 	}
 
 	public void testTimeoutDefault() throws Exception {
@@ -87,24 +86,20 @@ public class OsgiDefaultsTests extends TestCase {
 
 	public void testCardinalityDefaultOnSingleImporter() throws Exception {
 		OsgiServiceProxyFactoryBean fb = (OsgiServiceProxyFactoryBean) appContext.getBean("&refWDefaults");
-		assertEquals(Availability.OPTIONAL, getCardinality(fb));
+		assertEquals(Cardinality.C_0__1, getCardinality(fb));
 	}
 
 	public void testCardinalityDefaultOnMultiImporter() throws Exception {
-		OsgiServiceCollectionProxyFactoryBean fb =
-				(OsgiServiceCollectionProxyFactoryBean) appContext.getBean("&colWDefaults");
-		assertEquals(Availability.OPTIONAL, getCardinality(fb));
+		OsgiServiceCollectionProxyFactoryBean fb = (OsgiServiceCollectionProxyFactoryBean) appContext.getBean("&colWDefaults");
+		assertEquals(Cardinality.C_0__N, getCardinality(fb));
 	}
 
-	public void testNormalBeanInjection() throws Exception {
-		appContext.getBean("nestedURLValue");
-	}
-	
-	private Availability getCardinality(Object obj) {
-		return (Availability) TestUtils.getFieldValue(obj, "availability");
+	private Cardinality getCardinality(Object obj) {
+		return (Cardinality) TestUtils.getFieldValue(obj, "cardinality");
 	}
 
 	private long getTimeout(Object obj) {
 		return ((RetryTemplate) TestUtils.getFieldValue(obj, "retryTemplate")).getWaitTime();
 	}
+
 }

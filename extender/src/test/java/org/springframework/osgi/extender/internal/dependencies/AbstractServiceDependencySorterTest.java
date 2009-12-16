@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,10 @@ public abstract class AbstractServiceDependencySorterTest extends TestCase {
 
 	protected abstract ServiceDependencySorter createSorter();
 
+	/*
+	 * (non-Javadoc)
+	 * @see junit.framework.TestCase#tearDown()
+	 */
 	protected void tearDown() throws Exception {
 		sorter = null;
 	}
@@ -242,7 +246,7 @@ public abstract class AbstractServiceDependencySorterTest extends TestCase {
 		testDependencyTreeWithShuffle(new Bundle[]{E, D, C, B, A}, new Bundle[]{E, D, C, B, A});
 	}
 
-	public void tstCircularReferenceIdMulti() throws Exception {
+	public void testCircularReferenceIdMulti() throws Exception {
 		DependencyMockBundle A = new DependencyMockBundle("A");
 		DependencyMockBundle B = new DependencyMockBundle("B");
 		DependencyMockBundle C = new DependencyMockBundle("C");

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,12 +91,6 @@ public class ServiceReferenceInjectionBeanPostProcessor extends InstantiationAwa
         static void setGreedyProxying(Object importer, boolean greedy) {
             if (importer instanceof OsgiServiceCollectionProxyFactoryBean) {
                 ((OsgiServiceCollectionProxyFactoryBean) importer).setGreedyProxying(greedy);
-            }
-        }
-        
-        static void setSticky(Object importer, boolean sticky) {
-            if (importer instanceof OsgiServiceProxyFactoryBean) {
-                ((OsgiServiceProxyFactoryBean) importer).setSticky(sticky);
             }
         }
 
@@ -240,7 +234,6 @@ public class ServiceReferenceInjectionBeanPostProcessor extends InstantiationAwa
 			ImporterCallAdapter.setInterfaces(pfb, s.serviceTypes());
 		}
 		ImporterCallAdapter.setCardinality(pfb, s.cardinality().toCardinality());
-		ImporterCallAdapter.setSticky(pfb, s.sticky());
 		ImporterCallAdapter.setContextClassLoader(pfb, s.contextClassLoader().toImportContextClassLoader());
 		ImporterCallAdapter.setBundleContext(pfb, bundleContext);
 

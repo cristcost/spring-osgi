@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,9 @@ package org.springframework.osgi.service.importer.support.internal.controller;
 
 import java.lang.reflect.Field;
 
+import org.springframework.osgi.service.importer.support.OsgiServiceCollectionProxyFactoryBean;
+import org.springframework.osgi.service.importer.support.OsgiServiceProxyFactoryBean;
+
 /**
  * Importer-only delegate (it would be nice to have generics).
  * 
@@ -27,35 +30,34 @@ import java.lang.reflect.Field;
 public abstract class ImporterControllerUtils {
 
 	private static final String FIELD_NAME = "controller";
+
 	private static final Field singleProxyField, collectionProxyField;
-	private static final Class<?> singleImporter;
 
 	static {
-		Class<?> clazz = null;
-		String singleImporterName = "org.springframework.osgi.service.importer.support.OsgiServiceProxyFactoryBean";
-		String multiImporterName =
-				"org.springframework.osgi.service.importer.support.OsgiServiceCollectionProxyFactoryBean";
+		Class clazz = null;
 		try {
-			ClassLoader cl = ImporterControllerUtils.class.getClassLoader();
-			clazz = cl.loadClass(singleImporterName);
-			singleImporter = clazz;
+			clazz = OsgiServiceProxyFactoryBean.class;
 			singleProxyField = clazz.getDeclaredField(FIELD_NAME);
 			singleProxyField.setAccessible(true);
 
-			clazz = cl.loadClass(multiImporterName);
+			clazz = OsgiServiceCollectionProxyFactoryBean.class;
 			collectionProxyField = clazz.getDeclaredField(FIELD_NAME);
 			collectionProxyField.setAccessible(true);
-		} catch (Exception ex) {
+		}
+		catch (NoSuchFieldException ex) {
 			throw (RuntimeException) new IllegalStateException("Cannot read field [" + FIELD_NAME + "] on class ["
 					+ clazz + "]").initCause(ex);
 		}
 	}
 
+
 	public static ImporterInternalActions getControllerFor(Object importer) {
-		Field field = (singleImporter == importer.getClass() ? singleProxyField : collectionProxyField);
+		Field field = (OsgiServiceProxyFactoryBean.class == importer.getClass() ? singleProxyField
+				: collectionProxyField);
 		try {
 			return (ImporterInternalActions) field.get(importer);
-		} catch (IllegalAccessException iae) {
+		}
+		catch (IllegalAccessException iae) {
 			throw (RuntimeException) new IllegalArgumentException("Cannot access field [" + FIELD_NAME
 					+ "] on object [" + importer + "]").initCause(iae);
 		}

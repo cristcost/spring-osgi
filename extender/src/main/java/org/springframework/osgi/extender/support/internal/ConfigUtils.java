@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -106,10 +106,10 @@ public abstract class ConfigUtils {
 	public static final long DIRECTIVE_NO_TIMEOUT = -2L; // Indicates wait forever
 
 
-	public static boolean matchExtenderVersionRange(Bundle bundle, String header, Version versionToMatch) {
+	public static boolean matchExtenderVersionRange(Bundle bundle, Version versionToMatch) {
 		Assert.notNull(bundle);
 		// get version range
-		String range = (String) bundle.getHeaders().get(header);
+		String range = (String) bundle.getHeaders().get(EXTENDER_VERSION);
 
 		boolean trace = log.isTraceEnabled();
 
@@ -118,7 +118,7 @@ public abstract class ConfigUtils {
 			return true;
 
 		if (trace)
-			log.trace("discovered " + header + " header w/ value=" + range);
+			log.trace("discovered " + EXTENDER_VERSION + " header w/ value=" + range);
 
 		// do we have a range or not ?
 		range = StringUtils.trimWhitespace(range);
@@ -327,20 +327,7 @@ public abstract class ConfigUtils {
 	 * @return array of locations specified (if any)
 	 */
 	public static String[] getHeaderLocations(Dictionary headers) {
-		return getLocationsFromHeader(getSpringContextHeader(headers),
-			OsgiBundleXmlApplicationContext.DEFAULT_CONFIG_LOCATION);
-
-	}
-
-	/**
-	 * Similar to {@link #getHeaderLocations(Dictionary)} but looks at a
-	 * specified header directly.
-	 * 
-	 * @param header header to look at
-	 * @param defaultValue default locations if none is specified
-	 * @return
-	 */
-	public static String[] getLocationsFromHeader(String header, String defaultValue) {
+		String header = getSpringContextHeader(headers);
 
 		String[] ctxEntries;
 		if (StringUtils.hasText(header) && !(';' == header.charAt(0))) {
@@ -352,7 +339,7 @@ public abstract class ConfigUtils {
 			// replace * with a 'digestable' location
 			for (int i = 0; i < ctxEntries.length; i++) {
 				if (CONFIG_WILDCARD.equals(ctxEntries[i]))
-					ctxEntries[i] = defaultValue;
+					ctxEntries[i] = OsgiBundleXmlApplicationContext.DEFAULT_CONFIG_LOCATION;
 			}
 		}
 		else {

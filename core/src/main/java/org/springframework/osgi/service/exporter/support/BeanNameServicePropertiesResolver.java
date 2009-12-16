@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,18 +25,19 @@ import org.osgi.framework.Constants;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.osgi.context.BundleContextAware;
 import org.springframework.osgi.service.exporter.OsgiServicePropertiesResolver;
-import org.springframework.osgi.util.OsgiBundleUtils;
 import org.springframework.osgi.util.internal.MapBasedDictionary;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 /**
- * {@link OsgiServicePropertiesResolver} that creates a service property set with the following properties: <ul>
- * <li>Bundle-SymbolicName=&lt;bundle symbolic name&gt;</li> <li>Bundle-Version=&lt;bundle version&gt;</li>
- * <li>org.springframework.osgi.bean.name="&lt;bean name&gt;</li> <li>osgi.service.blueprint.compname="&lt;bean
- * name&gt;</li> </ul>
+ * {@link OsgiServicePropertiesResolver} that creates a service property set
+ * with the following properties:
+ * <ul>
+ * <li>Bundle-SymbolicName=&lt;bundle symbolic name&gt;</li>
+ * <li>Bundle-Version=&lt;bundle version&gt;</li>
+ * <li>org.springframework.osgi.bean.name="&lt;bean name&gt;</li>
+ * </ul>
  * 
- * If the name is null/empty, the keys that refer to it will not be created.
  * 
  * @author Adrian Colyer
  * @author Hal Hildebrand
@@ -50,13 +51,10 @@ public class BeanNameServicePropertiesResolver implements OsgiServicePropertiesR
 
 	private BundleContext bundleContext;
 
+
 	public Map getServiceProperties(String beanName) {
 		Map p = new MapBasedDictionary();
-		if (StringUtils.hasText(beanName)) {
-			p.put(BEAN_NAME_PROPERTY_KEY, beanName);
-			p.put(BLUEPRINT_COMP_NAME, beanName);
-		}
-
+		p.put(BEAN_NAME_PROPERTY_KEY, beanName);
 		String name = getSymbolicName();
 		if (StringUtils.hasLength(name)) {
 			p.put(Constants.BUNDLE_SYMBOLICNAME, name);
@@ -69,7 +67,7 @@ public class BeanNameServicePropertiesResolver implements OsgiServicePropertiesR
 	}
 
 	private String getBundleVersion() {
-		return OsgiBundleUtils.getBundleVersion(bundleContext.getBundle()).toString();
+		return (String) this.bundleContext.getBundle().getHeaders().get(Constants.BUNDLE_VERSION);
 	}
 
 	private String getSymbolicName() {
@@ -83,4 +81,5 @@ public class BeanNameServicePropertiesResolver implements OsgiServicePropertiesR
 	public void afterPropertiesSet() throws Exception {
 		Assert.notNull(bundleContext, "required property bundleContext has not been set");
 	}
+
 }

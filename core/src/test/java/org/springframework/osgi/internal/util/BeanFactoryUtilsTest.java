@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,20 +78,5 @@ public class BeanFactoryUtilsTest extends AbstractDependencyInjectionSpringConte
 	public void testFilteringOnFB() {
 		String[] deps = BeanFactoryUtils.getTransitiveDependenciesForBean(bf, "secondBuffer", true, FactoryBean.class);
 		assertTrue(Arrays.equals(new String[] { "&field" }, deps));
-	}
-
-	public void testNestedDependencies() throws Exception {
-		String[] deps = BeanFactoryUtils.getTransitiveDependenciesForBean(bf, "nested", true, null);
-		assertTrue(Arrays.equals(new String[] { "int", "c", "b" }, deps));
-	}
-
-	public void testNestedFactoryDependencies() throws Exception {
-		String[] deps = BeanFactoryUtils.getTransitiveDependenciesForBean(bf, "nestedFB", true, null);
-		assertTrue(Arrays.equals(new String[] { "thread", "buffer", "int", "c", "b" }, deps));
-	}
-
-	public void testNestedCycle() throws Exception {
-		String[] deps = BeanFactoryUtils.getTransitiveDependenciesForBean(bf, "nestedCycle", true, null);
-		assertTrue(Arrays.equals(new String[] { "nestedCycle", "thread", "buffer", "int", "c", "b" }, deps));
 	}
 }

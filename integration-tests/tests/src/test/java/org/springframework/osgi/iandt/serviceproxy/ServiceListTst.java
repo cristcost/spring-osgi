@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,9 +30,9 @@ public abstract class ServiceListTst extends ServiceCollectionTest {
 
 	protected Collection createCollection() {
 		ClassLoader classLoader = BundleDelegatingClassLoader.createBundleClassLoaderFor(bundleContext.getBundle());
-		OsgiServiceList col = new OsgiServiceList(null, bundleContext, classLoader, null, false);
+		OsgiServiceList col = new OsgiServiceList(null, bundleContext, classLoader, null);
 		col.setRequiredAtStartup(false);
-		// col.setInterfaces(new Class<?>[] { Date.class });
+		// col.setInterfaces(new Class[] { Date.class });
 		col.afterPropertiesSet();
 		return col;
 	}

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,12 +21,13 @@ import java.util.Map;
 
 import org.osgi.framework.ServiceReference;
 import org.osgi.framework.ServiceRegistration;
+import org.springframework.osgi.service.exporter.OsgiServiceRegistrationListener;
 import org.springframework.osgi.util.OsgiServiceReferenceUtils;
 import org.springframework.util.Assert;
 
 /**
- * Decorator class for {@link ServiceReference} which add notification for {@link ServiceRegistration#unregister()}
- * method when dealing with listeners.
+ * Decorator class for {@link ServiceReference} which add notification for
+ * {@link ServiceRegistration#unregister()} method when dealing with listeners.
  * 
  * @author Costin Leau
  */
@@ -34,15 +35,18 @@ public class ServiceRegistrationDecorator implements ServiceRegistration {
 
 	/** actual service registration */
 	private final ServiceRegistration delegate;
-	private volatile UnregistrationNotifier notifier;
 
-	public ServiceRegistrationDecorator(ServiceRegistration registration) {
+	private final OsgiServiceRegistrationListener[] listeners;
+
+	private final Object service;
+
+
+	public ServiceRegistrationDecorator(Object service, ServiceRegistration registration,
+			OsgiServiceRegistrationListener[] listeners) {
 		Assert.notNull(registration);
 		this.delegate = registration;
-	}
-
-	void setNotifier(UnregistrationNotifier notifier) {
-		this.notifier = notifier;
+		this.listeners = (listeners == null ? new OsgiServiceRegistrationListener[0] : listeners);
+		this.service = service;
 	}
 
 	public ServiceReference getReference() {
@@ -56,18 +60,26 @@ public class ServiceRegistrationDecorator implements ServiceRegistration {
 	// call unregister on the actual service but inform also listeners
 	public void unregister() {
 		// if the delegate is unregistered then an exception will be thrown
-		ServiceReference reference = delegate.getReference();
+		Map properties = (Map) OsgiServiceReferenceUtils.getServicePropertiesSnapshot(delegate.getReference());
 
-		Map properties =
-				(reference != null ? (Map) OsgiServiceReferenceUtils.getServicePropertiesSnapshot(reference) : null);
-
-		if (notifier != null) {
-			notifier.unregister(properties);
-		}
 		delegate.unregister();
+
+		// if no exception has been thrown (i.e. the delegate is properly
+		// unregistered), the listeners will be informed
+		for (int i = 0; i < listeners.length; i++) {
+			if (listeners[i] != null) {
+				try {
+					listeners[i].unregistered(service, properties);
+				}
+				catch (Exception ex) {
+					// no need to log exceptions, the wrapper already does this
+				}
+			}
+		}
 	}
 
 	public String toString() {
 		return "ServiceRegistrationWrapper for " + delegate.toString();
 	}
+
 }

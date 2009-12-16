@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ public class ClassDependenciesVisibilityTest extends BaseIntegrationTest {
 		fb.setBundleContext(bundleContext);
 		fb.setCardinality(Cardinality.C_0__1);
 		fb.setContextClassLoader(ImportContextClassLoader.UNMANAGED);
-		fb.setInterfaces(new Class<?>[] { DocumentEvent.class });
+		fb.setInterfaces(new Class[] { DocumentEvent.class });
 		fb.setBeanClassLoader(cl);
 		fb.setApplicationEventPublisher(applicationContext);
 		fb.afterPropertiesSet();
@@ -75,7 +75,7 @@ public class ClassDependenciesVisibilityTest extends BaseIntegrationTest {
 		checkPackageVisibility(cl);
 
 		try {
-			Object proxy = Proxy.newProxyInstance(cl, new Class<?>[] { DocumentEvent.class }, ih);
+			Object proxy = Proxy.newProxyInstance(cl, new Class[] { DocumentEvent.class }, ih);
 			assertNotNull(proxy);
 			System.out.println(proxy.getClass());
 

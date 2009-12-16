@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package org.springframework.osgi.iandt.servicedependency;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.osgi.framework.AdminPermission;
@@ -29,7 +30,8 @@ import org.springframework.osgi.util.OsgiBundleUtils;
 import org.springframework.util.Assert;
 
 /**
- * Integration test with multiple imports that are hooked inside the same exporter.
+ * Integration test with multiple imports that are hooked inside the same
+ * exporter.
  * 
  * @author Costin Leau
  * 
@@ -42,16 +44,16 @@ public class SingleExportDependingOnMultipleImportTest extends BaseIntegrationTe
 
 	private static final String SERVICE_2_SYM_NAME = "org.springframework.osgi.iandt.simpleservice2";
 
+
 	protected String[] getConfigLocations() {
 		return new String[] { "org/springframework/osgi/iandt/servicedependency/single-export-multi-import.xml" };
 	}
 
 	protected String[] getTestBundlesNames() {
 		// load the tccl bundle, plus simple.service + simple.service.2
-		return new String[] { "org.springframework.osgi.iandt,tccl.intf," + getSpringDMVersion(),
-				"org.springframework.osgi.iandt, tccl," + getSpringDMVersion(),
-				"org.springframework.osgi.iandt, simple.service," + getSpringDMVersion(),
-				"org.springframework.osgi.iandt, simple.service2," + getSpringDMVersion() };
+		return new String[] { "org.springframework.osgi.iandt, tccl," + getSpringDMVersion(),
+			"org.springframework.osgi.iandt, simple.service," + getSpringDMVersion(),
+			"org.springframework.osgi.iandt, simple.service2," + getSpringDMVersion() };
 	}
 
 	public void testOneImporterCGoesDownAndThenUpAgain() throws Exception {
@@ -123,7 +125,7 @@ public class SingleExportDependingOnMultipleImportTest extends BaseIntegrationTe
 		assertTrue("service A + B + C up, exporter should be up as well", isExporterStarted());
 	}
 
-	private void checkAndTakeDownService(String beanName, Class<?> type, String bundleSymName) throws Exception {
+	private void checkAndTakeDownService(String beanName, Class type, String bundleSymName) throws Exception {
 		ServiceReference ref = bundleContext.getServiceReference(type.getName());
 		Object service = bundleContext.getService(ref);
 		Assert.isInstanceOf(type, service);

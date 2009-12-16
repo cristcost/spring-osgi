@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,10 @@ import org.springframework.context.event.ApplicationEventMulticaster;
 import org.springframework.util.Assert;
 
 /**
- * Adapter class between Spring {@link ApplicationEventMulticaster} and Spring-DM
- * {@link OsgiBundleApplicationContextEventMulticaster}. Allows reusage (especially considering the contractual
- * similarities between the two interfaces) of existing implementations for propagating Spring-DM events.
+ * Adapter class between Spring {@link ApplicationEventMulticaster} and
+ * Spring-DM {@link OsgiBundleApplicationContextEventMulticaster}. Allows
+ * reusage (especially considering the contractual similarities between the two
+ * interfaces) of existing implementations for propagating Spring-DM events.
  * 
  * @author Costin Leau
  * 
@@ -32,8 +33,11 @@ public class OsgiBundleApplicationContextEventMulticasterAdapter implements
 
 	private final ApplicationEventMulticaster delegatedMulticaster;
 
+
 	/**
-	 * Constructs a new <code>OsgiBundleApplicationContextEventMulticasterAdapter</code> instance.
+	 * Constructs a new
+	 * <code>OsgiBundleApplicationContextEventMulticasterAdapter</code>
+	 * instance.
 	 * 
 	 * @param delegatedMulticaster
 	 */
@@ -45,12 +49,14 @@ public class OsgiBundleApplicationContextEventMulticasterAdapter implements
 	/**
 	 * {@inheritDoc}
 	 * 
-	 * The given listener is wrapped with an adapter class that delegates the equals/hashcode methods to the wrapped
-	 * listener instance. However, depending on the equals implementation, this might affect the object identity.
+	 * The given listener is wrapped with an adapter class that delegates the
+	 * equals/hashcode methods to the wrapped listener instance. However,
+	 * depending on the equals implementation, this might affect the object
+	 * identity.
 	 */
 	public void addApplicationListener(OsgiBundleApplicationContextListener osgiListener) {
 		Assert.notNull(osgiListener);
-		delegatedMulticaster.addApplicationListener(ApplicationListenerAdapter.createAdapter(osgiListener));
+		delegatedMulticaster.addApplicationListener(new ApplicationListenerAdapter(osgiListener));
 	}
 
 	public void multicastEvent(OsgiBundleApplicationContextEvent osgiEvent) {
@@ -64,11 +70,13 @@ public class OsgiBundleApplicationContextEventMulticasterAdapter implements
 	/**
 	 * {@inheritDoc}
 	 * 
-	 * The given listener is wrapped with an adapter class that delegates the equals/hashcode methods to the wrapped
-	 * listener instance. However, depending on the equals implementation, this might affect the object identity.
+	 * The given listener is wrapped with an adapter class that delegates the
+	 * equals/hashcode methods to the wrapped listener instance. However,
+	 * depending on the equals implementation, this might affect the object
+	 * identity.
 	 */
 	public void removeApplicationListener(OsgiBundleApplicationContextListener osgiListener) {
 		Assert.notNull(null);
-		delegatedMulticaster.removeApplicationListener(ApplicationListenerAdapter.createAdapter(osgiListener));
+		delegatedMulticaster.removeApplicationListener(new ApplicationListenerAdapter(osgiListener));
 	}
 }

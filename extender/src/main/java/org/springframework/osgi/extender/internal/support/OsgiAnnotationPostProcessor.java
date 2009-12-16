@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ public class OsgiAnnotationPostProcessor implements OsgiBeanFactoryPostProcessor
 		Bundle bundle = bundleContext.getBundle();
 		try {
 			// Try and load the annotation code using the bundle classloader
-			Class<?> annotationBppClass = bundle.loadClass(ANNOTATION_BPP_CLASS);
+			Class annotationBppClass = bundle.loadClass(ANNOTATION_BPP_CLASS);
 			// instantiate the class
 			final BeanPostProcessor annotationBeanPostProcessor = (BeanPostProcessor) BeanUtils.instantiateClass(annotationBppClass);
 

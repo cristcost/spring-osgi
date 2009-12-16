@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,7 +65,7 @@ public class RetryTemplate {
 	 * @param callback
 	 * @return
 	 */
-	public <T> T execute(RetryCallback<T> callback) {
+	public Object execute(RetryCallback callback) {
 		long waitTime;
 
 		synchronized (monitor) {
@@ -80,7 +80,7 @@ public class RetryTemplate {
 		boolean startWaiting = false;
 
 		do {
-			T result = callback.doWithRetry();
+			Object result = callback.doWithRetry();
 
 			if (callback.isComplete(result)) {
 
@@ -132,7 +132,7 @@ public class RetryTemplate {
 			}
 		} while (retry || waitLeft > WAIT_THRESHOLD);
 
-		T result = callback.doWithRetry();
+		Object result = callback.doWithRetry();
 		stop = System.currentTimeMillis() - initialStart;
 
 		if (callback.isComplete(result)) {

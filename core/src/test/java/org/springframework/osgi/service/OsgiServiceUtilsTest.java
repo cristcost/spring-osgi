@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -148,31 +148,31 @@ public class OsgiServiceUtilsTest extends TestCase {
 	}
 
 	public void testSimpleClassDetermination() throws Exception {
-		Class<?>[] classes = new Class<?>[] { Object.class, Serializable.class, Cloneable.class };
-		Class<?>[] expected = new Class<?>[] { Serializable.class, Cloneable.class };
-		Class<?>[] clazz = org.springframework.osgi.util.internal.ClassUtils.removeParents(classes);
+		Class[] classes = new Class[] { Object.class, Serializable.class, Cloneable.class };
+		Class[] expected = new Class[] { Serializable.class, Cloneable.class };
+		Class[] clazz = org.springframework.osgi.util.internal.ClassUtils.removeParents(classes);
 
 		assertTrue(Arrays.equals(expected, clazz));
 	}
 
 	public void testIntefacesAlreadyContainedInTheSpecifiedClass() throws Exception {
-		Class<?>[] classes = new Class<?>[] { Serializable.class, Number.class, Comparable.class, Object.class };
-		Class<?>[] expected = new Class<?>[] { Number.class, Comparable.class };
-		Class<?>[] clazz = org.springframework.osgi.util.internal.ClassUtils.removeParents(classes);
+		Class[] classes = new Class[] { Serializable.class, Number.class, Comparable.class, Object.class };
+		Class[] expected = new Class[] { Number.class, Comparable.class };
+		Class[] clazz = org.springframework.osgi.util.internal.ClassUtils.removeParents(classes);
 		assertTrue(Arrays.equals(expected, clazz));
 	}
 
 	public void testMultipleClassesAndInterfaces() throws Exception {
-		Class<?>[] classes = new Class<?>[] { Serializable.class, Number.class, Comparable.class, Object.class, Long.class,
+		Class[] classes = new Class[] { Serializable.class, Number.class, Comparable.class, Object.class, Long.class,
 				Integer.class };
-		Class<?>[] expected = new Class<?>[] { Long.class, Integer.class };
-		Class<?>[] clazz = org.springframework.osgi.util.internal.ClassUtils.removeParents(classes);
+		Class[] expected = new Class[] { Long.class, Integer.class };
+		Class[] clazz = org.springframework.osgi.util.internal.ClassUtils.removeParents(classes);
 		assertTrue(Arrays.equals(expected, clazz));
 	}
 
 	public void tstProxyCreation() throws Exception {
 		ProxyFactory pf = new ProxyFactory();
-		pf.setInterfaces(new Class<?>[] { Serializable.class, Comparable.class });
+		pf.setInterfaces(new Class[] { Serializable.class, Comparable.class });
 		//pf.setTargetClass(Number.class);
 		pf.setProxyTargetClass(true);
 		Object proxy = pf.getProxy();

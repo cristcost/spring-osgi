@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,11 +26,13 @@ import org.osgi.framework.Filter;
 import org.springframework.osgi.service.importer.support.internal.aop.ServiceProxyCreator;
 
 /**
- * OSGi service dynamic collection - allows iterating while the underlying storage is being shrunk/expanded. This
- * collection is read-only - its content is being retrieved dynamically from the OSGi platform.
+ * OSGi service dynamic collection - allows iterating while the underlying
+ * storage is being shrunk/expanded. This collection is read-only - its content
+ * is being retrieved dynamically from the OSGi platform.
  * 
- * <p/> This collection and its iterators are thread-safe. That is, multiple threads can access the collection. However,
- * since the collection is read-only, it cannot be modified by the client.
+ * <p/> This collection and its iterators are thread-safe. That is, multiple
+ * threads can access the collection. However, since the collection is
+ * read-only, it cannot be modified by the client.
  * 
  * @author Costin Leau
  * 
@@ -42,15 +44,18 @@ public class OsgiServiceList extends OsgiServiceCollection implements List, Rand
 		// dynamic iterator
 		private final ListIterator iter;
 
+
 		public OsgiServiceListIterator(int index) {
 			iter = storage.listIterator(index);
 		}
 
 		public Object next() {
+			mandatoryServiceCheck();
 			return iter.next();
 		}
 
 		public Object previous() {
+			mandatoryServiceCheck();
 			return iter.previous();
 		}
 
@@ -58,18 +63,22 @@ public class OsgiServiceList extends OsgiServiceCollection implements List, Rand
 		// index operations
 		//
 		public boolean hasNext() {
+			mandatoryServiceCheck();
 			return iter.hasNext();
 		}
 
 		public boolean hasPrevious() {
+			mandatoryServiceCheck();
 			return iter.hasPrevious();
 		}
 
 		public int nextIndex() {
+			mandatoryServiceCheck();
 			return iter.nextIndex();
 		}
 
 		public int previousIndex() {
+			mandatoryServiceCheck();
 			return iter.previousIndex();
 		}
 
@@ -90,22 +99,25 @@ public class OsgiServiceList extends OsgiServiceCollection implements List, Rand
 
 	};
 
+
 	/**
 	 * cast the collection to a specialized collection
 	 */
 	protected List storage;
 
+
 	public OsgiServiceList(Filter filter, BundleContext context, ClassLoader classLoader,
-			ServiceProxyCreator proxyCreator, boolean useServiceReference) {
-		super(filter, context, classLoader, proxyCreator, useServiceReference);
+			ServiceProxyCreator proxyCreator) {
+		super(filter, context, classLoader, proxyCreator);
 	}
 
 	protected DynamicCollection createInternalDynamicStorage() {
 		storage = new DynamicList();
-		return (DynamicCollection) storage;
+		return (DynamicList) storage;
 	}
 
 	public Object get(int index) {
+		mandatoryServiceCheck();
 		return storage.get(index);
 	}
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,14 +21,14 @@ package org.springframework.osgi.service.importer.support.internal.support;
  * @author Costin Leau
  * 
  */
-public interface RetryCallback<T> {
+public interface RetryCallback {
 
 	/**
 	 * Does the actual work.
 	 * 
 	 * @return
 	 */
-	T doWithRetry();
+	Object doWithRetry();
 
 	/**
 	 * Returns true if the work has been completed or false is a retry is
@@ -36,6 +36,6 @@ public interface RetryCallback<T> {
 	 * 
 	 * @return
 	 */
-	boolean isComplete(T result);
+	boolean isComplete(Object result);
 
 }

@@ -4,13 +4,13 @@
 	xmlns:osgi="http://www.springframework.org/schema/osgi"
 	xmlns:beans="http://www.springframework.org/schema/beans"
 	xsi:schemaLocation="
-		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
 		http://www.springframework.org/schema/osgi http://www.springframework.org/schema/osgi/spring-osgi.xsd"
 	osgi:default-timeout="10">
 
 
 	<!-- simple collection types -->
-	
+
 	<osgi:list id="simpleList" interface="java.io.Serializable"
 		cardinality="0..N" />
 	<osgi:set id="simpleSet" interface="java.io.Serializable"
@@ -22,7 +22,7 @@
 
 	<!-- Comparator variants  -->
 	<beans:bean id="defaultComparator"
-		class="org.springframework.osgi.service.importer.support.internal.util.ServiceReferenceComparator" />
+		class="org.springframework.osgi.service.importer.support.internal.collection.comparator.ServiceReferenceComparator" />
 
 	<osgi:list id="implicitSortedList" interface="java.io.Serializable"
 		comparator-ref="defaultComparator" cardinality="0..N" />
@@ -45,8 +45,8 @@
 	<!-- sorted osgi:set (testing osgi:comparator variants) 	-->
 	<osgi:set id="sortedSetWithNaturalOrderingOnRefs"
 		interface="java.io.Externalizable" cardinality="0..N">
-		<osgi:reference-listener ref="firstListener" />
-		<osgi:reference-listener ref="secondListener" />
+		<osgi:listener ref="firstListener" />
+		<osgi:listener ref="secondListener" />
 		<osgi:comparator>
 			<osgi:natural basis="service-reference" />
 		</osgi:comparator>
@@ -54,20 +54,10 @@
 
 	<osgi:list id="sortedListWithNaturalOrderingOnServs"
 		interface="java.io.Externalizable" cardinality="0..N">
-		<osgi:reference-listener ref="firstListener" />
+		<osgi:listener ref="firstListener" />
 		<osgi:comparator>
 			<osgi:natural basis="service" />
 		</osgi:comparator>
 	</osgi:list>
 
-	<!--
-	<beans:bean id="primitiveArray"
-		class="org.springframework.osgi.blueprint.PrimitiveArrayConstructorInjection">
-		<beans:constructor-arg type="int[]">
-			<beans:array value-type="int">
-				<beans:value>1</beans:value>
-			</beans:array>
-		</beans:constructor-arg>
-	</beans:bean>
-	-->
 </beans:beans>

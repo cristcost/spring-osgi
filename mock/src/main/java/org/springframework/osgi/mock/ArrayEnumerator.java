@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.springframework.osgi.mock;
 
 import java.util.Enumeration;
@@ -23,14 +22,13 @@ import java.util.NoSuchElementException;
  * Simple enumeration mock backed by an array of objects.
  * 
  */
-public class ArrayEnumerator<E> implements Enumeration<E> {
+public class ArrayEnumerator implements Enumeration {
 
-	private final E[] source;
+	private final Object[] source;
 
 	private int index = 0;
 
-
-	public ArrayEnumerator(E[] source) {
+	public ArrayEnumerator(Object[] source) {
 		this.source = source;
 	}
 
@@ -38,7 +36,7 @@ public class ArrayEnumerator<E> implements Enumeration<E> {
 		return source.length > index;
 	}
 
-	public E nextElement() {
+	public Object nextElement() {
 		if (hasMoreElements())
 			return (source[index++]);
 		else

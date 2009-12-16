@@ -115,5 +115,5 @@ public class WeatherServiceBundleTest extends AbstractConfigurableBundleCreatorT
 		OsgiPlatform platform = super.createPlatform();
 		platform.getConfigurationProperties().setProperty("felix.fragment.validation", "warning");
 		return platform;
-	}
+	}    
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,11 +44,10 @@ public class OsgiBeanFactoryPostProcessorAdapter implements BeanFactoryPostProce
 
 	private final BundleContext bundleContext;
 
-	private List<OsgiBeanFactoryPostProcessor> osgiPostProcessors;
+	private List osgiPostProcessors;
 
 
-	public OsgiBeanFactoryPostProcessorAdapter(BundleContext bundleContext,
-			List<OsgiBeanFactoryPostProcessor> postProcessors) {
+	public OsgiBeanFactoryPostProcessorAdapter(BundleContext bundleContext, List postProcessors) {
 		this.bundleContext = bundleContext;
 		this.osgiPostProcessors = postProcessors;
 	}
@@ -58,8 +57,8 @@ public class OsgiBeanFactoryPostProcessorAdapter implements BeanFactoryPostProce
 
 		Exception processingException = null;
 
-		for (Iterator<OsgiBeanFactoryPostProcessor> iterator = osgiPostProcessors.iterator(); iterator.hasNext();) {
-			OsgiBeanFactoryPostProcessor osgiPostProcessor = iterator.next();
+		for (Iterator iterator = osgiPostProcessors.iterator(); iterator.hasNext();) {
+			OsgiBeanFactoryPostProcessor osgiPostProcessor = (OsgiBeanFactoryPostProcessor) iterator.next();
 			if (trace)
 				log.trace("Calling OsgiBeanFactoryPostProcessor " + osgiPostProcessor + " for bean factory "
 						+ beanFactory);

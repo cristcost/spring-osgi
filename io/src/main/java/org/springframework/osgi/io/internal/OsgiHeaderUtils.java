@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,9 +76,9 @@ public abstract class OsgiHeaderUtils {
 			return new String[0];
 
 		// consider , as a delimiter only if a quote is not encountered
-		List<String> tokens = new ArrayList<String>(2);
+		List tokens = new ArrayList(2);
 
-		StringBuilder token = new StringBuilder();
+		StringBuffer token = new StringBuffer();
 		boolean ignoreComma = false;
 		for (int stringIndex = 0; stringIndex < headerContent.length(); stringIndex++) {
 			char currentChar = headerContent.charAt(stringIndex);
@@ -100,7 +100,7 @@ public abstract class OsgiHeaderUtils {
 			}
 		}
 		tokens.add(token.toString().trim());
-		return tokens.toArray(new String[tokens.size()]);
+		return (String[]) tokens.toArray(new String[tokens.size()]);
 	}
 
 	/**
@@ -109,8 +109,8 @@ public abstract class OsgiHeaderUtils {
 	 * 
 	 * @param string required bundle entry
 	 * @return returns an array of strings with 2 entries, the first being the
-	 *         bundle sym name, the second the version (or 0.0.0 if nothing is
-	 *         specified).
+	 * bundle sym name, the second the version (or 0.0.0 if nothing is
+	 * specified).
 	 */
 	public static String[] parseRequiredBundleString(String entry) {
 		String[] value = new String[2];

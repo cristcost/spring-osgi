@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package org.springframework.osgi.config;
 
 import java.io.Serializable;
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Dictionary;
@@ -59,6 +58,7 @@ public class OsgiServiceNamespaceHandlerTest extends TestCase {
 	private final List services = new ArrayList();
 
 	private ServiceRegistration registration;
+
 
 	protected void setUp() throws Exception {
 
@@ -106,9 +106,9 @@ public class OsgiServiceNamespaceHandlerTest extends TestCase {
 		assertSame(OsgiServiceFactoryBean.class, bean.getClass());
 		OsgiServiceFactoryBean exporter = (OsgiServiceFactoryBean) bean;
 
-		assertTrue(Arrays.equals(new Class<?>[] { Serializable.class }, getInterfaces(exporter)));
+		assertTrue(Arrays.equals(new Class[] { Serializable.class }, getInterfaces(exporter)));
 		assertEquals("string", getTargetBeanName(exporter));
-		//assertEquals(appContext.getBean("string"), getTarget(exporter));
+		assertEquals(appContext.getBean("string"), getTarget(exporter));
 
 		assertSame(appContext.getBean("string"), getServiceAtIndex(0));
 	}
@@ -116,7 +116,7 @@ public class OsgiServiceNamespaceHandlerTest extends TestCase {
 	public void testBiggerService() throws Exception {
 		OsgiServiceFactoryBean exporter = (OsgiServiceFactoryBean) appContext.getBean("&manyOptions");
 
-		assertTrue(Arrays.equals(new Class<?>[] { Serializable.class, CharSequence.class }, getInterfaces(exporter)));
+		assertTrue(Arrays.equals(new Class[] { Serializable.class, CharSequence.class }, getInterfaces(exporter)));
 		Properties prop = new Properties();
 		prop.setProperty("foo", "bar");
 		prop.setProperty("white", "horse");
@@ -127,12 +127,12 @@ public class OsgiServiceNamespaceHandlerTest extends TestCase {
 		assertNotSame(appContext.getBean("string"), getServiceAtIndex(1));
 
 		assertEquals("string", getTargetBeanName(exporter));
-		//assertEquals(appContext.getBean("string"), getTarget(exporter));
+		assertEquals(appContext.getBean("string"), getTarget(exporter));
 	}
 
 	public void testNestedService() throws Exception {
 		OsgiServiceFactoryBean exporter = (OsgiServiceFactoryBean) appContext.getBean("&nestedService");
-		assertTrue(Arrays.equals(new Class<?>[] { Object.class }, getInterfaces(exporter)));
+		assertTrue(Arrays.equals(new Class[] { Object.class }, getInterfaces(exporter)));
 
 		Object service = getServiceAtIndex(2);
 		assertSame(HashMap.class, service.getClass());
@@ -173,7 +173,7 @@ public class OsgiServiceNamespaceHandlerTest extends TestCase {
 		assertTrue(target instanceof ServiceRegistration);
 
 		assertEquals(0, RegistrationListener.UNBIND_CALLS);
-		unregister((ServiceRegistration) target);
+		((ServiceRegistration) target).unregister();
 		assertEquals(2, RegistrationListener.UNBIND_CALLS);
 		assertNotNull(RegistrationListener.SERVICE_REG);
 		assertNotNull(RegistrationListener.SERVICE_UNREG);
@@ -194,8 +194,9 @@ public class OsgiServiceNamespaceHandlerTest extends TestCase {
 		Object target = appContext.getBean("exporterWithCustomListener");
 
 		assertTrue(target instanceof ServiceRegistration);
+
 		assertEquals(0, CustomRegistrationListener.UNREG_CALLS);
-		unregister((ServiceRegistration) target);
+		((ServiceRegistration) target).unregister();
 		assertEquals(1, CustomRegistrationListener.UNREG_CALLS);
 		// check service instance passed around
 		assertSame(appContext.getBean("string"), CustomRegistrationListener.SERVICE_REG);
@@ -206,7 +207,7 @@ public class OsgiServiceNamespaceHandlerTest extends TestCase {
 		return (OsgiServiceRegistrationListener[]) TestUtils.getFieldValue(exporter, "listeners");
 	}
 
-	private Class<?>[] getInterfaces(OsgiServiceFactoryBean exporter) {
+	private Class[] getInterfaces(OsgiServiceFactoryBean exporter) {
 		return (Class[]) TestUtils.getFieldValue(exporter, "interfaces");
 	}
 
@@ -216,12 +217,5 @@ public class OsgiServiceNamespaceHandlerTest extends TestCase {
 
 	private Object getTarget(OsgiServiceFactoryBean exporter) {
 		return TestUtils.getFieldValue(exporter, "target");
-	}
-
-	private void unregister(ServiceRegistration target) throws Exception {
-		Field fld = target.getClass().getDeclaredField("delegate");
-		fld.setAccessible(true);
-		ServiceRegistration reg = (ServiceRegistration) fld.get(target);
-		reg.unregister();
 	}
 }

@@ -1,6 +1,3 @@
-Export-Template: 
- org.osgi.service.blueprint.container;version="1.0.0",
- org.osgi.service.blueprint.reflect;version="1.0.0"
 Excluded-Exports: 
  *.internal*
 Import-Package: 

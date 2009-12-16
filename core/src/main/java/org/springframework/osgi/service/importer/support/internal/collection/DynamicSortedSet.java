@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,16 +31,16 @@ import org.springframework.util.Assert;
  * @author Costin Leau
  * 
  */
-public class DynamicSortedSet<E> extends DynamicSet<E> implements SortedSet<E> {
+public class DynamicSortedSet extends DynamicSet implements SortedSet {
 
-	private final Comparator<? super E> comparator;
+	private final Comparator comparator;
 
 
 	public DynamicSortedSet() {
-		this((Comparator<? super E>) null);
+		this((Comparator) null);
 	}
 
-	public DynamicSortedSet(Collection<? extends E> c) {
+	public DynamicSortedSet(Collection c) {
 		comparator = null;
 		addAll(c);
 	}
@@ -50,21 +50,21 @@ public class DynamicSortedSet<E> extends DynamicSet<E> implements SortedSet<E> {
 		comparator = null;
 	}
 
-	public DynamicSortedSet(SortedSet<E> ss) {
+	public DynamicSortedSet(SortedSet ss) {
 		this.comparator = ss.comparator();
 		addAll(ss);
 	}
 
-	public DynamicSortedSet(Comparator<? super E> c) {
+	public DynamicSortedSet(Comparator c) {
 		this.comparator = c;
 
 	}
 
-	public Comparator<? super E> comparator() {
+	public Comparator comparator() {
 		return comparator;
 	}
 
-	public boolean add(E o) {
+	public boolean add(Object o) {
 		Assert.notNull(o);
 
 		if (comparator == null && !(o instanceof Comparable))
@@ -93,7 +93,7 @@ public class DynamicSortedSet<E> extends DynamicSet<E> implements SortedSet<E> {
 		return super.remove(o);
 	}
 
-	public E first() {
+	public Object first() {
 		synchronized (storage) {
 			if (storage.isEmpty())
 				throw new NoSuchElementException();
@@ -102,11 +102,11 @@ public class DynamicSortedSet<E> extends DynamicSet<E> implements SortedSet<E> {
 		}
 	}
 
-	public SortedSet<E> headSet(Object toElement) {
+	public SortedSet headSet(Object toElement) {
 		throw new UnsupportedOperationException();
 	}
 
-	public E last() {
+	public Object last() {
 		synchronized (storage) {
 			if (storage.isEmpty())
 				throw new NoSuchElementException();
@@ -115,11 +115,11 @@ public class DynamicSortedSet<E> extends DynamicSet<E> implements SortedSet<E> {
 		}
 	}
 
-	public SortedSet<E> subSet(Object fromElement, Object toElement) {
+	public SortedSet subSet(Object fromElement, Object toElement) {
 		throw new UnsupportedOperationException();
 	}
 
-	public SortedSet<E> tailSet(Object fromElement) {
+	public SortedSet tailSet(Object fromElement) {
 		throw new UnsupportedOperationException();
 	}
 }

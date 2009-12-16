@@ -3,7 +3,7 @@
   <parent>
     <artifactId>spring-osgi</artifactId>
     <groupId>org.springframework.osgi</groupId>
-    <version>2.0.0.M2-SNAPSHOT</version>
+    <version>1.2.1</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <artifactId>spring-osgi-jdk5-integration-test-bundles</artifactId>
@@ -13,8 +13,10 @@
   <url>http://www.springframework.org/osgi</url>
   
   <properties>
-	
-	<bundlor.enabled>false</bundlor.enabled>
+    <!-- root, empty package -->
+    <!-- plugin not yet enabled to avoid further problems -->
+	<spring.osgi.import.pkg>!org.springframework.osgi.iandt, *</spring.osgi.import.pkg>
+	<spring.osgi.export.pkg>${pom.artifactId}*</spring.osgi.export.pkg>
   </properties>
   
   <!-- shared dependencies -->

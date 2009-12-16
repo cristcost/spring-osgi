@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -132,10 +132,10 @@ public abstract class OsgiResourceUtils {
 		return res;
 	}
 
-	public static Resource[] convertURLEnumerationToResourceArray(Enumeration<URL> enm) {
-		Set<UrlResource> resources = new LinkedHashSet<UrlResource>(4);
+	public static Resource[] convertURLEnumerationToResourceArray(Enumeration enm) {
+		Set resources = new LinkedHashSet(4);
 		while (enm != null && enm.hasMoreElements()) {
-			resources.add(new UrlResource(enm.nextElement()));
+			resources.add(new UrlResource((URL) enm.nextElement()));
 		}
 		return (Resource[]) resources.toArray(new Resource[resources.size()]);
 	}

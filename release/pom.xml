@@ -13,7 +13,7 @@
 	<parent>
 		<groupId>org.springframework.osgi</groupId>
 		<artifactId>spring-osgi</artifactId>
-		<version>2.0.0.M2-SNAPSHOT</version>
+		<version>1.2.1</version>
 		<relativePath>..</relativePath>
 	</parent>
 	
@@ -26,11 +26,11 @@
 		<module>../web</module>
 		<module>../web-extender</module>
 		<module>../annotation</module>
-        <module>../bundle-archetype</module>			
 	</modules>
 
 	<build>
 		<plugins>
+       
 			<plugin>
 				<artifactId>maven-assembly-plugin</artifactId>
 				<version>2.2-beta-2</version>
@@ -48,7 +48,6 @@
 							<descriptors>
 								<descriptor>src/assembly/no-dependencies.xml</descriptor>
 							</descriptors>
-							<attach>false</attach>
 						</configuration>
 					</execution>
 
@@ -64,19 +63,10 @@
 							<descriptors>
 								<descriptor>src/assembly/with-dependencies.xml</descriptor>
 							</descriptors>
-                            <attach>false</attach>
 						</configuration>
 					</execution>
 				</executions>
 			</plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-deploy-plugin</artifactId>
-                <version>2.4</version>
-                <configuration>
-                    <skip>true</skip>
-                </configuration>
-            </plugin>
 		</plugins>
 	</build>
 

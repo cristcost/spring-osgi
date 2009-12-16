@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,7 +67,7 @@ public class OsgiServiceInvokerTest extends TestCase {
 
 	public void testExceptionUnwrapping() throws Throwable {
 		MethodInvocation invocation = new MockMethodInvocation(Integer.class.getMethod("parseInt",
-			new Class<?>[] { String.class }), new Object[] { "invalid number" });
+			new Class[] { String.class }), new Object[] { "invalid number" });
 
 		try {
 			invoker.invoke(invocation);

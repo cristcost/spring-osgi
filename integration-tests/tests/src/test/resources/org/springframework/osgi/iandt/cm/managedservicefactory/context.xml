@@ -17,9 +17,4 @@
 	</osgix:managed-service-factory>
 
 	<bean id="listener" class="org.springframework.osgi.iandt.cm.managedservicefactory.Listener"/>
-	
-	<osgix:cm-properties id="dynamic-override" persistent-id="dynamic-override" local-override="true" dynamic="true">
-		<prop key="spring">framework</prop>
-	</osgix:cm-properties>
-	
 </beans>

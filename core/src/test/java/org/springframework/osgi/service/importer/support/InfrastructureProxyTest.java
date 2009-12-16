@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,14 +37,15 @@ public class InfrastructureProxyTest extends TestCase {
 
 	private StaticServiceProxyCreator proxyCreator;
 
-	private final Class<?>[] classes = new Class<?>[] { Serializable.class, Comparable.class };
+	private final Class[] classes = new Class[] { Serializable.class, Comparable.class };
 
-	private StaticServiceProxyCreator createProxyCreator(BundleContext ctx, Class<?>[] classes) {
+
+	private StaticServiceProxyCreator createProxyCreator(BundleContext ctx, Class[] classes) {
 		ClassLoader cl = getClass().getClassLoader();
 		if (ctx == null) {
 			ctx = new MockBundleContext();
 		}
-		return new StaticServiceProxyCreator(classes, cl, cl, ctx, ImportContextClassLoaderEnum.UNMANAGED, true, false);
+		return new StaticServiceProxyCreator(classes, cl, cl, ctx, ImportContextClassLoader.UNMANAGED, true);
 	}
 
 	protected void setUp() throws Exception {
@@ -85,26 +86,8 @@ public class InfrastructureProxyTest extends TestCase {
 		proxyCreator = createProxyCreator(ctx, classes);
 		InfrastructureProxy proxy = (InfrastructureProxy) proxyCreator.createServiceProxy(ref).proxy;
 		assertEquals(service, proxy.getWrappedObject());
-		InfrastructureProxy anotherProxy =
-				(InfrastructureProxy) proxyCreator.createServiceProxy(new MockServiceReference()).proxy;
+		InfrastructureProxy anotherProxy = (InfrastructureProxy) proxyCreator.createServiceProxy(new MockServiceReference()).proxy;
 		assertFalse(proxy.equals(anotherProxy));
 		assertFalse(anotherProxy.getWrappedObject().equals(proxy.getWrappedObject()));
-	}
-
-	// FIXME: disabled due to some strange certificates problem with Equinox
-	public void tstBlueprintExceptions() throws Exception {
-		MockServiceReference ref = new MockServiceReference(new String[] { Comparable.class.getName() });
-		MockBundleContext ctx = new MockBundleContext() {
-
-			@Override
-			public Object getService(ServiceReference reference) {
-				return null;
-			}
-		};
-		ClassLoader cl = getClass().getClassLoader();
-		StaticServiceProxyCreator creator =
-				new StaticServiceProxyCreator(classes, cl, cl, ctx, ImportContextClassLoaderEnum.UNMANAGED, true, true);
-		Comparable proxy = (Comparable) creator.createServiceProxy(ref).proxy;
-		System.out.println(proxy.compareTo(null));
 	}
 }

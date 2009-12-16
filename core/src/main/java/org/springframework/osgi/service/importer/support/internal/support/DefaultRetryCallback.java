@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,9 @@ package org.springframework.osgi.service.importer.support.internal.support;
  * @author Costin Leau
  * 
  */
-public abstract class DefaultRetryCallback<T> implements RetryCallback<T> {
+public abstract class DefaultRetryCallback implements RetryCallback {
 
-	public boolean isComplete(T result) {
+	public boolean isComplete(Object result) {
 		return (result != null);
 	}
 }

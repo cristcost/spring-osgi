@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,21 +27,22 @@ import org.springframework.osgi.service.exporter.support.internal.controller.Exp
 import org.springframework.osgi.service.exporter.support.internal.controller.ExporterControllerUtils;
 
 /**
- * BeanPostProcessor registered for detecting the dependency between service importer and service exporters. Besides
- * bean detection, this component also listens to specific importer events to determine whether a potential associated
- * exporter needs to be disabled temporarily.
+ * BeanPostProcessor registered for detecting the dependency between service
+ * importer and service exporters. Besides bean detection, this component also
+ * listens to specific importer events to determine whether a potential
+ * associated exporter needs to be disabled temporarily.
  * 
  * @author Costin Leau
  * 
  */
-public class MandatoryDependencyBeanPostProcessor implements BeanFactoryAware, BeanPostProcessor,
-		DestructionAwareBeanPostProcessor {
+public class MandatoryDependencyBeanPostProcessor implements BeanFactoryAware, BeanPostProcessor, DestructionAwareBeanPostProcessor {
 
 	private MandatoryServiceDependencyManager manager;
 	private ConfigurableBeanFactory beanFactory;
 
+
 	public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
-		if (bean instanceof OsgiServiceFactoryBean && beanFactory.containsLocalBean(beanName)) {
+		if (bean instanceof OsgiServiceFactoryBean) {
 			manager.addServiceExporter(bean, beanName);
 		}
 		return bean;
@@ -49,9 +50,8 @@ public class MandatoryDependencyBeanPostProcessor implements BeanFactoryAware, B
 
 	public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
 		// disable publication until all the dependencies have been fulfilled
-		
-		// ignore inner beans
-		if (bean instanceof OsgiServiceFactoryBean && beanFactory.containsLocalBean(beanName)) {
+		// make sure we don't consider nested beans
+		if (bean instanceof OsgiServiceFactoryBean && beanFactory.containsBean(beanName)) {
 			String exporterName = beanName;
 			if (beanFactory.isFactoryBean(beanName)) {
 				exporterName = BeanFactory.FACTORY_BEAN_PREFIX + beanName;
@@ -74,7 +74,7 @@ public class MandatoryDependencyBeanPostProcessor implements BeanFactoryAware, B
 	}
 
 	public void postProcessBeforeDestruction(Object bean, String beanName) throws BeansException {
-		if (bean instanceof OsgiServiceFactoryBean && beanFactory.containsLocalBean(beanName)) {
+		if (bean instanceof OsgiServiceFactoryBean) {
 			manager.removeServiceExporter(bean, beanName);
 		}
 	}

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import java.util.List;
 
 import junit.framework.TestCase;
 
-import org.apache.commons.logging.LogFactory;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
@@ -42,17 +41,18 @@ public class ExtenderConfigurationCustomSettingsTest extends TestCase {
 	private BundleContext bundleContext;
 	private Bundle bundle;
 
+
 	protected void setUp() throws Exception {
 		bundle = new MockBundle() {
 
 			public Enumeration findEntries(String path, String filePattern, boolean recurse) {
 				return new ArrayEnumerator(new URL[] { getClass().getResource(
-						"/org/springframework/osgi/extender/internal/support/extender-custom-config.xml") });
+					"/org/springframework/osgi/extender/internal/support/extender-custom-config.xml") });
 			}
 		};
 
 		bundleContext = new MockBundleContext(bundle);
-		config = new ExtenderConfiguration(bundleContext, LogFactory.getLog(ExtenderConfiguration.class));
+		config = new ExtenderConfiguration(bundleContext);
 	}
 
 	protected void tearDown() throws Exception {

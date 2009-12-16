@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,13 @@
 package org.springframework.osgi.iandt.cycles;
 
 import org.osgi.framework.ServiceRegistration;
-import org.springframework.osgi.iandt.BaseIntegrationTest;
 import org.springframework.osgi.test.AbstractConfigurableBundleCreatorTests;
 
 /**
  * @author Costin Leau
  * 
  */
-public class ExporterCycleTest extends BaseIntegrationTest {
+public class ExporterCycleTest extends AbstractConfigurableBundleCreatorTests {
 
 	private ListenerA listenerA;
 	private ListenerB listenerB;

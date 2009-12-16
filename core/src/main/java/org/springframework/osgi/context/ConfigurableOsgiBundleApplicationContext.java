@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,14 +40,10 @@ public interface ConfigurableOsgiBundleApplicationContext extends ConfigurableAp
 	static final String APPLICATION_CONTEXT_SERVICE_PROPERTY_NAME = "org.springframework.context.service.name";
 
 	/**
-	 * Name of the bundle context bean
+	 * Bean name under which the OSGi bundle context is published as a
+	 * singleton.
 	 */
 	static final String BUNDLE_CONTEXT_BEAN_NAME = "bundleContext";
-
-	/**
-	 * Name of the bundle bean
-	 */
-	static final String BUNDLE_BEAN_NAME = "bundle";
 
 
 	/**

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,14 +27,15 @@ import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceFactory;
 import org.osgi.framework.ServiceRegistration;
+import org.springframework.beans.factory.BeanFactory;
 import org.springframework.osgi.service.util.internal.aop.ProxyUtils;
 import org.springframework.osgi.service.util.internal.aop.ServiceTCCLInterceptor;
 import org.springframework.osgi.util.DebugUtils;
-import org.springframework.osgi.util.OsgiStringUtils;
 
 /**
- * ServiceFactory used for publishing the service beans. Acts as a a wrapper around special beans (such as
- * ServiceFactory). Additionally, used to create TCCL managing proxies.
+ * ServiceFactory used for publishing the service beans. Acts as a a wrapper
+ * around special beans (such as ServiceFactory). Additionally, used to create
+ * TCCL managing proxies.
  * 
  * @author Costin Leau
  */
@@ -43,20 +44,26 @@ public class PublishingServiceFactory implements ServiceFactory {
 	/** logger */
 	private static final Log log = LogFactory.getLog(PublishingServiceFactory.class);
 
-	/** proxy cache in case the given bean has a non-singleton scope */
-	private final Map<Object, WeakReference<Object>> proxyCache;
+	// synchronization monitor
+	private final Object monitor = new Object();
 
-	private final LazyTargetResolver targetResolver;
-	private final Class<?>[] classes;
+	/** proxy cache in case the given bean has a non-singleton scope */
+	private final Map proxyCache;
+
+	private final Class[] classes;
+	private final Object target;
+	private final BeanFactory beanFactory;
+	private final String targetBeanName;
 	private final boolean createTCCLProxy;
 	private final ClassLoader classLoader;
 	private final ClassLoader aopClassLoader;
 	private final BundleContext bundleContext;
-	private final Object lock = new Object();
+
 
 	/**
-	 * Constructs a new <code>PublishingServiceFactory</code> instance. Since its an internal class, this constructor
-	 * accepts a number of parameters to sacrifice readability for thread-safety.
+	 * Constructs a new <code>PublishingServiceFactory</code> instance. Since
+	 * its an internal class, this constructor accepts a number of paramters to
+	 * sacrifice readability for thread-safety.
 	 * 
 	 * @param classes
 	 * @param target
@@ -67,30 +74,32 @@ public class PublishingServiceFactory implements ServiceFactory {
 	 * @param aopClassLoader
 	 * @param bundleContext
 	 */
-	public PublishingServiceFactory(LazyTargetResolver targetResolver, Class<?>[] classes, boolean createTCCLProxy,
-			ClassLoader classLoader, ClassLoader aopClassLoader, BundleContext bundleContext) {
+	public PublishingServiceFactory(Class[] classes, Object target, BeanFactory beanFactory, String targetBeanName,
+			boolean createTCCLProxy, ClassLoader classLoader, ClassLoader aopClassLoader, BundleContext bundleContext) {
 		super();
-
-		this.targetResolver = targetResolver;
 		this.classes = classes;
 
+		this.target = target;
+		this.beanFactory = beanFactory;
+		this.targetBeanName = targetBeanName;
 		this.createTCCLProxy = createTCCLProxy;
 		this.classLoader = classLoader;
 		this.aopClassLoader = aopClassLoader;
 		this.bundleContext = bundleContext;
 
-		proxyCache = (createTCCLProxy ? new WeakHashMap<Object, WeakReference<Object>>(4) : null);
+		proxyCache = (createTCCLProxy ? new WeakHashMap(4) : null);
+	}
+
+	private Object getBean() {
+		synchronized (monitor) {
+			// no instance given
+			// use container lookup
+			return (target == null ? beanFactory.getBean(targetBeanName) : target);
+		}
 	}
 
 	public Object getService(Bundle bundle, ServiceRegistration serviceRegistration) {
-		if (log.isTraceEnabled()) {
-			log.trace("Get service called by bundle " + OsgiStringUtils.nullSafeName(bundle) + " on registration "
-					+ OsgiStringUtils.nullSafeToString(serviceRegistration.getReference()));
-		}
-
-		targetResolver.activate();
-		Object bn = targetResolver.getBean();
-
+		Object bn = getBean();
 		// handle SF beans
 		if (bn instanceof ServiceFactory) {
 			bn = ((ServiceFactory) bn).getService(bundle, serviceRegistration);
@@ -99,14 +108,14 @@ public class PublishingServiceFactory implements ServiceFactory {
 		if (createTCCLProxy) {
 			// check proxy cache
 			synchronized (proxyCache) {
-				WeakReference<Object> value = proxyCache.get(bn);
+                WeakReference value = (WeakReference) proxyCache.get(bn);
 				Object proxy = null;
 				if (value != null) {
 					proxy = value.get();
-				}
+				}				
 				if (proxy == null) {
 					proxy = createCLLProxy(bn);
-					proxyCache.put(bn, new WeakReference<Object>(proxy));
+					proxyCache.put(bn, new WeakReference(proxy));
 				}
 				bn = proxy;
 			}
@@ -116,9 +125,10 @@ public class PublishingServiceFactory implements ServiceFactory {
 	}
 
 	/**
-	 * Proxy the target object with an interceptor that manages the context classloader. This should be applied only if
-	 * such management is needed. Additionally, this method uses a cache to prevent multiple proxies to be created for
-	 * the same object.
+	 * Proxy the target object with an interceptor that manages the context
+	 * classloader. This should be applied only if such management is needed.
+	 * Additionally, this method uses a cache to prevent multiple proxies to be
+	 * created for the same object.
 	 * 
 	 * @param target
 	 * @return
@@ -126,8 +136,9 @@ public class PublishingServiceFactory implements ServiceFactory {
 	private Object createCLLProxy(final Object target) {
 		try {
 			return ProxyUtils.createProxy(classes, target, aopClassLoader, bundleContext,
-					new Advice[] { new ServiceTCCLInterceptor(classLoader) });
-		} catch (Throwable th) {
+				new Advice[] { new ServiceTCCLInterceptor(classLoader) });
+		}
+		catch (Throwable th) {
 			log.error("Cannot create TCCL managed proxy; falling back to the naked object", th);
 			if (th instanceof NoClassDefFoundError) {
 				NoClassDefFoundError ncdfe = (NoClassDefFoundError) th;
@@ -142,23 +153,15 @@ public class PublishingServiceFactory implements ServiceFactory {
 	}
 
 	public void ungetService(Bundle bundle, ServiceRegistration serviceRegistration, Object service) {
-
-		if (log.isTraceEnabled()) {
-			log.trace("Unget service called by bundle " + OsgiStringUtils.nullSafeName(bundle) + " on registration "
-					+ OsgiStringUtils.nullSafeToString(serviceRegistration.getReference()));
-		}
-
-		Class<?> type = targetResolver.getType();
+		Object bn = getBean();
 		// handle SF beans
-		if (ServiceFactory.class.isAssignableFrom(type)) {
-			ServiceFactory sf = (ServiceFactory) targetResolver.getBean();
-			sf.ungetService(bundle, serviceRegistration, service);
+		if (bn instanceof ServiceFactory) {
+			((ServiceFactory) bn).ungetService(bundle, serviceRegistration, service);
 		}
 
 		if (createTCCLProxy) {
 			synchronized (proxyCache) {
-				// trigger purging of unused entries
-				proxyCache.size();
+				proxyCache.values().remove(new WeakReference(service));
 			}
 		}
 	}

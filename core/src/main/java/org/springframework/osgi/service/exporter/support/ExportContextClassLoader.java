@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,15 +17,15 @@
 package org.springframework.osgi.service.exporter.support;
 
 import org.springframework.core.enums.StaticLabeledEnum;
-import org.springframework.core.enums.StaticLabeledEnumResolver;
 
 /**
- * Enum-like class for the exporter thread context-classLoader (TCCL) management options.
+ * Enum-like class for the exporter thread context-classLoader (TCCL) management
+ * options.
  * 
- * <p/> Used by {@link OsgiServiceFactoryBean} for exported services that depend on certain TCCL to be set.
+ * <p/> Used by {@link OsgiServiceFactoryBean} for exported services that depend
+ * on certain TCCL to be set.
  * 
  * @author Costin Leau
- * @deprecated As of Spring DM 2.0, replaced by {@link ExportContextClassLoaderEnum}
  */
 public class ExportContextClassLoader extends StaticLabeledEnum {
 
@@ -41,6 +41,7 @@ public class ExportContextClassLoader extends StaticLabeledEnum {
 	 */
 	public static final ExportContextClassLoader SERVICE_PROVIDER = new ExportContextClassLoader(1, "SERVICE_PROVIDER");
 
+
 	/**
 	 * Constructs a new <code>ExportContextClassLoader</code> instance.
 	 * 
@@ -49,14 +50,5 @@ public class ExportContextClassLoader extends StaticLabeledEnum {
 	 */
 	private ExportContextClassLoader(int code, String label) {
 		super(code, label);
-	}
-
-	ExportContextClassLoaderEnum getExportContextClassLoaderEnum() {
-		return ExportContextClassLoaderEnum.valueOf(getLabel());
-	}
-
-	static ExportContextClassLoader getExportContextClassLoader(ExportContextClassLoaderEnum enm) {
-		return (ExportContextClassLoader) StaticLabeledEnumResolver.instance().getLabeledEnumByLabel(
-				ExportContextClassLoader.class, enm.name());
 	}
 }

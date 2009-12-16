@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import java.util.List;
 
 import junit.framework.TestCase;
 
-import org.apache.commons.logging.LogFactory;
 import org.osgi.framework.BundleContext;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.core.task.TaskExecutor;
@@ -28,6 +27,7 @@ import org.springframework.osgi.context.event.OsgiBundleApplicationContextEventM
 import org.springframework.osgi.extender.internal.dependencies.startup.MandatoryImporterDependencyFactory;
 import org.springframework.osgi.extender.support.DefaultOsgiApplicationContextCreator;
 import org.springframework.osgi.mock.MockBundleContext;
+import org.springframework.osgi.util.BundleDelegatingClassLoader;
 import org.springframework.scheduling.timer.TimerTaskExecutor;
 
 /**
@@ -38,9 +38,10 @@ public class ExtenderConfigurationDefaultSettingsTest extends TestCase {
 	private ExtenderConfiguration config;
 	private BundleContext bundleContext;
 
+
 	protected void setUp() throws Exception {
 		bundleContext = new MockBundleContext();
-		config = new ExtenderConfiguration(bundleContext, LogFactory.getLog(ExtenderConfiguration.class));
+		config = new ExtenderConfiguration(bundleContext);
 	}
 
 	protected void tearDown() throws Exception {

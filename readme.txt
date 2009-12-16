@@ -40,7 +40,7 @@ configurations.
 2. RELEASE INFO
 
 The Spring Dynamic Modules for OSGi(tm) Service Platforms is targeted at OSGi R4 and 
-above, and JDK level 5.0 and above.
+above, and JDK level 1.4 and above.
 
 Release contents:
 * "src" contains the Java source files for the framework
@@ -54,12 +54,11 @@ this full distribution ZIP file if you want to run the sample applications and/o
 Maven 2 pom.xml are provided for building the sources.
  
 Latest info is available at the public website: http://www.springframework.org/osgi
-Project info at the SourceForge site: http://www.springsource.org/about
+Project info at the SourceForge site: http://sourceforge.net/projects/springframework
 
 Spring Dynamic Modules is released under the terms of the Apache Software License (see license.txt).
 All libraries included in the "-with-dependencies" download are subject to their respective licenses.
-This product includes software developed by the Apache Software Foundation (http://www.apache.org) and 
-OSGi Alliance (http://www.osgi.org).
+This product includes software developed by the Apache Software Foundation (http://www.apache.org).
 
 3. DISTRIBUTION JAR FILES
 
@@ -74,8 +73,8 @@ exact list of Spring-DM project dependencies see the respective Maven2 pom.xml f
 
 * spring-osgi-extender-${version}.jar
 - Contents: The Spring Dynamic Modules Extender
-- Dependencies: sl4fj, spring-osgi-core
-			    [Log4J, spring-osgi-annotation]
+- Dependencies: sl4fj, spring-osgi-core 
+			    [Log4J]
 
 * spring-osgi-io-${version}.jar
 - Contents: The Spring Dynamic Modules IO library

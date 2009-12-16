@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2009 the original author or authors.
+ * Copyright 2006-2008 the original author or authors.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,11 +70,11 @@ public class NonOSGiLoaderProxyTest extends BaseIntegrationTest {
 			return 0;
 		}
 
-		public boolean isWrapperFor(Class<?> iface) {
+		public boolean isWrapperFor(Class iface) {
 			return false;
 		}
 
-		public <T> T unwrap(Class<T> iface) throws SQLException {
+		public Object unwrap(Class c) {
 			return null;
 		}
 	}
